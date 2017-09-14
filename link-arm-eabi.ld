@@ -1,12 +1,11 @@
 /* link-arm-eabi.ld - linker script for arm eabi */
-ENTRY(Start)
+ENTRY(_start)
 
 SECTIONS
 {
     /* Starts at LOADER_ADDR. */
     . = 0x8000;
     _text_start = .;
-    _start = .;
     .text :
     {
         KEEP(*(.text.boot))

@@ -1,22 +1,17 @@
 /* main.c - the entry point for the kernel */
 
 #include <stdint.h>
-
 #include <uart.h>
 
 void *set_gfx_mode(uint32_t w, uint32_t h, uint32_t bpp);
 
 #define UNUSED(x) (void)(x)
 
-const char hello[] = "\r\nHello World\r\n";
-const char halting[] = "\r\n*** system halting ***";
+static const char *to_hex = "0123456789ABCDEF";
 
-const char *to_hex = "0123456789ABCDEF";
-
-void print_hex(uint32_t number) {
-  while (number) {
-    uart_putc(to_hex[number & 0xF]);
-    number >>= 4;
+static void print_hex(uint32_t number) {
+  for (int i = 7; i >= 0; i--) {
+    uart_putc(to_hex[(number >> (i * 4)) & 0xF]);
   }
 }
 
@@ -25,19 +20,18 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
   UNUSED(r0);
   UNUSED(r1);
   UNUSED(atags);
+
   uart_init();
+  uart_puts("Hello world!\n");
 
-  uart_puts("Type letter 'b' to boot!");
-  while (uart_getc() != 'b')
-    ;
-
-  uart_puts(hello);
   uint32_t width = 1366;
   uint32_t height = 768;
   uint32_t *framebuffer = set_gfx_mode(width, height, 32);
   uint32_t *pos = framebuffer;
 
+  uart_puts("Framebuffer address: ");
   print_hex((uint32_t)framebuffer);
+  uart_putc('\n');
 
   for (int h = 0; h < height; h++) {
     for (int w = 0; w < width; w++, pos++) {
@@ -45,10 +39,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
     }
   }
 
-  while (1) {
-    uart_putc(uart_getc());
-    uart_putc('>');
-  }
+  uart_puts("Type letter 'q' to halt machine!\n");
+  while (uart_getc() != 'q')
+    ;
 
-  uart_puts(halting);
+  uart_puts("*** system halting ***\n");
 }

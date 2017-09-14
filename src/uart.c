@@ -93,12 +93,12 @@ void uart_init() {
  * uint8_t Byte: byte to send.
  */
 void uart_putc(uint8_t byte) {
+  if (byte == '\n')
+    uart_putc('\r');
+
   // wait for UART to become ready to transmit
-  while (1) {
-    if (!(mmio_read(UART0_FR) & (1 << 5))) {
-      break;
-    }
-  }
+  while (mmio_read(UART0_FR) & (1 << 5))
+    ;
   mmio_write(UART0_DR, byte);
 }
 
@@ -120,10 +120,7 @@ void uart_puts(const char *str) {
  */
 uint8_t uart_getc() {
   // wait for UART to have recieved something
-  while (1) {
-    if (!(mmio_read(UART0_FR) & (1 << 4))) {
-      break;
-    }
-  }
+  while (mmio_read(UART0_FR) & (1 << 4))
+    ;
   return mmio_read(UART0_DR);
 }

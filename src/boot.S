@@ -4,7 +4,7 @@
 .section ".text.boot"
  
 // Make Start global.
-.globl Start
+.globl _start
  
 // Entry point for the kernel.
 // r15 -> should begin execution at 0x8000.
@@ -12,7 +12,7 @@
 // r1 -> 0x00000C42
 // r2 -> 0x00000100 - start of ATAGS
 // preserve these registers as argument for kernel_main
-Start:
+_start:
 	// Setup the stack.
 	mov	sp, #0x8000
  
@@ -39,3 +39,5 @@ Start:
 halt:
 	wfe
 	b	halt
+
+@ vim: ft=armv5 ts=8 sw=8 noet
