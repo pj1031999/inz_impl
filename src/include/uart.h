@@ -31,4 +31,3 @@ void uart_puts(const char *str);
 uint8_t uart_getc();
 
 #endif // #ifndef UART_H
-

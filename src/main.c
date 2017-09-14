@@ -14,40 +14,41 @@ const char halting[] = "\r\n*** system halting ***";
 const char *to_hex = "0123456789ABCDEF";
 
 void print_hex(uint32_t number) {
-    while (number) {
-        uart_putc(to_hex[number & 0xF]);
-        number >>= 4;
-    }
+  while (number) {
+    uart_putc(to_hex[number & 0xF]);
+    number >>= 4;
+  }
 }
 
 // kernel main function, it all begins here
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
-    UNUSED(r0);
-    UNUSED(r1);
-    UNUSED(atags);
-    uart_init();
+  UNUSED(r0);
+  UNUSED(r1);
+  UNUSED(atags);
+  uart_init();
 
-    uart_puts("Waiting for permission to boot");
-    while (uart_getc() != 'b');
+  uart_puts("Type letter 'b' to boot!");
+  while (uart_getc() != 'b')
+    ;
 
-    uart_puts(hello);
-    uint32_t width = 1366;
-    uint32_t height = 768;
-    uint32_t *framebuffer = set_gfx_mode(width, height, 32);
-    uint32_t *pos = framebuffer;
+  uart_puts(hello);
+  uint32_t width = 1366;
+  uint32_t height = 768;
+  uint32_t *framebuffer = set_gfx_mode(width, height, 32);
+  uint32_t *pos = framebuffer;
 
-    print_hex((uint32_t)framebuffer);
+  print_hex((uint32_t)framebuffer);
 
-    for (int h = 0; h < height; h ++) {
-        for (int w = 0; w < width; w ++, pos ++) {
-            *pos = (h >> 2 << 8) | (w >> 2);
-        }
+  for (int h = 0; h < height; h++) {
+    for (int w = 0; w < width; w++, pos++) {
+      *pos = (h >> 2 << 8) | (w >> 2);
     }
+  }
 
-    while (1) {
-	uart_putc(uart_getc());
-	uart_putc('>');
-    }
+  while (1) {
+    uart_putc(uart_getc());
+    uart_putc('>');
+  }
 
-    uart_puts(halting);
+  uart_puts(halting);
 }

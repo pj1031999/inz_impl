@@ -1,7 +1,7 @@
 # Makefile - build script */
  
 # build environment
-PREFIX ?= /opt/arm-gcc
+PREFIX ?= /usr
 ARMGNU ?= $(PREFIX)/bin/arm-none-eabi
  
 # source files
@@ -33,7 +33,10 @@ WARNFLAGS   += -Wwrite-strings -Wdisabled-optimization -Wpointer-arith
 WARNFLAGS   += -Werror
 ASFLAGS     := $(INCLUDES) $(DEPENDFLAGS) -D__ASSEMBLY__
 CFLAGS      := $(INCLUDES) $(DEPENDFLAGS) $(BASEFLAGS) $(WARNFLAGS)
-CFLAGS      += -std=c99
+CFLAGS      += -g -std=c99
+
+QEMU        := qemu-system-arm
+QEMUFLAGS   := -M raspi2 -serial stdio 
  
 # build rules
 all: kernel.img
@@ -45,6 +48,12 @@ kernel.elf: $(OBJS) link-arm-eabi.ld
  
 kernel.img: kernel.elf
 	$(ARMGNU)-objcopy kernel.elf -O binary kernel.img
+
+run: kernel.elf
+	$(QEMU) $(QEMUFLAGS) -kernel kernel.elf
+
+debug: kernel.elf
+	$(QEMU) $(QEMUFLAGS) -gdb tcp::9000 -S -kernel kernel.elf
  
 clean:
 	$(RM) -f $(OBJS) kernel.elf kernel.img
@@ -59,3 +68,5 @@ dist-clean: clean
 # AS.
 %.o: %.S Makefile
 	$(ARMGNU)-g++ $(ASFLAGS) -c $< -o $@
+
+# vim: ts=8 sw=8 noet
