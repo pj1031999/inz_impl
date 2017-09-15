@@ -3,7 +3,10 @@
 # build environment
 PREFIX ?= /usr
 ARMGNU ?= $(PREFIX)/bin/arm-none-eabi
- 
+
+CC	= $(ARMGNU)-gcc 
+OBJCOPY = $(ARMGNU)-objcopy
+
 # source files
 SOURCES_ASM := $(wildcard src/*.S)
 SOURCES_C   := $(wildcard src/*.c)
@@ -33,7 +36,7 @@ WARNFLAGS   += -Wwrite-strings -Wdisabled-optimization -Wpointer-arith
 WARNFLAGS   += -Werror
 ASFLAGS     := $(INCLUDES) $(DEPENDFLAGS) -D__ASSEMBLY__
 CFLAGS      := $(INCLUDES) $(DEPENDFLAGS) $(BASEFLAGS) $(WARNFLAGS)
-CFLAGS      += -g -std=c99
+CFLAGS      += -std=c11
 
 QEMU        := qemu-system-arm
 QEMUFLAGS   := -M raspi2 -serial stdio 
@@ -44,10 +47,10 @@ all: kernel.img
 include $(wildcard src/*.d)
  
 kernel.elf: $(OBJS) link-arm-eabi.ld
-	$(ARMGNU)-ld $(OBJS) -Tlink-arm-eabi.ld -o $@
+	$(CC) $(OBJS) -static -nostdlib -Wl,-Map=kernel.map -Tlink-arm-eabi.ld -o $@
  
 kernel.img: kernel.elf
-	$(ARMGNU)-objcopy kernel.elf -O binary kernel.img
+	$(OBJCOPY) kernel.elf -O binary kernel.img
 
 run: kernel.elf
 	$(QEMU) $(QEMUFLAGS) -kernel kernel.elf
@@ -63,10 +66,10 @@ dist-clean: clean
  
 # C.
 %.o: %.c Makefile
-	$(ARMGNU)-gcc $(CFLAGS) -c $< -o $@
+	$(CC) -g $(CFLAGS) -c $< -o $@
  
 # AS.
 %.o: %.S Makefile
-	$(ARMGNU)-g++ $(ASFLAGS) -c $< -o $@
+	$(CC) -g $(ASFLAGS) -c $< -o $@
 
 # vim: ts=8 sw=8 noet

@@ -1,40 +1,65 @@
 /* link-arm-eabi.ld - linker script for arm eabi */
 ENTRY(_start)
-
+PHDRS
+{
+  init   PT_LOAD FLAGS(5); /* read-only, executable */
+  text   PT_LOAD FLAGS(5); /* read-only, executable */
+  rodata PT_LOAD FLAGS(4); /* read-only */
+  data   PT_LOAD FLAGS(6); /* read-write */
+}
 SECTIONS
 {
-    /* Starts at LOADER_ADDR. */
-    . = 0x8000;
-    _text_start = .;
-    .text :
-    {
-        KEEP(*(.text.boot))
-        *(.text)
-    }
-    . = ALIGN(4096); /* align to page size */
-    _text_end = .;
-    _rodata_start = .;
-    .rodata :
-    {
-	*(.rodata)
-    }
-    . = ALIGN(4096); /* align to page size */
-    _rodata_end = .;
-    _data_start = .;
-    .data :
-    {
-        *(.data)
-    }
-    . = ALIGN(4096); /* align to page size */
-    _data_end = .;
-    _bss_start = .;
-    .bss :
-    {
-        bss = .;
-        *(.bss)
-    }
-    . = ALIGN(4096); /* align to page size */
-    _bss_end = .;
+  _kernel = 0xC0000000;
 
-    _end = .;
+  _stack_bottom = _kernel;
+  _stack_top = _kernel + 0x8000;
+
+  .init 0x8000 : AT(0x8000) ALIGN(4096)
+  {
+    KEEP(*(.init .init.*))
+  } : init
+
+  _init_end = ALIGN(4096);
+
+  .text _kernel + _init_end : AT(_init_end) ALIGN(4096)
+  {
+    _text_start = .;
+    *(.text .text.*)
+    _text_end = .;
+  } : text
+
+  .rodata : ALIGN(4096)
+  {
+    _rodata_start = .;
+    *(.rodata .rodata.*)
+    _rodata_end = .;
+  } : rodata
+
+  .data : ALIGN(4096)
+  {
+    _data_start = .;
+    *(.data .data.*)
+    _data_end = .;
+  } : data
+
+  . = ALIGN(16384);
+  _kernel_pde = .;
+  . = . + 16384;
+
+  .bss : ALIGN(4096)
+  {
+    _bss_start = .;
+    *(.bss .bss.*)
+    *(COMMON)
+    _bss_end = .;
+  }
+
+  . = ALIGN(4096);
+  _end = .;
+
+  /DISCARD/ :
+  {
+    *(.ARM.attributes)
+    *(.comment)
+  }
 }
