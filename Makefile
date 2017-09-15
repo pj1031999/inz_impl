@@ -37,6 +37,7 @@ WARNFLAGS   += -Werror
 ASFLAGS     := $(INCLUDES) $(DEPENDFLAGS) -D__ASSEMBLY__
 CFLAGS      := $(INCLUDES) $(DEPENDFLAGS) $(BASEFLAGS) $(WARNFLAGS)
 CFLAGS      += -std=c11
+LDFLAGS	    := -static -nostdlib 
 
 QEMU        := qemu-system-arm
 QEMUFLAGS   := -M raspi2 -serial stdio 
@@ -47,7 +48,7 @@ all: kernel.img
 include $(wildcard src/*.d)
  
 kernel.elf: $(OBJS) link-arm-eabi.ld
-	$(CC) $(OBJS) -static -nostdlib -Wl,-Map=kernel.map -Tlink-arm-eabi.ld -o $@
+	$(CC) $(LDFLAGS) $(OBJS) -lgcc -Wl,-Map=kernel.map -Tlink-arm-eabi.ld -o $@
  
 kernel.img: kernel.elf
 	$(OBJCOPY) kernel.elf -O binary kernel.img

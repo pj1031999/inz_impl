@@ -1,5 +1,8 @@
-#include <mmio.h>
 #include <stdint.h>
+
+#include <cdefs.h>
+#include <mmio.h>
+#include <gfx.h>
 
 enum {
   GPU_READ = (MMIO_BASE + 0xB880),
@@ -23,14 +26,14 @@ typedef struct {
   uint32_t buffer_size;
 } GFX_INIT_REQUEST __attribute__((aligned(16)));
 
-void send_mail(uint32_t message, uint32_t box) {
+static __noinline void send_mail(uint32_t message, uint32_t box) {
   while (mmio_read(GPU_STATUS) & 0x80000000)
     ;
 
   mmio_write(GPU_WRITE, (message & 0xFFFFFFF0) | (box & 0xF));
 }
 
-uint32_t recv_mail(uint32_t box) {
+static __noinline uint32_t recv_mail(uint32_t box) {
   uint32_t value;
   box &= 0xF;
   while (1) {
@@ -45,7 +48,7 @@ uint32_t recv_mail(uint32_t box) {
   return value & ~0xF;
 }
 
-GFX_INIT_REQUEST init_request;
+static GFX_INIT_REQUEST init_request;
 
 void *set_gfx_mode(uint32_t w, uint32_t h, uint32_t bpp) {
   init_request.width = init_request.buffer_width = w;
