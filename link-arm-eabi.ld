@@ -59,7 +59,7 @@ SECTIONS
 
   /DISCARD/ :
   {
-    *(.ARM.attributes)
+    *(.ARM.*)
     *(.comment)
   }
 }
