@@ -55,7 +55,7 @@ SECTIONS
   }
 
   . = ALIGN(4096);
-  _end = .;
+  _brk_limit = .;
 
   /DISCARD/ :
   {
