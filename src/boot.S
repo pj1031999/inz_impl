@@ -50,6 +50,11 @@ _start:
 	mcr	p15, 0, r4, c1, c0, 0	@ write Control Register
 	mcr	p15, 0, r6, c7, c5, 4	@ Instruction Synchronization Barrier
 
+	@ Configure exception base vector.
+	ldr	r4, =_exc_vector
+	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
+	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
+
 	@ Setup the stack.
 	ldr	sp, =_stack_top
  

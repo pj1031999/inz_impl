@@ -23,6 +23,7 @@ SECTIONS
 
   .text _kernel + _init_end : AT(_init_end) ALIGN(4096)
   {
+    *(.evec);
     _text_start = .;
     *(.text .text.*)
     _text_end = .;
@@ -42,12 +43,11 @@ SECTIONS
     _data_end = .;
   } : data
 
-  . = ALIGN(16384);
-  _kernel_pde = .;
-  . = . + 16384;
-
-  .bss : ALIGN(4096)
+  .bss : ALIGN(16384)
   {
+    _kernel_pde = .;
+    . = . + 16384;
+
     _bss_start = .;
     *(.bss .bss.*)
     *(COMMON)
