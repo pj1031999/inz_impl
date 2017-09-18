@@ -1,16 +1,19 @@
 #include <stdint.h>
 
 #include <cdefs.h>
+#include <bcm2836reg.h>
 #include <mmio.h>
 #include <gfx.h>
 
 enum {
-  GPU_READ = (MMIO_BASE + 0xB880),
-  GPU_POLL = (MMIO_BASE + 0xB890),
-  GPU_SENDER = (MMIO_BASE + 0xB894),
-  GPU_STATUS = (MMIO_BASE + 0xB898),
-  GPU_CONFIG = (MMIO_BASE + 0xB89C),
-  GPU_WRITE = (MMIO_BASE + 0xB8A0),
+  ARMMBOX_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE),
+
+  GPU_READ   = (ARMMBOX_BASE + 0x00),
+  GPU_POLL   = (ARMMBOX_BASE + 0x10),
+  GPU_SENDER = (ARMMBOX_BASE + 0x14),
+  GPU_STATUS = (ARMMBOX_BASE + 0x18),
+  GPU_CONFIG = (ARMMBOX_BASE + 0x1C),
+  GPU_WRITE  = (ARMMBOX_BASE + 0x20),
 };
 
 typedef struct {

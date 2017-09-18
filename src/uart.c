@@ -4,13 +4,14 @@
  * Chapter 13: UART
  */
 
-#include <mmio.h>
 #include <stdint.h>
+#include <bcm2836reg.h>
+#include <mmio.h>
 #include <uart.h>
 
 enum {
   // The base address for UART.
-  UART0_BASE = (GPIO_BASE + 0x1000),
+  UART0_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE),
 
   // The offsets for reach register for the UART.
   UART0_DR = (UART0_BASE + 0x00),
@@ -31,6 +32,13 @@ enum {
   UART0_ITIP = (UART0_BASE + 0x84),
   UART0_ITOP = (UART0_BASE + 0x88),
   UART0_TDR = (UART0_BASE + 0x8C),
+  
+  // The GPIO registers base address.
+  GPIO_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE),
+  // Controls actuation of pull up/down to ALL GPIO pins.
+  GPPUD = (GPIO_BASE + 0x94),
+  // Controls actuation of pull up/down for specific GPIO pin.
+  GPPUDCLK0 = (GPIO_BASE + 0x98),
 };
 
 /*
