@@ -21,8 +21,8 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
   uint32_t height = 768;
   uint32_t *framebuffer = set_gfx_mode(width, height, 32);
 
-  /* Disable mapping for lower 3GiB */
-  for (int i = 0; i < 3072; i++)
+  /* Disable mapping for lower 2GiB */
+  for (int i = 0; i < 2048; i++)
     _kernel_pde[i] = 0;
   /* TODO: TLB flush needed here */
 

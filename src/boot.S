@@ -15,22 +15,22 @@
 
 _start:
 	@ Setup initial page table address.
-	ldr	r4, =_kernel_pde - 0xc0000000
+	ldr	r4, =_kernel_pde - 0x80000000
 	mcr	p15, 0, r4, c2, c0, 0	@ Translation Table Base Register 0
 
-	@ 1:1 mapping for first 3GiB
+	@ 1:1 mapping for first 2GiB
 	mov	r5, #0x0140E		@ TEX=1, APX=0, AP=1, C=1, B=1, section
-	mov	r6, #3072
+	mov	r6, #2048
 1:	str	r5, [r4], #4
-	adds	r5, r5, #1024*1024	@ map next 1MiB section
+	add	r5, r5, #1024*1024	@ map next 1MiB section
 	subs	r6, r6, #1
 	bhi	1b
 
-	@ Remap first 1GiB to 0xC000_0000
+	@ Remap first 2GiB to 0x8000_0000
 	movt	r5, 0
-	mov	r6, #1024
+	mov	r6, #2048
 1:	str	r5, [r4], #4
-	adds	r5, r5, #1024*1024	@ map next 1MiB section
+	add	r5, r5, #1024*1024	@ map next 1MiB section
 	subs	r6, r6, #1
 	bhi	1b
 
@@ -44,13 +44,12 @@ _start:
 
 	@ Enable MMU in ARMv6 mode.
 	mrc	p15, 0, r4, c1, c0, 0	@ read Control Register
-	mov	r6, #0
 	movw	r5, #0x0001		@ Enable MMU
 	movt	r5, #0x0080		@ Subpage AP disable
 	orr	r4, r4, r5
-	mcr	p15, 0, r6, c7, c10, 4	@ Data Synchronization Barrier
+	dsb
 	mcr	p15, 0, r4, c1, c0, 0	@ write Control Register
-	mcr	p15, 0, r6, c7, c5, 4	@ Instruction Synchronization Barrier
+	isb
 
 	@ Configure exception base vector.
 	ldr	r4, =_exc_vector

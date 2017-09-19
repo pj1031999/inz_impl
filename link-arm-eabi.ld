@@ -9,7 +9,7 @@ PHDRS
 }
 SECTIONS
 {
-  _kernel = 0xC0000000;
+  _kernel = 0x80000000;
   _stack_size = 4096;
 
   .init 0x8000 : AT(0x8000) ALIGN(4096)

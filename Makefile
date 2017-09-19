@@ -18,7 +18,7 @@ OBJS        += $(patsubst %.c,%.o,$(SOURCES_C))
 # Build flags
 DEPENDFLAGS := -MD -MP
 INCLUDES    := -I src/include
-OPTFLAGS    := -O2 -mcpu=arm1176jzf-s
+OPTFLAGS    := -O2 -mcpu=cortex-a7
 BASEFLAGS   := -ffreestanding -fno-builtin -fomit-frame-pointer
 WARNFLAGS   := -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings
 WARNFLAGS   += -Wredundant-decls -Winline
