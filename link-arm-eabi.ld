@@ -10,9 +10,7 @@ PHDRS
 SECTIONS
 {
   _kernel = 0xC0000000;
-
-  _stack_bottom = _kernel;
-  _stack_top = _kernel + 0x8000;
+  _stack_size = 4096;
 
   .init 0x8000 : AT(0x8000) ALIGN(4096)
   {
@@ -47,6 +45,15 @@ SECTIONS
   {
     _kernel_pde = .;
     . = . + 16384;
+
+    _irq_stack = .;
+    . = . + 4096;
+
+    _svc_stack = .;
+    . = . + 4096;
+
+    _abt_stack = .;
+    . = . + 4096;
 
     _bss_start = .;
     *(.bss .bss.*)

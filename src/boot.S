@@ -1,4 +1,6 @@
 @ boot.S - assembly startup code
+
+#include "armreg.h"
  
 .section ".init"
  
@@ -55,8 +57,26 @@ _start:
 	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
 	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
 
-	@ Setup the stack.
-	ldr	sp, =_stack_top
+	@ Initialially we're running in supervisor mode.
+	mrs	r4, spsr
+	bic	r4, r4, #PSR_MODE
+	@ Setup the stack for fast interrupt mode.
+	orr	r5, r4, #PSR_FIQ32_MODE
+	msr	cpsr_c, r5
+	ldr	sp, =_irq_stack+4096
+	@ Setup the stack for interrupt mode.
+	orr	r5, r4, #PSR_IRQ32_MODE
+	msr	cpsr_c, r5
+	ldr	sp, =_irq_stack+4096
+	@ Setup the stack for abort mode.
+	orr	r5, r4, #PSR_ABT32_MODE
+	msr	cpsr_c, r5
+	ldr	sp, =_abt_stack+4096
+	@ Setup the stack for supervisor mode.
+	orr	r5, r4, #PSR_SVC32_MODE
+	msr	cpsr_c, r5
+	ldr	sp, =_svc_stack+4096
+	@ Continue in supervisor mode.
  
 	@ Clear out bss.
 	ldr	r4, =_bss_start

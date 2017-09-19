@@ -562,6 +562,8 @@
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
 #ifndef __ASSEMBLER__
+#define NBBY 8
+
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
