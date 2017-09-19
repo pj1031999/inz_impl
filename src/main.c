@@ -7,6 +7,7 @@
 #include <klibc.h>
 #include <uart.h>
 #include <gfx.h>
+#include <clock.h>
 
 extern uint32_t _kernel_pde[4096];
 
@@ -41,6 +42,8 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
       *pos = (h >> 2 << 8) | (w >> 2);
     }
   }
+
+  clock_init();
 
   uart_puts("Type letter 'q' to halt machine!\n");
   while (uart_getc() != 'q')
