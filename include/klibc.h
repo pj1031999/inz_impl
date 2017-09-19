@@ -21,9 +21,10 @@ void __assert(const char *expr, const char *file, unsigned line);
 
 typedef long ssize_t;
 
-void kprintf(const char *fmt, ...);
+void printf(const char *fmt, ...);
 void bzero(void *b, size_t length);
 void *memchr(const void *s, int c, size_t n);
 size_t strlen(const char *s);
+void *sbrk(size_t size);
 
 #endif // #ifndef KLIBC_H

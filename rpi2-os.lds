@@ -1,4 +1,3 @@
-/* link-arm-eabi.ld - linker script for arm eabi */
 ENTRY(_start)
 PHDRS
 {

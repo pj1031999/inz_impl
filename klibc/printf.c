@@ -118,7 +118,7 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
 /*
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
-int kvprintf(const char *fmt, va_list ap) {
+int vprintf(const char *fmt, va_list ap) {
   int ch;          /* character from fmt */
   int n;           /* handy integer (short term usage) */
   char *cp = NULL; /* handy char pointer (short term usage) */
@@ -483,10 +483,10 @@ done:
   return ret;
 }
 
-void kprintf(const char *fmt, ...) {
+void printf(const char *fmt, ...) {
   va_list ap;
 
   va_start(ap, fmt);
-  kvprintf(fmt, ap);
+  vprintf(fmt, ap);
   va_end(ap);
 }

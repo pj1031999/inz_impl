@@ -2,5 +2,6 @@ kernel.img
 kernel.elf
 kernel.map
 *.o
+*.a
 *.d
 *~

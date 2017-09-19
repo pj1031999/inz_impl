@@ -39,5 +39,5 @@ void clock_irq(void) {
 
   ticks++;
 
-  kprintf("tick %d!\n", ticks);
+  printf("tick %d!\n", ticks);
 }

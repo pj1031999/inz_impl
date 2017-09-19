@@ -30,12 +30,12 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
   {
     uint32_t cr;
     __asm__ volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r" (cr));
-    kprintf("Config Register: %08x\n", cr);
+    printf("Config Register: %08x\n", cr);
   }
 
   uint32_t *pos = framebuffer;
 
-  kprintf("Framebuffer address: %p\n", framebuffer);
+  printf("Framebuffer address: %p\n", framebuffer);
 
   for (int h = 0; h < height; h++) {
     for (int w = 0; w < width; w++, pos++) {
