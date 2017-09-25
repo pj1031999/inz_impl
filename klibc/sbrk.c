@@ -9,13 +9,13 @@ extern uint8_t _brk_limit[];
 static struct {
   uint8_t *ptr;
   uint8_t *end;
-} sbrk = {_bss_end, _brk_limit};
+} state = {_bss_end, _brk_limit};
 
 void *sbrk(size_t size) {
-  uint8_t *ptr = sbrk.ptr;
+  uint8_t *ptr = state.ptr;
   size = roundup(size, sizeof(uint64_t));
-  assert(ptr + size <= sbrk.end);
-  sbrk.ptr += size;
+  assert(ptr + size <= state.end);
+  state.ptr += size;
   bzero(ptr, size);
   return ptr;
 }
