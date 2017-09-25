@@ -8,8 +8,9 @@
 #include <uart.h>
 #include <gfx.h>
 #include <clock.h>
+#include <armmmu.h>
 
-extern uint32_t _kernel_pde[4096];
+extern pde_t _kernel_pde[4096];
 
 void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
                  uint32_t atags __unused)
@@ -24,7 +25,7 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
 
   /* Disable mapping for lower 2GiB */
   for (int i = 0; i < 2048; i++)
-    _kernel_pde[i] = 0;
+    _kernel_pde[i].raw = PDE_TYPE_FAULT;
   /* TODO: TLB flush needed here */
 
   {
