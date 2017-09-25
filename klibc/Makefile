@@ -2,11 +2,11 @@ TOPDIR := $(realpath ..)
 
 SOURCES_C := \
 	assert.c \
-	bzero.c \
-	memchr.c \
-	printf.c \
 	sbrk.c \
-	strlen.c 
+	stdio/printf.c \
+	string/bzero.c \
+	string/memchr.c \
+	string/strlen.c
 
 build: klibc.a
 
