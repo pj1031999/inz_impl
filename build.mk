@@ -11,7 +11,7 @@ OBJDUMP = $(TARGET)-objdump
 NM   	= $(TARGET)-nm
 
 CPPFLAGS    = -I $(TOPDIR)/include
-OPTFLAGS    = -O2 -fomit-frame-pointer
+OPTFLAGS    = -O2 -fomit-frame-pointer -mcpu=$(CPU) 
 WARNFLAGS   = -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings
 WARNFLAGS   += -Wredundant-decls -Winline
 WARNFLAGS   += -Wno-attributes -Wno-deprecated-declarations
@@ -25,10 +25,10 @@ WARNFLAGS   += -Wno-pragmas -Wno-unused-but-set-parameter
 WARNFLAGS   += -Wno-unused-but-set-variable -Wno-unused-result
 WARNFLAGS   += -Wwrite-strings -Wdisabled-optimization -Wpointer-arith
 WARNFLAGS   += -Werror
+KERNFLAGS   = -ffreestanding -fno-builtin 
 
 ASFLAGS     = -mcpu=$(CPU) $(CPPFLAGS)
-CFLAGS      = -std=c11 -mcpu=$(CPU) -ffreestanding -fno-builtin $(CPPFLAGS) 
-CFLAGS      += $(OPTFLAGS) $(WARNFLAGS)
+CFLAGS      = -std=c11 $(CPPFLAGS) $(OPTFLAGS) $(KERNFLAGS) $(WARNFLAGS)
 
 RM	    = rm -f -v
 
@@ -56,16 +56,13 @@ SOURCES = $(SOURCES_C) $(SOURCES_ASM)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 DEPFILES = $(SOURCES_C:%.c=.%.d) $(SOURCES_ASM:%.S=.%.d)
 
-# Automatically generate dependecy files
-define emit_dep_rule
-CFILE = $(1)
-DFILE = .$(patsubst %.S,%.d,$(patsubst %.c,%.d,$(1)))
-$$(DFILE): $$(CFILE)
-	@echo "[DEP] $$<"
-	$(CC) $(CFLAGS) $(CPPFLAGS) -MM -MG $$^ -o $$@
-endef
+.%.d: %.S
+	@echo "[DEP] $<"
+	$(CC) $(CPPFLAGS) -MM -MG -o $@ $<
 
-$(foreach file,$(SOURCES) null,$(eval $(call emit_dep_rule,$(file))))
+.%.d: %.c
+	@echo "[DEP] $<"
+	$(CC) $(CFLAGS) $(CPPFLAGS) -MM -MG -o $@ $<
 
 ifeq ($(words $(findstring $(MAKECMDGOALS), clean)), 0)
   -include $(DEPFILES)
@@ -81,6 +78,6 @@ clean-%:
 clean: extra-clean
 	$(RM) *.o .*.d *~
 
-.PHONY: build clean extra-clean
+.PHONY: build clean extra-clean build-% clean-%
 
 # vim: ts=8 sw=8 noet:

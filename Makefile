@@ -28,9 +28,6 @@ debug: kernel.elf
 	$(QEMU) $(QEMUFLAGS) -gdb tcp::9000 -S -kernel kernel.elf
  
 extra-clean: clean-kernel clean-klibc
-	$(RM) kernel.elf kernel.img
+	$(RM) kernel.elf kernel.img kernel.map
  
-dist-clean: clean
-	$(RM) *.d
- 
-# vim: ts=8 sw=8 noet
+# vim: ts=8 sw=8 noet:

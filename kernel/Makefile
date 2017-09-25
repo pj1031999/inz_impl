@@ -11,7 +11,7 @@ SOURCES_ASM := \
 	boot.S \
 	evec.S
 
-build: $(DEPFILES) kernel.a
+build: kernel.a
 
 include $(TOPDIR)/build.mk
 

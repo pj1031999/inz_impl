@@ -8,7 +8,7 @@ SOURCES_C := \
 	sbrk.c \
 	strlen.c 
 
-build: $(DEPFILES) klibc.a
+build: klibc.a
 
 include $(TOPDIR)/build.mk
 
