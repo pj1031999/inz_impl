@@ -833,6 +833,8 @@
 #if !defined(__ASSEMBLER__)
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <cdefs.h>
 
 static inline bool
 arm_cond_ok_p(uint32_t insn, uint32_t psr)
