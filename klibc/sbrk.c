@@ -1,5 +1,4 @@
 #include <klibc.h>
-#include <kmem.h>
 
 /* The end of the kernel's .bss section. Provided by the linker. */
 extern uint8_t _bss_end[];
