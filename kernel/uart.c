@@ -1,37 +1,30 @@
 /* uart.c - UART initialization & communication */
-/* Reference material:
- * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
- * Chapter 13: UART
- */
+/* PrimeCell® UART (PL011) */
 
 #include <stdint.h>
 #include <bcm2836reg.h>
 #include <mmio.h>
+#include <plcomreg.h>
 #include <uart.h>
 
 enum {
-  // The base address for UART.
   UART0_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE),
 
-  // The offsets for reach register for the UART.
-  UART0_DR = (UART0_BASE + 0x00),
-  UART0_RSRECR = (UART0_BASE + 0x04),
-  UART0_FR = (UART0_BASE + 0x18),
-  UART0_ILPR = (UART0_BASE + 0x20),
-  UART0_IBRD = (UART0_BASE + 0x24),
-  UART0_FBRD = (UART0_BASE + 0x28),
-  UART0_LCRH = (UART0_BASE + 0x2C),
-  UART0_CR = (UART0_BASE + 0x30),
-  UART0_IFLS = (UART0_BASE + 0x34),
-  UART0_IMSC = (UART0_BASE + 0x38),
-  UART0_RIS = (UART0_BASE + 0x3C),
-  UART0_MIS = (UART0_BASE + 0x40),
-  UART0_ICR = (UART0_BASE + 0x44),
-  UART0_DMACR = (UART0_BASE + 0x48),
-  UART0_ITCR = (UART0_BASE + 0x80),
-  UART0_ITIP = (UART0_BASE + 0x84),
-  UART0_ITOP = (UART0_BASE + 0x88),
-  UART0_TDR = (UART0_BASE + 0x8C),
+  UART0_DR = (UART0_BASE + PL01XCOM_DR),
+  UART0_RSR = (UART0_BASE + PL01XCOM_RSR),
+  UART0_ECR = (UART0_BASE + PL01XCOM_ECR),
+  UART0_FR = (UART0_BASE + PL01XCOM_FR),
+  UART0_ILPR = (UART0_BASE + PL01XCOM_ILPR),
+  UART0_IBRD = (UART0_BASE + PL011COM_IBRD),
+  UART0_FBRD = (UART0_BASE + PL011COM_FBRD),
+  UART0_LCRH = (UART0_BASE + PL011COM_LCRH),
+  UART0_CR = (UART0_BASE + PL011COM_CR),
+  UART0_IFLS = (UART0_BASE + PL011COM_IFLS),
+  UART0_IMSC = (UART0_BASE + PL011COM_IMSC),
+  UART0_RIS = (UART0_BASE + PL011COM_RIS),
+  UART0_MIS = (UART0_BASE + PL011COM_MIS),
+  UART0_ICR = (UART0_BASE + PL011COM_ICR),
+  UART0_DMACR = (UART0_BASE + PL011COM_DMACR),
   
   // The GPIO registers base address.
   GPIO_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE),
@@ -58,11 +51,11 @@ static void delay(int32_t count) {
  */
 void uart_init() {
   // Disable UART0.
-  mmio_write(UART0_CR, 0x00000000);
+  mmio_write(UART0_CR, 0);
   // Setup the GPIO pin 14 && 15.
 
   // Disable pull up/down for all GPIO pins & delay for 150 cycles.
-  mmio_write(GPPUD, 0x00000000);
+  mmio_write(GPPUD, 0);
   delay(150);
 
   // Disable pull up/down for pin 14,15 & delay for 150 cycles.
@@ -70,10 +63,10 @@ void uart_init() {
   delay(150);
 
   // Write 0 to GPPUDCLK0 to make it take effect.
-  mmio_write(GPPUDCLK0, 0x00000000);
+  mmio_write(GPPUDCLK0, 0);
 
   // Clear pending interrupts.
-  mmio_write(UART0_ICR, 0x7FF);
+  mmio_write(UART0_ICR, PL011_INT_ALLMASK);
 
   // Set integer & fractional part of baud rate.
   // Divider = UART_CLOCK/(16 * Baud)
@@ -85,15 +78,14 @@ void uart_init() {
   mmio_write(UART0_IBRD, 1);
   mmio_write(UART0_FBRD, 40);
 
-  // Enable FIFO & 8 bit data transmissio (1 stop bit, no parity).
-  mmio_write(UART0_LCRH, (1 << 4) | (1 << 5) | (1 << 6));
+  // Enable FIFO & 8 bit data transmission (1 stop bit, no parity).
+  mmio_write(UART0_LCRH, PL01X_LCR_FEN | PL01X_LCR_8BITS);
 
   // Mask all interrupts.
-  mmio_write(UART0_IMSC, (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) |
-                             (1 << 8) | (1 << 9) | (1 << 10));
+  mmio_write(UART0_IMSC, PL011_INT_ALLMASK);
 
   // Enable UART0, receive & transfer part of UART.
-  mmio_write(UART0_CR, (1 << 0) | (1 << 8) | (1 << 9));
+  mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
 }
 
 /*
@@ -105,7 +97,7 @@ void uart_putc(uint8_t byte) {
     uart_putc('\r');
 
   // wait for UART to become ready to transmit
-  while (mmio_read(UART0_FR) & (1 << 5))
+  while (mmio_read(UART0_FR) & PL01X_FR_TXFF)
     ;
   mmio_write(UART0_DR, byte);
 }
@@ -128,7 +120,7 @@ void uart_puts(const char *str) {
  */
 uint8_t uart_getc() {
   // wait for UART to have recieved something
-  while (mmio_read(UART0_FR) & (1 << 4))
+  while (mmio_read(UART0_FR) & PL01X_FR_RXFE)
     ;
   return mmio_read(UART0_DR);
 }
