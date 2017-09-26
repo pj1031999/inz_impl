@@ -28,7 +28,7 @@ WARNFLAGS   += -Werror
 KERNFLAGS   = -ffreestanding -fno-builtin 
 
 ASFLAGS     = -mcpu=$(CPU) $(CPPFLAGS)
-CFLAGS      = -std=c11 $(CPPFLAGS) $(OPTFLAGS) $(KERNFLAGS) $(WARNFLAGS)
+CFLAGS      = -std=gnu11 $(CPPFLAGS) $(OPTFLAGS) $(KERNFLAGS) $(WARNFLAGS)
 
 RM	    = rm -f -v
 

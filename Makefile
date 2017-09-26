@@ -21,10 +21,10 @@ kernel.img: kernel.elf
 	@echo "[OBJCOPY] $< -> $@"
 	@$(OBJCOPY) kernel.elf -O binary kernel.img
 
-run: kernel.elf
+run: build
 	$(QEMU) $(QEMUFLAGS) -kernel kernel.elf
 
-debug: kernel.elf
+debug: build
 	$(QEMU) $(QEMUFLAGS) -gdb tcp::9000 -S -kernel kernel.elf
  
 extra-clean: clean-kernel clean-klibc

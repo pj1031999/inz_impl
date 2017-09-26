@@ -3,16 +3,10 @@
 #include <klibc.h>
 #include <arm.h>
 #include <armreg.h>
-#include <mmio.h>
-#include <bcm2836reg.h>
+#include <bcm2836.h>
 
 #define CLK_FREQ (1000 * 1000 * 1000) 
 #define CLK_PERIOD (1000 * 1000 * 20)
-
-#define TIMER_IRQ_CTRL_N(x) \
-  (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_TIMER_IRQ_CONTROLN(x))
-#define INTC_IRQPENDING_N(x) \
-  (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_INTC_IRQPENDINGN(x))
 
 void clock_init(void) {
   armreg_cnt_frq_write(CLK_FREQ);
@@ -21,16 +15,16 @@ void clock_init(void) {
   arm_isb();
 
   /* Enable CP0 physical timer interrupt. */
-  mmio_write(TIMER_IRQ_CTRL_N(0), __BIT(BCM2836_INT_CNTPSIRQ));
+  bcm2836_local_timer_irq_enable(0, BCM2836_INT_CNTPSIRQ);
   /* Enable interrupts. */
   arm_set_cpsr_c(I32_bit, 0);
 }
 
 static uint32_t ticks = 0;
 
-void clock_irq(void) {
-  if (!mmio_read(INTC_IRQPENDING_N(0)))
-    return;
+bool clock_irq(void) {
+  if (!bcm2836_local_irq_pending_p(0, BCM2836_INT_CNTPSIRQ))
+    return false;
 
   uint32_t val = armreg_cntp_tval_read();
   armreg_cntp_tval_write(val + CLK_PERIOD);
@@ -40,4 +34,5 @@ void clock_irq(void) {
   ticks++;
 
   printf("tick %d!\n", ticks);
+  return true;
 }

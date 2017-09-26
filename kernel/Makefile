@@ -1,6 +1,7 @@
 TOPDIR := $(realpath ..)
 
 SOURCES_C := \
+	bcm2836.c \
 	clock.c \
 	exc.c \
 	gfx.c \
