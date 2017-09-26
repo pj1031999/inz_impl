@@ -3,7 +3,7 @@
 #include <klibc.h>
 #include <arm.h>
 #include <armreg.h>
-#include <bcm2836.h>
+#include <irq.h>
 
 #define CLK_FREQ (1000 * 1000 * 1000) 
 #define CLK_PERIOD (1000 * 1000 * 20)

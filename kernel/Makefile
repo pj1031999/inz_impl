@@ -1,9 +1,9 @@
 TOPDIR := $(realpath ..)
 
 SOURCES_C := \
-	bcm2836.c \
 	clock.c \
 	exc.c \
+	irq.c \
 	gfx.c \
 	main.c \
 	uart.c
