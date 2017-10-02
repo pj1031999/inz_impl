@@ -6,6 +6,7 @@ SOURCES_C := \
 	exc.c \
 	irq.c \
 	gfx.c \
+	gfx_cons.c \
 	main.c \
 	uart.c
 

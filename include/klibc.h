@@ -26,6 +26,7 @@ int getchar(void);
 void puts(const char *str);
 void printf(const char *fmt, ...);
 void bzero(void *b, size_t length);
+void *memmove(void *s1, const void *s2, size_t n);
 void *memchr(const void *s, int c, size_t n);
 size_t strlen(const char *s);
 void *sbrk(size_t size);

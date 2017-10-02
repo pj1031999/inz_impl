@@ -1,5 +1,4 @@
 TARGET	= arm-none-eabi
-CPU	= cortex-a7
 
 CC	= $(TARGET)-gcc -g
 AR	= $(TARGET)-ar
@@ -11,7 +10,8 @@ OBJDUMP = $(TARGET)-objdump
 NM   	= $(TARGET)-nm
 
 CPPFLAGS    = -I $(TOPDIR)/include
-OPTFLAGS    = -O2 -fomit-frame-pointer -mcpu=$(CPU) 
+CPUFLAGS    = -mcpu=cortex-a7 -mfpu=vfpv4-d16
+OPTFLAGS    = -O2 -fomit-frame-pointer
 WARNFLAGS   = -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings
 WARNFLAGS   += -Wredundant-decls -Winline
 WARNFLAGS   += -Wno-attributes -Wno-deprecated-declarations
@@ -27,8 +27,8 @@ WARNFLAGS   += -Wwrite-strings -Wdisabled-optimization -Wpointer-arith
 WARNFLAGS   += -Werror
 KERNFLAGS   = -ffreestanding -fno-builtin 
 
-ASFLAGS     = -mcpu=$(CPU) $(CPPFLAGS)
-CFLAGS      = -std=gnu11 $(CPPFLAGS) $(OPTFLAGS) $(KERNFLAGS) $(WARNFLAGS)
+ASFLAGS     = $(CPUFLAGS) $(CPPFLAGS)
+CFLAGS      = -std=gnu11 $(CPPFLAGS) $(CPUFLAGS) $(OPTFLAGS) $(KERNFLAGS) $(WARNFLAGS)
 
 RM	    = rm -f -v
 
@@ -76,7 +76,7 @@ clean-%:
 	$(MAKE) -C $(@:clean-%=%) clean
 
 clean: extra-clean
-	$(RM) *.o .*.d *~
+	$(RM) $(OBJECTS) $(DEPFILES) *~
 
 .PHONY: build clean extra-clean build-% clean-%
 

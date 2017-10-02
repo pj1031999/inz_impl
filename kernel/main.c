@@ -4,42 +4,48 @@
 #include <stdnoreturn.h>
 
 #include <cdefs.h>
+#include <bcm2836reg.h>
 #include <klibc.h>
 #include <cons.h>
 #include <gfx.h>
+#include <gfx_cons.h>
 #include <clock.h>
 #include <armmmu.h>
 
 extern pde_t _kernel_pde[4096];
 
-extern cons_t uart0_cons;
+static cons_t *gfx_cons[BCM2836_NCPUS];
+
+static void cons_bootstrap(void) {
+  window_t *screen = gfx_set_videomode(1280, 800);
+
+  unsigned w2 = screen->width / 2;
+  unsigned h2 = screen->height / 2;
+
+  for (int cpu = 0; cpu < BCM2836_NCPUS; cpu++) {
+    window_t win;
+    gfx_window(screen, &win, (cpu & 1) ? w2 : 0, (cpu & 2) ? h2 : 0, w2, h2);
+    gfx_set_bg_col(&win, (cpu ^ (cpu >> 1)) & 1 ? color(16,16,16) : color(32,32,32));
+    gfx_rect_draw(&win, 0, 0, w2, h2, win.bg_col);
+    gfx_cons[cpu] = make_gfx_cons(&win, NULL);
+  }
+}
 
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
 
-  /* Apparently graphics has to be setup before lower memory is detached. */
-  uint32_t width = 1366;
-  uint32_t height = 768;
-  uint32_t *framebuffer = set_gfx_mode(width, height, 32);
+  cons_bootstrap();
+  cons_init(gfx_cons[0]);
 
   /* Disable mapping for lower 2GiB */
   for (int i = 0; i < 2048; i++)
     _kernel_pde[i].raw = PDE_TYPE_FAULT;
   /* TODO: TLB flush needed here */
 
-  cons_init(&uart0_cons);
-
-  uint32_t *pos = framebuffer;
   puts("Hello world!");
 
-  printf("Framebuffer address: %p\n", framebuffer);
 
-  for (int h = 0; h < height; h++) {
-    for (int w = 0; w < width; w++, pos++) {
-      *pos = (h >> 2 << 8) | (w >> 2);
-    }
-  }
   printf("Config Register: %08x\n", armreg_sctlr_read());
 
   clock_init();

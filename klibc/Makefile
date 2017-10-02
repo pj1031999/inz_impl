@@ -9,6 +9,7 @@ SOURCES_C := \
 	stdio/printf.c \
 	string/bzero.c \
 	string/memchr.c \
+	string/memmove.c \
 	string/strlen.c
 
 build: klibc.a
