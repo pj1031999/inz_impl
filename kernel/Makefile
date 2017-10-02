@@ -8,7 +8,9 @@ SOURCES_C := \
 	gfx.c \
 	gfx_cons.c \
 	main.c \
-	uart.c
+	pcpu.c \
+	smp.c \
+	uart.c \
 
 SOURCES_ASM := \
 	boot.S \

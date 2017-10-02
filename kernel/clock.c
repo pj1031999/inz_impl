@@ -5,12 +5,11 @@
 #include <armreg.h>
 #include <irq.h>
 
-#define CLK_FREQ (1000 * 1000 * 1000) 
-#define CLK_PERIOD (1000 * 1000 * 20)
+#define CLK_FREQ 19200000
 
 void clock_init(void) {
   armreg_cnt_frq_write(CLK_FREQ);
-  armreg_cntp_tval_write(CLK_PERIOD);
+  armreg_cntp_tval_write(CLK_FREQ);
   armreg_cntp_ctl_write(ARM_CNTCTL_ENABLE);
   arm_isb();
 
@@ -27,7 +26,7 @@ bool clock_irq(void) {
     return false;
 
   uint32_t val = armreg_cntp_tval_read();
-  armreg_cntp_tval_write(val + CLK_PERIOD);
+  armreg_cntp_tval_write(val + CLK_FREQ);
   armreg_cntp_ctl_write(ARM_CNTCTL_ENABLE);
   arm_isb();
 

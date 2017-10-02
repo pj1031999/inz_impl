@@ -4,7 +4,7 @@ LDFLAGS   = -nostdlib -nostartfiles -nodefaultlibs
 LDSCRIPT  = rpi2-os.lds
 
 QEMU	  = qemu-system-arm
-QEMUFLAGS = -M raspi2 -serial stdio 
+QEMUFLAGS = -smp 4 -M raspi2 -serial stdio -gdb tcp::9000 
 
 # Files required to link kernel image
 KRT = kernel/kernel.a klibc/klibc.a font/font.a
@@ -25,7 +25,7 @@ run: build
 	$(QEMU) $(QEMUFLAGS) -kernel kernel.elf
 
 debug: build
-	$(QEMU) $(QEMUFLAGS) -gdb tcp::9000 -S -kernel kernel.elf
+	$(QEMU) $(QEMUFLAGS) -S -kernel kernel.elf
  
 extra-clean: clean-kernel clean-klibc
 	$(RM) kernel.elf kernel.img kernel.map

@@ -1,20 +1,22 @@
 #include <cons.h>
-
-static cons_t *console;
+#include <pcpu.h>
 
 void cons_init(cons_t *cn) {
-  console = cn;
-  console->init(console->dev);
+  pcpu()->cons = cn;
+  cn->init(cn->dev);
 }
 
 void cons_putc(int c) {
-  console->putc(console->dev, c);
+  cons_t *cn = pcpu()->cons;
+  cn->putc(cn->dev, c);
 }
 
 int cons_getc() {
-  return console->getc(console->dev);
+  cons_t *cn = pcpu()->cons;
+  return cn->getc(cn->dev);
 }
 
 void cons_flush() {
-  console->flush(console->dev);
+  cons_t *cn = pcpu()->cons;
+  cn->flush(cn->dev);
 }

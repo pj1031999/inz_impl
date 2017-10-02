@@ -11,40 +11,44 @@
 #include <gfx_cons.h>
 #include <clock.h>
 #include <armmmu.h>
+#include <armreg.h>
+#include <pcpu.h>
+#include <smp.h>
 
 extern pde_t _kernel_pde[4096];
 
-static cons_t *gfx_cons[BCM2836_NCPUS];
+static window_t *screen;
 
-static void cons_bootstrap(void) {
-  window_t *screen = gfx_set_videomode(1280, 800);
-
+void cons_bootstrap(unsigned cpu) {
   unsigned w2 = screen->width / 2;
   unsigned h2 = screen->height / 2;
 
-  for (int cpu = 0; cpu < BCM2836_NCPUS; cpu++) {
-    window_t win;
-    gfx_window(screen, &win, (cpu & 1) ? w2 : 0, (cpu & 2) ? h2 : 0, w2, h2);
-    gfx_set_bg_col(&win, (cpu ^ (cpu >> 1)) & 1 ? color(16,16,16) : color(32,32,32));
-    gfx_rect_draw(&win, 0, 0, w2, h2, win.bg_col);
-    gfx_cons[cpu] = make_gfx_cons(&win, NULL);
-  }
+  window_t win;
+  gfx_window(screen, &win, (cpu & 1) ? w2 : 0, (cpu & 2) ? h2 : 0, w2, h2);
+  gfx_set_bg_col(&win, (cpu ^ (cpu >> 1)) & 1 ? color(16,16,16) : color(32,32,32));
+  gfx_rect_draw(&win, 0, 0, w2, h2, win.bg_col);
+  cons_init(make_gfx_cons(&win, NULL));
+}
+
+void va_bootstrap(void) {
+  /* Disable mapping for lower 2GiB */
+  for (int i = 0; i < 2048; i++)
+    _kernel_pde[i].raw = PDE_TYPE_FAULT;
+  /* TODO: TLB flush needed here */
 }
 
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
+  screen = gfx_set_videomode(1280, 800);
 
-  cons_bootstrap();
-  cons_init(gfx_cons[0]);
+  pcpu_init();
+  cons_bootstrap(0);
 
-  /* Disable mapping for lower 2GiB */
-  for (int i = 0; i < 2048; i++)
-    _kernel_pde[i].raw = PDE_TYPE_FAULT;
-  /* TODO: TLB flush needed here */
+  puts("CPU#0 started!");
 
-  puts("Hello world!");
-
+  smp_bootstrap();
+  // va_bootstrap();
 
   printf("Config Register: %08x\n", armreg_sctlr_read());
 
