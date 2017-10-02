@@ -1,5 +1,5 @@
+#include <arm/cpureg.h>
 #include <clock.h>
-#include <armreg.h>
 #include <klibc.h>
 
 #define __interrupt(x) __attribute__ ((interrupt(x))) 

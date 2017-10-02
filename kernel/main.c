@@ -4,14 +4,12 @@
 #include <stdnoreturn.h>
 
 #include <cdefs.h>
-#include <bcm2836reg.h>
 #include <klibc.h>
 #include <cons.h>
 #include <gfx.h>
 #include <gfx_cons.h>
 #include <clock.h>
-#include <armmmu.h>
-#include <armreg.h>
+#include <arm/mmu.h>
 #include <pcpu.h>
 #include <smp.h>
 

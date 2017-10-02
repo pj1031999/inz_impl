@@ -1,7 +1,7 @@
 @ boot.S - assembly startup code
 
-#include "armreg.h"
-#include "bcm2836reg.h"
+#include "arm/cpureg.h"
+#include "dev/bcm2836reg.h"
 
 #define __BIT(__n) (1 << (__n))
 #define PHYSADDR(x) ((x) - 0x80000000)

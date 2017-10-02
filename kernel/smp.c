@@ -1,14 +1,14 @@
 #include <cdefs.h>
 #include <klibc.h>
 #include <pcpu.h>
-#include <mbox.h>
+#include <arm/mbox.h>
 #include <smp.h>
 
 extern void cons_bootstrap(unsigned);
 
 static void smp_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                       uint32_t atags __unused) {
-  unsigned cpu = smp_cpu_id();
+  unsigned cpu = arm_cpu_id();
   pcpu_init();
   cons_bootstrap(cpu);
   printf("CPU#%d started!\n", cpu);

@@ -1,6 +1,6 @@
-#include <bcm2836reg.h>
+#include <arm/mbox.h>
+#include <dev/bcm2836reg.h>
 #include <mmio.h>
-#include <mbox.h>
 
 #define MAILBOX_SET_N(n,m) \
   (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX_SETN(n,m))

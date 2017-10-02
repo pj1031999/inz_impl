@@ -1,8 +1,8 @@
-#ifndef BCM2836_H
-#define BCM2836_H
+#ifndef BCM2836_IRQ_H
+#define BCM2836_IRQ_H
 
 #include <stdbool.h>
-#include <bcm2836reg.h>
+#include <dev/bcm2836reg.h>
 
 void bcm2835_irq_enable(unsigned irq);
 void bcm2835_irq_disable(unsigned irq);

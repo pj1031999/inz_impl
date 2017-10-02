@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #include <cdefs.h>
-#include <bcm2836reg.h>
+#include <dev/bcm2836reg.h>
 #include <mmio.h>
 #include <gfx.h>
 #include <font.h>

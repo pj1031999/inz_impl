@@ -3,9 +3,9 @@
 
 #include <cdefs.h>
 #include <stdint.h>
-#include <bcm2836reg.h>
+#include <dev/bcm2836reg.h>
+#include <dev/plcomreg.h>
 #include <mmio.h>
-#include <plcomreg.h>
 #include <irq.h>
 #include <cons.h>
 

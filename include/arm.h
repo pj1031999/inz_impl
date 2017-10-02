@@ -1,6 +1,12 @@
 #ifndef ARM_H
 #define ARM_H
 
+#include <arm/cpureg.h>
+
+static inline unsigned arm_cpu_id(void) {
+  return armreg_mpidr_read() & CORTEXA9_MPIDR_CPUID;
+}
+
 static inline uint32_t arm_set_cpsr_c(uint32_t clr, uint32_t eor) {
   uint32_t tmp, ret;
 

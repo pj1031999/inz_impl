@@ -1,7 +1,7 @@
 #ifndef PCPU_H
 #define PCPU_H
 
-#include <armreg.h>
+#include <arm/cpureg.h>
 
 typedef struct cons cons_t;
 

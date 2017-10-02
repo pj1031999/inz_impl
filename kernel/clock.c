@@ -2,7 +2,7 @@
 
 #include <klibc.h>
 #include <arm.h>
-#include <armreg.h>
+#include <arm/cpureg.h>
 #include <irq.h>
 
 #define CLK_FREQ 19200000
