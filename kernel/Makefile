@@ -8,6 +8,7 @@ SOURCES_C := \
 	gfx.c \
 	gfx_cons.c \
 	main.c \
+	mbox.c \
 	pcpu.c \
 	smp.c \
 	uart.c \

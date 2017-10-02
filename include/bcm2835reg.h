@@ -244,4 +244,7 @@
 #define	BCM2836_LOCAL_MAILBOX2_CLRN(n)		(0xc8 + 0x10 * (n))
 #define	BCM2836_LOCAL_MAILBOX3_CLRN(n)		(0xcc + 0x10 * (n))
 
+#define	BCM2836_LOCAL_MAILBOX_SETN(n,m)		(0x80 + 0x10 * (n) + 4 * (m))
+#define	BCM2836_LOCAL_MAILBOX_CLRN(n,m)		(0xc0 + 0x10 * (n) + 4 * (m))
+
 #endif /* _BCM2835REG_H_ */
