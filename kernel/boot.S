@@ -106,8 +106,6 @@ no_cpu0_init:
 	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
 	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
 
-	@ Use TPIDRPRW for pcpu?
-
 	@ Initialially we're running in supervisor mode.
 	mrs	r4, spsr
 	bic	r4, r4, #PSR_MODE
