@@ -1,6 +1,7 @@
 TOPDIR := $(realpath ..)
 
 SOURCES_C := \
+	cons.c \
 	clock.c \
 	exc.c \
 	irq.c \

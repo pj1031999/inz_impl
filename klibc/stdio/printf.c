@@ -39,7 +39,7 @@
 #include <cdefs.h>
 
 #include <klibc.h>
-#include <uart.h>
+#include <cons.h>
 
 /*
  * kprintf: scaled down version of printf(3).
@@ -110,11 +110,6 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
                                      : (unsigned long)va_arg(ap,               \
                                                              unsigned int))
 
-#define KPRINTF_PUTCHAR(C)                                                     \
-  {                                                                            \
-      uart_putc(C);                                                          \
-  }
-
 /*
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
@@ -142,7 +137,7 @@ int vprintf(const char *fmt, va_list ap) {
   for (;;) {
     for (; *fmt != '%' && *fmt; fmt++) {
       ret++;
-      KPRINTF_PUTCHAR(*fmt);
+      cons_putc(*fmt);
     }
     if (*fmt == 0)
       goto done;
@@ -443,42 +438,42 @@ int vprintf(const char *fmt, va_list ap) {
     if ((flags & (LADJUST | ZEROPAD)) == 0) {
       n = width - realsz;
       while (n-- > 0)
-        KPRINTF_PUTCHAR(' ');
+        cons_putc(' ');
     }
 
     /* prefix */
     if (sign) {
-      KPRINTF_PUTCHAR(sign);
+      cons_putc(sign);
     } else if (flags & HEXPREFIX) {
-      KPRINTF_PUTCHAR('0');
-      KPRINTF_PUTCHAR(ch);
+      cons_putc('0');
+      cons_putc(ch);
     }
 
     /* right-adjusting zero padding */
     if ((flags & (LADJUST | ZEROPAD)) == ZEROPAD) {
       n = width - realsz;
       while (n-- > 0)
-        KPRINTF_PUTCHAR('0');
+        cons_putc('0');
     }
 
     /* leading zeroes from decimal precision */
     n = dprec - size;
     while (n-- > 0)
-      KPRINTF_PUTCHAR('0');
+      cons_putc('0');
 
     /* the string or number proper */
     for (; size--; cp++)
-      KPRINTF_PUTCHAR(*cp);
+      cons_putc(*cp);
     /* left-adjusting padding (always blank) */
     if (flags & LADJUST) {
       n = width - realsz;
       while (n-- > 0)
-        KPRINTF_PUTCHAR(' ');
+        cons_putc(' ');
     }
   }
 
 done:
-  /* (*v_flush)(); */
+  cons_flush();
 
   return ret;
 }

@@ -3,6 +3,9 @@ TOPDIR := $(realpath ..)
 SOURCES_C := \
 	assert.c \
 	sbrk.c \
+	stdio/getchar.c \
+	stdio/putchar.c \
+	stdio/puts.c \
 	stdio/printf.c \
 	string/bzero.c \
 	string/memchr.c \

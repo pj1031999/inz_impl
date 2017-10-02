@@ -5,18 +5,18 @@
 
 #include <cdefs.h>
 #include <klibc.h>
-#include <uart.h>
+#include <cons.h>
 #include <gfx.h>
 #include <clock.h>
 #include <armmmu.h>
 
 extern pde_t _kernel_pde[4096];
 
-void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
-                 uint32_t atags __unused)
+extern cons_t uart0_cons;
+
+void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
+                  uint32_t atags __unused)
 {
-  uart_init();
-  uart_puts("Hello world!\n");
 
   /* Apparently graphics has to be setup before lower memory is detached. */
   uint32_t width = 1366;
@@ -28,13 +28,10 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
     _kernel_pde[i].raw = PDE_TYPE_FAULT;
   /* TODO: TLB flush needed here */
 
-  {
-    uint32_t cr;
-    __asm__ volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r" (cr));
-    printf("Config Register: %08x\n", cr);
-  }
+  cons_init(&uart0_cons);
 
   uint32_t *pos = framebuffer;
+  puts("Hello world!");
 
   printf("Framebuffer address: %p\n", framebuffer);
 
@@ -43,14 +40,15 @@ void kernel_main(uint32_t r0 __unused, uint32_t r1 __unused,
       *pos = (h >> 2 << 8) | (w >> 2);
     }
   }
+  printf("Config Register: %08x\n", armreg_sctlr_read());
 
   clock_init();
 
-  uart_puts("Type letter 'q' to halt machine!\n");
-  while (uart_getc() != 'q')
+  puts("Type letter 'q' to halt machine!");
+  while (getchar() != 'q')
     ;
 
-  uart_puts("*** system halting ***\n");
+  puts("*** system halting ***\n");
 }
 
 noreturn void kernel_exit() {

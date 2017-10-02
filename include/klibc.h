@@ -21,6 +21,9 @@ void __assert(const char *expr, const char *file, unsigned line);
 
 typedef long ssize_t;
 
+void putchar(int c);
+int getchar(void);
+void puts(const char *str);
 void printf(const char *fmt, ...);
 void bzero(void *b, size_t length);
 void *memchr(const void *s, int c, size_t n);

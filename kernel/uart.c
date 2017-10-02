@@ -1,11 +1,13 @@
 /* uart.c - UART initialization & communication */
 /* PrimeCell® UART (PL011) */
 
+#include <cdefs.h>
 #include <stdint.h>
 #include <bcm2836reg.h>
 #include <mmio.h>
 #include <plcomreg.h>
-#include <uart.h>
+#include <irq.h>
+#include <cons.h>
 
 enum {
   UART0_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE),
@@ -46,10 +48,7 @@ static void delay(int32_t count) {
                    : [count] "+r"(count));
 }
 
-/*
- * Initialize UART0.
- */
-void uart_init() {
+static void pl011_init() {
   // Disable UART0.
   mmio_write(UART0_CR, 0);
   // Setup the GPIO pin 14 && 15.
@@ -88,39 +87,29 @@ void uart_init() {
   mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
 }
 
-/*
- * Transmit a byte via UART0.
- * uint8_t Byte: byte to send.
- */
-void uart_putc(uint8_t byte) {
-  if (byte == '\n')
-    uart_putc('\r');
 
-  // wait for UART to become ready to transmit
+static void pl011_putc(cons_dev_t *dev __unused, int c) {
+  /* wait for UART to become ready to transmit */
   while (mmio_read(UART0_FR) & PL01X_FR_TXFF)
     ;
-  mmio_write(UART0_DR, byte);
+  mmio_write(UART0_DR, c);
 }
 
-/*
- * print a string to the UART one character at a time
- * const char *str: 0-terminated string
- */
-void uart_puts(const char *str) {
-  while (*str) {
-    uart_putc(*str++);
-  }
-}
-
-/*
- * Receive a byte via UART0.
- *
- * Returns:
- * uint8_t: byte received.
- */
-uint8_t uart_getc() {
-  // wait for UART to have recieved something
+static int pl011_getc(cons_dev_t *dev __unused) {
+  /* wait for UART to have recieved something */
   while (mmio_read(UART0_FR) & PL01X_FR_RXFE)
     ;
   return mmio_read(UART0_DR);
 }
+
+static void pl011_flush(cons_dev_t *dev __unused) {
+}
+
+struct cons_dev {};
+
+cons_t uart0_cons = {
+  .init = pl011_init,
+  .getc = pl011_getc,
+  .putc = pl011_putc,
+  .flush = pl011_flush,
+};
