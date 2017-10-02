@@ -7,7 +7,7 @@ QEMU	  = qemu-system-arm
 QEMUFLAGS = -M raspi2 -serial stdio 
 
 # Files required to link kernel image
-KRT = kernel/kernel.a klibc/klibc.a
+KRT = kernel/kernel.a klibc/klibc.a font/font.a
 
 build: build-kernel build-klibc kernel.img
 

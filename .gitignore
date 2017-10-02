@@ -1,6 +1,7 @@
 kernel.img
 kernel.elf
 kernel.map
+*.psf
 *.o
 *.a
 *.d
