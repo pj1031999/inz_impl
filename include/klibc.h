@@ -1,10 +1,7 @@
 #ifndef KLIBC_H
 #define KLIBC_H
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <cdefs.h>
+#include <types.h>
 
 void __assert(const char *expr, const char *file, unsigned line);
 

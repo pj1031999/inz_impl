@@ -561,6 +561,10 @@
  */
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
+/* Macros for min/max. */
+#define MIN(a,b)    ((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define MAX(a,b)    ((/*CONSTCOND*/(a)>(b))?(a):(b))
+
 #ifndef __ASSEMBLER__
 #define NBBY 8
 

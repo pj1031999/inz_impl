@@ -1,8 +1,7 @@
 /* uart.c - UART initialization & communication */
 /* PrimeCell® UART (PL011) */
 
-#include <cdefs.h>
-#include <stdint.h>
+#include <types.h>
 #include <dev/bcm2836reg.h>
 #include <dev/plcomreg.h>
 #include <mmio.h>

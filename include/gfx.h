@@ -1,8 +1,7 @@
 #ifndef GFX_H
 #define GFX_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <types.h>
 
 typedef struct font font_t;
 typedef uint32_t color_t;

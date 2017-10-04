@@ -1,7 +1,7 @@
 #ifndef MBOX_H
 #define MBOX_H
 
-#include <stdint.h>
+#include <types.h>
 
 void mbox_set(unsigned cpu, unsigned mbox, uint32_t mask);
 void mbox_clr(unsigned cpu, unsigned mbox, uint32_t mask);

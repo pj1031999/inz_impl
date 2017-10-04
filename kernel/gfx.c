@@ -1,6 +1,4 @@
-#include <stdint.h>
-
-#include <cdefs.h>
+#include <types.h>
 #include <dev/bcm2836reg.h>
 #include <mmio.h>
 #include <gfx.h>

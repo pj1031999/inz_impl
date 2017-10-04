@@ -1,9 +1,7 @@
 /* main.c - the entry point for the kernel */
 
-#include <stdint.h>
+#include <types.h>
 #include <stdnoreturn.h>
-
-#include <cdefs.h>
 #include <klibc.h>
 #include <cons.h>
 #include <gfx.h>

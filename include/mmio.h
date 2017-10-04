@@ -3,7 +3,7 @@
 #ifndef MMIO_H
 #define MMIO_H
 
-#include <stdint.h>
+#include <types.h>
 
 extern uint8_t _kernel[];
 

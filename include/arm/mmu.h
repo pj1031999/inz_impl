@@ -1,7 +1,7 @@
 #ifndef ARMMMU_H
 #define ARMMMU_H
 
-#include <stdint.h>
+#include <types.h>
 
 /* ARMv6 page directory and page table entries */
 

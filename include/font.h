@@ -1,7 +1,7 @@
 #ifndef FONT_H
 #define FONT_H
 
-#include <stdint.h>
+#include <types.h>
 
 typedef struct font_char {
   uint32_t code;

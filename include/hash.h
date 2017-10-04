@@ -30,7 +30,7 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
-#include <stdint.h>
+#include <types.h>
 
 #define HASH32_BUF_INIT 5381
 
