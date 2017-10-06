@@ -7,6 +7,7 @@
 #include <mmio.h>
 #include <irq.h>
 #include <cons.h>
+#include <klibc.h>
 
 enum {
   UART0_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE),
@@ -47,7 +48,9 @@ static void delay(int32_t count) {
                    : [count] "+r"(count));
 }
 
-static void pl011_init() {
+static void pl011_irq(unsigned irq __unused);
+
+static void pl011_init(cons_dev_t *dev __unused) {
   // Disable UART0.
   mmio_write(UART0_CR, 0);
   // Setup the GPIO pin 14 && 15.
@@ -84,8 +87,12 @@ static void pl011_init() {
 
   // Enable UART0, receive & transfer part of UART.
   mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
-}
 
+  // Enable receive interrupt
+  mmio_write(UART0_IMSC, PL011_INT_RX);
+  bcm2835_irq_register(BCM2835_INT_UART0, pl011_irq);
+  bcm2835_irq_enable(BCM2835_INT_UART0);
+}
 
 static void pl011_putc(cons_dev_t *dev __unused, int c) {
   /* wait for UART to become ready to transmit */
@@ -102,6 +109,10 @@ static int pl011_getc(cons_dev_t *dev __unused) {
 }
 
 static void pl011_flush(cons_dev_t *dev __unused) {
+}
+
+static void pl011_irq(unsigned irq __unused) {
+  printf("UART0: received '%c'!\n", pl011_getc(NULL));
 }
 
 struct cons_dev {};

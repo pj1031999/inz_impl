@@ -1,13 +1,13 @@
 /* main.c - the entry point for the kernel */
 
 #include <types.h>
-#include <stdnoreturn.h>
 #include <klibc.h>
 #include <cons.h>
 #include <gfx.h>
 #include <gfx_cons.h>
 #include <clock.h>
 #include <arm/mmu.h>
+#include <irq.h>
 #include <pcpu.h>
 #include <smp.h>
 
@@ -33,6 +33,8 @@ void va_bootstrap(void) {
   /* TODO: TLB flush needed here */
 }
 
+extern cons_t uart0_cons;
+
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
@@ -41,24 +43,28 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   pcpu_init();
   cons_bootstrap(0);
 
+  bcm2835_irq_init();
+  bcm2836_local_irq_init();
+  arm_irq_enable();
+
   puts("CPU#0 started!");
 
   smp_bootstrap();
   va_bootstrap();
 
   printf("Config Register: %08x\n", armreg_sctlr_read());
+  printf("Framebuffer address: %p\n", screen->pixels);
 
   clock_init();
+  uart0_cons.init(NULL);
 
   puts("Type letter 'q' to halt machine!");
   while (getchar() != 'q')
     ;
-
-  puts("*** system halting ***\n");
 }
 
 noreturn void kernel_exit() {
-  for (;;) {
-    __asm__ volatile("wfe");
-  }
+  arm_irq_disable();
+  printf("*** CPU#%d halted! ***", arm_cpu_id());
+  for (;;);
 }

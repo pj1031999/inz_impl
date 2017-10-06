@@ -6,6 +6,7 @@
 #include <stdint-gcc.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdnoreturn.h>
 
 typedef unsigned long paddr_t;
 typedef unsigned long vaddr_t;

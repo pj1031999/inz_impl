@@ -497,6 +497,13 @@
 #define __format_arg(fmtarg)			/* nothing */
 #endif
 
+/* GCC 3.0 adds attribute to declare interrupt entry point. */
+#if __GNUC_PREREQ__(3, 0)
+#define __interrupt(x) __attribute__ ((interrupt(x))) 
+#else
+#define __interrupt(x) error: no __interrupt for this compiler
+#endif
+
 /*
  * Macros for manipulating "link sets".  Link sets are arrays of pointers
  * to objects, which are gathered up by the linker.

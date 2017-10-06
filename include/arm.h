@@ -21,6 +21,14 @@ static inline uint32_t arm_set_cpsr_c(uint32_t clr, uint32_t eor) {
   return ret;
 }
 
+static inline void arm_irq_enable(void) {
+  arm_set_cpsr_c(I32_bit, 0);
+}
+
+static inline void arm_irq_disable(void) {
+  arm_set_cpsr_c(I32_bit, I32_bit);
+}
+
 /* Data Memory Barrier */
 static inline void arm_dmb(void) { __asm__ volatile("dmb" ::: "memory"); }
 

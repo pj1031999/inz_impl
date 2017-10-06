@@ -2,6 +2,7 @@
 #include <klibc.h>
 #include <pcpu.h>
 #include <arm/mbox.h>
+#include <irq.h>
 #include <smp.h>
 
 extern void cons_bootstrap(unsigned);
@@ -11,6 +12,9 @@ static void smp_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   unsigned cpu = arm_cpu_id();
   pcpu_init();
   cons_bootstrap(cpu);
+  bcm2836_local_irq_init();
+  arm_irq_enable();
+
   printf("CPU#%d started!\n", cpu);
   mbox_set(0, 3, __BIT(cpu));
   for (;;);

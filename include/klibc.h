@@ -5,10 +5,18 @@
 
 void __assert(const char *expr, const char *file, unsigned line);
 
+noreturn void kernel_exit();
+
 #define assert(EXPR)                                                           \
   __extension__({                                                              \
     if (!(EXPR))                                                               \
       __assert(__STRING(EXPR), __FILE__, __LINE__);                            \
+  })
+
+#define panic(...)                                                             \
+  __extension__({                                                              \
+    printf(__VA_ARGS__);                                                       \
+    kernel_exit();                                                             \
   })
 
 /* Macros for counting and rounding. */
