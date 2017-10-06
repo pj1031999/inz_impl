@@ -1,7 +1,8 @@
-#include <cdefs.h>
+#include <types.h>
 #include <klibc.h>
 #include <pcpu.h>
 #include <arm/mbox.h>
+#include <arm/cpu.h>
 #include <irq.h>
 #include <smp.h>
 

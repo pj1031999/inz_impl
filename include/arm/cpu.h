@@ -1,5 +1,5 @@
-#ifndef ARM_H
-#define ARM_H
+#ifndef ARMCPU_H
+#define ARMCPU_H
 
 #include <arm/cpureg.h>
 

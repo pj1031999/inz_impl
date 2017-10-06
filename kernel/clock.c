@@ -1,8 +1,7 @@
 /* clock.c - System timer */
 
 #include <klibc.h>
-#include <arm.h>
-#include <arm/cpureg.h>
+#include <arm/cpu.h>
 #include <irq.h>
 
 #define CLK_FREQ 19200000

@@ -6,6 +6,7 @@
 #include <gfx.h>
 #include <gfx_cons.h>
 #include <clock.h>
+#include <arm/cpu.h>
 #include <arm/mmu.h>
 #include <irq.h>
 #include <pcpu.h>

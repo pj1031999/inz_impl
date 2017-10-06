@@ -1,6 +1,5 @@
-#include <arm/cpureg.h>
+#include <arm/cpu.h>
 #include <dev/bcm2836reg.h>
-#include <smp.h>
 #include <pcpu.h>
 
 static pcpu_t _pcpu_data[BCM2836_NCPUS];

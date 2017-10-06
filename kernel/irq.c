@@ -1,6 +1,6 @@
-#include <cdefs.h>
+#include <types.h>
 #include <klibc.h>
-#include <arm.h>
+#include <arm/cpu.h>
 #include <irq.h>
 #include <mmio.h>
 

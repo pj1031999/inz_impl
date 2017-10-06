@@ -3,6 +3,8 @@
 
 #include <types.h>
 
+#define PAGE_SIZE 4096
+
 /* ARMv6 page directory and page table entries */
 
 #define PDE_TYPE_FAULT 0
