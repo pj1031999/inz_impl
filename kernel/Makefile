@@ -13,6 +13,7 @@ SOURCES_C := \
 	pcpu.c \
 	smp.c \
 	uart.c \
+	vc_mbox.c \
 
 SOURCES_ASM := \
 	boot.S \

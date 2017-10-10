@@ -1,20 +1,7 @@
-#include <types.h>
-#include <dev/bcm2836reg.h>
-#include <mmio.h>
+#include <vc_mbox.h>
 #include <gfx.h>
 #include <font.h>
 #include <klibc.h>
-
-enum {
-  ARMMBOX_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE),
-
-  GPU_READ   = (ARMMBOX_BASE + 0x00),
-  GPU_POLL   = (ARMMBOX_BASE + 0x10),
-  GPU_SENDER = (ARMMBOX_BASE + 0x14),
-  GPU_STATUS = (ARMMBOX_BASE + 0x18),
-  GPU_CONFIG = (ARMMBOX_BASE + 0x1C),
-  GPU_WRITE  = (ARMMBOX_BASE + 0x20),
-};
 
 typedef struct {
   uint32_t width;
@@ -29,28 +16,6 @@ typedef struct {
   uint32_t buffer_size;
 } GFX_INIT_REQUEST __attribute__((aligned(16)));
 
-static __noinline void send_mail(uint32_t message, uint32_t box) {
-  while (mmio_read(GPU_STATUS) & 0x80000000)
-    ;
-
-  mmio_write(GPU_WRITE, (message & 0xFFFFFFF0) | (box & 0xF));
-}
-
-static __noinline uint32_t recv_mail(uint32_t box) {
-  uint32_t value;
-  box &= 0xF;
-  while (1) {
-    while (mmio_read(GPU_STATUS) & 0x40000000)
-      ;
-    value = mmio_read(GPU_READ);
-    if ((value & 0xF) == box) {
-      break;
-    }
-  }
-
-  return value & ~0xF;
-}
-
 static GFX_INIT_REQUEST init_request;
 
 window_t screen;
@@ -63,8 +28,8 @@ window_t *gfx_set_videomode(unsigned w, unsigned h) {
       init_request.buffer_size = 0;
   init_request.bit_depth = 32;
 
-  send_mail((uint32_t)&init_request, 1);
-  uint32_t reply = recv_mail(1);
+  vc_mbox_send((uint32_t)&init_request, 1);
+  uint32_t reply = vc_mbox_recv(1);
 
   if (reply != 0)
     return 0;
