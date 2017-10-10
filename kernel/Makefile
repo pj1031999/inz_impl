@@ -7,6 +7,7 @@ SOURCES_C := \
 	irq.c \
 	gfx.c \
 	gfx_cons.c \
+	gpio.c \
 	main.c \
 	mbox.c \
 	pcpu.c \

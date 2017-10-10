@@ -5,6 +5,7 @@
 #include <dev/bcm2836reg.h>
 #include <dev/plcomreg.h>
 #include <mmio.h>
+#include <gpio.h>
 #include <irq.h>
 #include <cons.h>
 #include <klibc.h>
@@ -27,68 +28,44 @@ enum {
   UART0_MIS = (UART0_BASE + PL011COM_MIS),
   UART0_ICR = (UART0_BASE + PL011COM_ICR),
   UART0_DMACR = (UART0_BASE + PL011COM_DMACR),
-  
-  // The GPIO registers base address.
-  GPIO_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE),
-  // Controls actuation of pull up/down to ALL GPIO pins.
-  GPPUD = (GPIO_BASE + 0x94),
-  // Controls actuation of pull up/down for specific GPIO pin.
-  GPPUDCLK0 = (GPIO_BASE + 0x98),
 };
-
-/*
- * delay function
- * int32_t delay: number of cycles to delay
- *
- * This just loops <delay> times in a way that the compiler
- * wont optimize away.
- */
-static void delay(int32_t count) {
-  __asm__ volatile("1: subs %[count], %[count], #1; bne 1b"
-                   : [count] "+r"(count));
-}
 
 static void pl011_irq(unsigned irq __unused);
 
 static void pl011_init(cons_dev_t *dev __unused) {
-  // Disable UART0.
+  /* Disable UART0. */
   mmio_write(UART0_CR, 0);
-  // Setup the GPIO pin 14 && 15.
-
-  // Disable pull up/down for all GPIO pins & delay for 150 cycles.
-  mmio_write(GPPUD, 0);
-  delay(150);
-
-  // Disable pull up/down for pin 14,15 & delay for 150 cycles.
-  mmio_write(GPPUDCLK0, (1 << 14) | (1 << 15));
-  delay(150);
-
-  // Write 0 to GPPUDCLK0 to make it take effect.
-  mmio_write(GPPUDCLK0, 0);
-
-  // Clear pending interrupts.
+  /* Clear pending interrupts. */
   mmio_write(UART0_ICR, PL011_INT_ALLMASK);
 
-  // Set integer & fractional part of baud rate.
-  // Divider = UART_CLOCK/(16 * Baud)
-  // Fraction part register = (Fractional part * 64) + 0.5
-  // UART_CLOCK = 3000000; Baud = 115200.
+  /* Enable UART0 on pins 14 & 15 */
+  gpio_function_select(14, GPIO_ALT0);
+  gpio_function_select(15, GPIO_ALT0);
+  gpio_set_pull(14, GPPUD_PULLOFF);
+  gpio_set_pull(15, GPPUD_PULLOFF);
 
-  // Divider = 3000000/(16 * 115200) = 1.627 = ~1.
-  // Fractional part register = (.627 * 64) + 0.5 = 40.6 = ~40.
+  /*
+   * Set integer & fractional part of baud rate.
+   * Divider = UART_CLOCK/(16 * Baud)
+   * Fraction part register = (Fractional part * 64) + 0.5
+   * UART_CLOCK = 3000000; Baud = 115200.
+   *
+   * Divider = 3000000/(16 * 115200) = 1.627 = ~1.
+   * Fractional part register = (.627 * 64) + 0.5 = 40.6 = ~40.
+   */
   mmio_write(UART0_IBRD, 1);
   mmio_write(UART0_FBRD, 40);
 
-  // Enable FIFO & 8 bit data transmission (1 stop bit, no parity).
+  /* Enable FIFO & 8 bit data transmission (1 stop bit, no parity). */
   mmio_write(UART0_LCRH, PL01X_LCR_FEN | PL01X_LCR_8BITS);
 
-  // Mask all interrupts.
+  /* Mask all interrupts. */
   mmio_write(UART0_IMSC, PL011_INT_ALLMASK);
 
-  // Enable UART0, receive & transfer part of UART.
+  /* Enable UART0, receive & transfer part of UART. */
   mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
 
-  // Enable receive interrupt
+  /* Enable receive interrupt. */
   mmio_write(UART0_IMSC, PL011_INT_RX);
   bcm2835_irq_register(BCM2835_INT_UART0, pl011_irq);
   bcm2835_irq_enable(BCM2835_INT_UART0);
