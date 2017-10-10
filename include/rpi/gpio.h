@@ -1,5 +1,5 @@
-#ifndef RASPI_GPIO_H
-#define RASPI_GPIO_H
+#ifndef RPI_GPIO_H
+#define RPI_GPIO_H
 
 #include <types.h>
 
@@ -32,4 +32,4 @@ enum {
 /* \brief Configures input pin as pull-up or pull-down. */
 void gpio_set_pull(unsigned pin, unsigned pud);
 
-#endif /* !RASPI_GPIO_H */
+#endif /* !RPI_GPIO_H */

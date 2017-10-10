@@ -1,6 +1,6 @@
-#include <gpio.h>
 #include <mmio.h>
 #include <dev/bcm2836reg.h>
+#include <rpi/gpio.h>
 #include <klibc.h>
 
 /* The GPIO registers base address. */

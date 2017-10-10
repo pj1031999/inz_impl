@@ -1,7 +1,7 @@
 #include <types.h>
 #include <klibc.h>
 #include <arm/cpu.h>
-#include <irq.h>
+#include <rpi/irq.h>
 #include <mmio.h>
 
 static irq_handler_t _handler_vec[BCM2835_NIRQ + BCM2836_NIRQ];

@@ -1,4 +1,4 @@
-#include <vc_mbox.h>
+#include <rpi/vc_mbox.h>
 #include <gfx.h>
 #include <font.h>
 #include <klibc.h>
@@ -14,7 +14,7 @@ typedef struct {
   uint32_t y;
   void *buffer;
   uint32_t buffer_size;
-} GFX_INIT_REQUEST __attribute__((aligned(16)));
+} GFX_INIT_REQUEST __aligned(16);
 
 static GFX_INIT_REQUEST init_request;
 
@@ -28,8 +28,8 @@ window_t *gfx_set_videomode(unsigned w, unsigned h) {
       init_request.buffer_size = 0;
   init_request.bit_depth = 32;
 
-  vc_mbox_send((uint32_t)&init_request, 1);
-  uint32_t reply = vc_mbox_recv(1);
+  vc_mbox_send((uint32_t)&init_request, VC_CHAN_FB);
+  uint32_t reply = vc_mbox_recv(VC_CHAN_FB);
 
   if (reply != 0)
     return 0;

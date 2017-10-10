@@ -1,5 +1,5 @@
-#ifndef BCM2836_IRQ_H
-#define BCM2836_IRQ_H
+#ifndef RPI_IRQ_H
+#define RPI_IRQ_H
 
 #include <dev/bcm2836reg.h>
 
@@ -15,4 +15,4 @@ void bcm2836_local_irq_register(unsigned irq, irq_handler_t handler);
 void bcm2836_local_irq_enable(unsigned irq);
 void bcm2836_local_irq_disable(unsigned irq);
 
-#endif
+#endif /* !RPI_IRQ_H */

@@ -1,5 +1,3 @@
-/* mmio.h - access to MMIO registers */
-
 #ifndef MMIO_H
 #define MMIO_H
 
@@ -23,4 +21,4 @@ static inline uint32_t mmio_read(uint32_t reg) {
   return data;
 }
 
-#endif // #ifndef MMIO_H
+#endif /* MMIO_H */

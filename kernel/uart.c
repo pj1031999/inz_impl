@@ -5,8 +5,8 @@
 #include <dev/bcm2836reg.h>
 #include <dev/plcomreg.h>
 #include <mmio.h>
-#include <gpio.h>
-#include <irq.h>
+#include <rpi/gpio.h>
+#include <rpi/irq.h>
 #include <cons.h>
 #include <klibc.h>
 

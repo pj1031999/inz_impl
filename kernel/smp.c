@@ -3,7 +3,7 @@
 #include <pcpu.h>
 #include <arm/mbox.h>
 #include <arm/cpu.h>
-#include <irq.h>
+#include <rpi/irq.h>
 #include <smp.h>
 
 extern void cons_bootstrap(unsigned);

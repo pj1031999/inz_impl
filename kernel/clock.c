@@ -2,7 +2,7 @@
 
 #include <klibc.h>
 #include <arm/cpu.h>
-#include <irq.h>
+#include <rpi/irq.h>
 
 #define CLK_FREQ 19200000
 

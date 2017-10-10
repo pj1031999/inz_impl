@@ -1,6 +1,6 @@
-#include <dev/bcm2836reg.h>
 #include <mmio.h>
-#include <vc_mbox.h>
+#include <dev/bcm2836reg.h>
+#include <rpi/vc_mbox.h>
 #include <klibc.h>
 
 #define ARMMBOX_BASE BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE)

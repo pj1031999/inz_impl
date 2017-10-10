@@ -31,4 +31,4 @@ static inline void gfx_set_bg_col(window_t *win, color_t color) {
   win->bg_col = color;
 }
 
-#endif // #ifndef GFX_H
+#endif /* !GFX_H */

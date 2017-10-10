@@ -8,7 +8,7 @@
 #include <clock.h>
 #include <arm/cpu.h>
 #include <arm/mmu.h>
-#include <irq.h>
+#include <rpi/irq.h>
 #include <pcpu.h>
 #include <smp.h>
 
