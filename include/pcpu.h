@@ -2,11 +2,13 @@
 #define PCPU_H
 
 #include <arm/cpureg.h>
+#include <arm/mmu.h>
 
 typedef struct cons cons_t;
 
 typedef struct pcpu {
   cons_t *cons;
+  pde_t *pdtab;
 } pcpu_t;
 
 void pcpu_init(void);

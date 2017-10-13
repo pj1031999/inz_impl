@@ -45,6 +45,9 @@ SECTIONS
     _kernel_pde = .;
     . = . + 16384;
 
+    _kernel_pte = .;
+    . = . + 4096;
+
     _irq_stack = .;
     . = . + 4096;
 
@@ -60,8 +63,9 @@ SECTIONS
     _bss_end = .;
   }
 
-  . = ALIGN(4096);
-  _brk_limit = .;
+  . += 32768; /* for physical memory manager bitmap */
+
+  _brk_limit = ALIGN(4096);
 
   /DISCARD/ :
   {

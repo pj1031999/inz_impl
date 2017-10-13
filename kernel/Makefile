@@ -10,7 +10,9 @@ SOURCES_C := \
 	gpio.c \
 	main.c \
 	mbox.c \
+	mmu.c \
 	pcpu.c \
+	pmman.c \
 	smp.c \
 	uart.c \
 	vc_mbox.c \

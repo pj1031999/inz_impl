@@ -11,7 +11,7 @@ NM   	= $(TARGET)-nm
 
 CPPFLAGS    = -I $(TOPDIR)/include
 CPUFLAGS    = -mcpu=cortex-a7 -mfpu=vfpv4-d16
-OPTFLAGS    = -O2 -fomit-frame-pointer
+OPTFLAGS    = -Og -fomit-frame-pointer
 WARNFLAGS   = -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings
 WARNFLAGS   += -Wredundant-decls -Winline
 WARNFLAGS   += -Wno-attributes -Wno-deprecated-declarations

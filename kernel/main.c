@@ -9,10 +9,12 @@
 #include <arm/cpu.h>
 #include <arm/mmu.h>
 #include <rpi/irq.h>
+#include <mmu.h>
+#include <pmman.h>
 #include <pcpu.h>
 #include <smp.h>
 
-extern pde_t _kernel_pde[4096];
+extern uint8_t _brk_limit;
 
 static window_t *screen;
 
@@ -30,7 +32,7 @@ void cons_bootstrap(unsigned cpu) {
 void va_bootstrap(void) {
   /* Disable mapping for lower 2GiB */
   for (int i = 0; i < 2048; i++)
-    _kernel_pde[i].raw = PDE_TYPE_FAULT;
+    pcpu()->pdtab[i].raw = PDE_TYPE_FAULT;
   /* TODO: TLB flush needed here */
 }
 
@@ -47,6 +49,10 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   bcm2835_irq_init();
   bcm2836_local_irq_init();
   arm_irq_enable();
+
+  pm_init();
+  pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
+  pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
 
   puts("CPU#0 started!");
 

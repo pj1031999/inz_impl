@@ -3,7 +3,11 @@
 #include <pcpu.h>
 
 static pcpu_t _pcpu_data[BCM2836_NCPUS];
+extern pde_t _kernel_pde[4096];
 
 void pcpu_init(void) {
-  armreg_tpidrprw_write((uint32_t)&_pcpu_data[arm_cpu_id()]);
+  pcpu_t *pcpu = &_pcpu_data[arm_cpu_id()];
+  pcpu->cons = NULL;
+  pcpu->pdtab = _kernel_pde;
+  armreg_tpidrprw_write((uint32_t)pcpu);
 }
