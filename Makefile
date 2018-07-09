@@ -9,7 +9,7 @@ QEMUFLAGS = -smp 4 -M raspi2 -serial stdio -gdb tcp::9000
 # Files required to link kernel image
 KRT = kernel/kernel.a klibc/klibc.a font/font.a
 
-build: build-kernel build-klibc kernel.img
+build: build-kernel build-klibc build-font kernel.img
 
 include build.mk
  
