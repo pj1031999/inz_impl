@@ -44,10 +44,13 @@ SECTIONS
     _data_end = .;
   } : data
 
-  .bss : ALIGN(16384)
+  .bss : ALIGN(65536)
   {
     _kernel_pde = .;
-    . = . + 16384;
+    . = . + 4096;
+    
+    _level2_pagetable = .;
+    . = . + 32768;
 
     _kernel_pte = .;
     . = . + 4096;
