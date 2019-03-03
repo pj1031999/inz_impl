@@ -34,7 +34,7 @@
 #define MBOX_DATA(data) ((data) & ~15)
 #define MBOX_MSG(data, chan) (MBOX_DATA(data) | MBOX_CHAN(chan))
 
-void vc_mbox_send(uint32_t msg, unsigned chan) {
+void vc_mbox_send(unsigned long msg, unsigned chan) {
   assert(MBOX_CHAN(chan) == chan);
   assert(MBOX_CHAN(msg) == 0);
 
@@ -55,3 +55,4 @@ uint32_t vc_mbox_recv(unsigned chan) {
       return MBOX_DATA(val);
   }
 }
+

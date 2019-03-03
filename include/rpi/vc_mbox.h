@@ -14,7 +14,7 @@
 #define VC_CHAN_ARM2VC 8
 #define VC_CHAN_VC2ARM 9
 
-void vc_mbox_send(uint32_t msg, unsigned chan);
+void vc_mbox_send(unsigned long msg, unsigned chan);
 uint32_t vc_mbox_recv(unsigned chan);
 
 #endif /* !RPI_VC_MBOX_H */

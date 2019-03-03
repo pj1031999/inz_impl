@@ -2,9 +2,16 @@
 #include <klibc.h>
 #include <pcpu.h>
 #include <arm/mbox.h>
-#include <arm/cpu.h>
 #include <rpi/irq.h>
 #include <smp.h>
+
+#ifdef AARCH64
+#include <aarch64/cpu.h>
+
+#else
+#include <arm/cpu.h>
+#endif
+
 
 extern void cons_bootstrap(unsigned);
 
@@ -23,8 +30,9 @@ static void smp_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
 void smp_bootstrap() {
   for (int cpu = 1; cpu < 4; cpu++)
-    mbox_send(cpu, 3, (uint32_t)smp_entry);
+    mbox_send(cpu, 3, (uint32_t)(long)smp_entry);
 
+    
   do {
     __asm__ volatile("wfe");
   } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));

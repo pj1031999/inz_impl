@@ -1,6 +1,15 @@
 TARGET	= arm-none-eabi
 
-CC	= $(TARGET)-gcc -g
+CPPFLAGS    = -I $(TOPDIR)/include
+CPUFLAGS    = -mcpu=cortex-a7 -mfpu=vfpv4-d16
+OPTFLAGS    = -Og -fomit-frame-pointer
+
+ifdef MIMIKER_ARMV8
+  TARGET = aarch64-mimiker-elf
+  CPUFLAGS = -mcpu=cortex-a53 -march=armv8-a -DAARCH64
+endif
+
+CC	= $(TARGET)-gcc -g 
 AR	= $(TARGET)-ar
 GDB	= $(TARGET)-gdb
 RANLIB	= $(TARGET)-ranlib
@@ -9,9 +18,6 @@ OBJCOPY = $(TARGET)-objcopy
 OBJDUMP = $(TARGET)-objdump
 NM   	= $(TARGET)-nm
 
-CPPFLAGS    = -I $(TOPDIR)/include
-CPUFLAGS    = -mcpu=cortex-a7 -mfpu=vfpv4-d16
-OPTFLAGS    = -Og -fomit-frame-pointer
 WARNFLAGS   = -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings
 WARNFLAGS   += -Wredundant-decls -Winline
 WARNFLAGS   += -Wno-attributes -Wno-deprecated-declarations

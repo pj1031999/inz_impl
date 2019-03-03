@@ -1,4 +1,7 @@
+/* OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64") */
+/* OUTPUT_ARCH(aarch64) */
 ENTRY(_start)
+
 PHDRS
 {
   init   PT_LOAD FLAGS(5); /* read-only, executable */
@@ -6,6 +9,7 @@ PHDRS
   rodata PT_LOAD FLAGS(4); /* read-only */
   data   PT_LOAD FLAGS(6); /* read-write */
 }
+
 SECTIONS
 {
   _kernel = 0x80000000;
