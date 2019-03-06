@@ -2,16 +2,13 @@
 // AArch64 mode 
 // To keep this in the first portion of the binary.
 
-#include "dev/bcm2836reg.h"
+//#include "dev/bcm2836reg.h"
 
 #define UPPERADDR 0xFFFF000000000000
 #define PHYSADDR(x) ((x) - UPPERADDR)
 
 	
-.section ".text.boot"
- 
-//.org 0x80000
-
+//.section ".text.boot"
 .section ".init"
  
 .globl _start
