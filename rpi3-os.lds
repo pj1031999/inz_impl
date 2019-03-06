@@ -47,10 +47,15 @@ SECTIONS
   .bss : ALIGN(65536)
   {
     _kernel_pde = .;
-    . = . + 4096;
+    . = . + 65536;
     
+    _level1_pagetable = .;
+    . = . + 65536;
     _level2_pagetable = .;
-    . = . + 32768;
+    . = . + 65536;
+    _level3_pagetable = .;
+    . = . + 65536;
+
 
     _kernel_pte = .;
     . = . + 4096;
