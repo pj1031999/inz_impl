@@ -12,7 +12,7 @@ PHDRS
 
 SECTIONS
 {
-  _kernel = 0xFFFF000000000000;
+  _kernel = 0xFFFFFF0000000000;
   _stack_size = 4096;
 
   .init 0x80000 : AT(0x80000) ALIGN(4096)
@@ -55,6 +55,7 @@ SECTIONS
     _level3_pagetable = .;
     . = . + 65536;
 
+    . = . + 65536; 
     _el0_stack = .;
     . = . + 65536;
     _el1_stack = .;

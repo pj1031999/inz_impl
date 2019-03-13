@@ -5,8 +5,8 @@
 #include "aarch64/aarch64reg.h"
 #include "dev/bcm2836reg.h"
 	
-#define CPU_STACK_SIZE 8192
-#define UPPERADDR 0xFFFF000000000000
+#define CPU_STACK_SIZE 4096
+#define UPPERADDR 0xFFFFFF0000000000
 #define PHYSADDR(x) ((x) - UPPERADDR)
 
 	
@@ -66,7 +66,7 @@ clear_bss:
 	cmp	x4, x5
 	blo	1b
 
-#if 0
+#if 1
 clear_cache:	
 	// Disable L1 Caches
 	MRS    	X0, SCTLR_EL3		// Read SCTLR_EL3.
@@ -85,7 +85,7 @@ clear_cache:
 	LDR    X3, =0x7FFF
 	AND    X2, X3, X4, LSR   #13  	// X2 = Cache Set Number – 1.
 	LDR    X3, =0x3FF
-	AND    X3, X3, X4, LSR   #3   	//  X3 = Cache Associativity Number – 1.
+	AND    X3, X3, X4, LSR   #3   	// X3 = Cache Associativity Number – 1.
 	CLZ    W4,   W3               	// X4 = way position in the CISW  instruction.
 	
 	MOV    X5, #0               	//  X5 = way counter way_loop.
@@ -112,7 +112,8 @@ setup_translation_table:
 	tlbi	vmalle1is
 	dsb	ish
 	isb
-	
+
+#if 0	
 	ADR	X0, PHYSADDR(_level2_pagetable)	// must be a 4KB-aligned address.
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
@@ -129,7 +130,58 @@ loop:
 	ADD	X2, X2, X5
 	SUBS	X4, X4, #1
 	BNE	loop
+#else
+	// Initialize translation table control registers
+	LDR    X1, =0x3520	// 4GB space 4KB granularity
+	// Inner-shareable.
+	MSR    TCR_EL3, X1	// Normal Inner and    Outer Cacheable.
+	LDR    X1, =0xFF440400	// ATTR0 Device-nGnRnE ATTR1 Device.
+	MSR    MAIR_EL3, X1     // ATTR2 Normal Non-Cacheable.
+				//   ATTR3 Normal Cacheable.
+	ADR    X0, PHYSADDR(_level0_pagetable)	// ttb0_base must be a 4KB-aligned address.
+	//MSR    TTBR0_EL3, X0
+	MSR    TTBR1_EL1, X0
+	MSR    TTBR0_EL1, X0
+	
+	// Set up translation table entries in memory with looped store
+	// instructions.
+	// Set the level 1 translation table.
+	// The first entry points to level2_pagetable.
 
+	LDR    X1, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
+	LDR    X2, =0xFFFFF000
+	AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
+	ORR    X2, X2, 0x3
+	STR    X2, [X0], #8
+
+	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
+	LDR    X2, =0x40000741        	// Executable Inner and    Outer Shareable.
+	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
+	// AttrIdx=000 Device-nGnRnE.
+
+	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
+	LDR    X2, =0x80000741
+	STR    X2, [X0], #8
+
+	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
+	LDR    X2, =0xC0000741
+	STR    X2, [X0], #8
+
+	// Set level 2 translation table.
+	LDR    X0, =PHYSADDR(_level2_pagetable)  	// Base address of level2_pagetable.
+	LDR    X2, =0x00000721        	// Executable Inner and Outer Shareable.
+					// R/W at all ELs secure memory.
+					// AttrIdx=011  Normal Cacheable.
+
+	MOV    X4, #512			// Set 512 level2 block entries.
+	LDR    X5, =0x00200000        	// Increase 2MB address each time.
+loop:
+	STR    X2, [X0], #8 		// Each entry occupies 2 words.
+	ADD    X2, X2, X5
+	SUBS   X4, X4, #1
+	BNE	loop	
+	
+#endif	
 	
 no_cpu0_init:
 change_el:
@@ -155,7 +207,7 @@ change_el:
 	MSR	HCR_EL2, XZR   
 	MRS	X0, HCR_EL2
 	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	//ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
 	MSR	HCR_EL2, X0
 
 	
@@ -170,21 +222,7 @@ change_el:
 	// Determine EL2 entry.
 	ADR	X0, el2_entry     	// el2_entry points to the first instruction of
 	MSR	ELR_EL3, X0       	// EL2 code.
-	ERET
-	
-el2_entry:
-	MRS	x4, CurrentEl
 
-	// Determine the  EL1 Execution stat
-	MOV	X0, #0x3c5//#0b00101 		// DAIF=0000
-	MSR	SPSR_EL2, X0      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
-	
-	ADR	X0, el1_entry     	// el1_entry points to the first instruction of
-	MSR	ELR_EL2, X0       	// EL1 code.
-	ERET
-	
-el1_entry:
-	MRS	x0, CurrentEl
 
 mmu_setup:
 	dsb	sy
@@ -196,12 +234,20 @@ mmu_setup:
 	dsb	ish
 	isb
 
-	ldr	x0, =(MAIR_DEVICE_nGnRnE | MAIR_NORMAL_WT | MAIR_NORMAL_NC | MAIR_NORMAL_WB)
+	ldr	x0, =( \
+	MAIR_ATTR(MAIR_DEVICE_nGnRnE, 3) \
+	| MAIR_ATTR(MAIR_NORMAL_WT, 2) \
+	| MAIR_ATTR(MAIR_NORMAL_NC, 1) \
+	| MAIR_ATTR(MAIR_NORMAL_WB, 0))
 	msr	mair_el1, x0
 
 
 	/* TCR_EL1:IPS[34:32] = AA64MMFR0:PARange[3:0] */
-	ldr	x0, =( TCR_TxSZ(0x10) | TCR_CACHE_ATTRS | TCR_SMP_ATTRS |  TCR_TG1_64K | TCR_TG0_64K)
+	ldr	x0, =(\
+	TCR_TxSZ(24)\
+	| TCR_CACHE_ATTRS\
+	| TCR_SMP_ATTRS\
+	| TCR_TGx_(4K))
 	mrs	x1, id_aa64mmfr0_el1
 	bfi	x0, x1, #32, #3
 	msr	tcr_el1, x0
@@ -210,17 +256,63 @@ mmu_setup:
 	 * configure SCTLR
 	 */
 	mrs	x0, sctlr_el1
-	ldr	x1, =(SCTLR_IESB | SCTLR_WXN | SCTLR_UMA | SCTLR_ITD | SCTLR_THEE | SCTLR_CP15BEN | SCTLR_SA0 | SCTLR_SA | SCTLR_A | 0)
+	ldr	x1, =(	\
+	SCTLR_IESB 	\
+	| SCTLR_WXN 	\
+	| SCTLR_UMA 	\
+	| SCTLR_ITD 	\
+	| SCTLR_THEE 	\
+	| SCTLR_CP15BEN \
+	| SCTLR_SA0 	\
+	| SCTLR_SA 	\
+	| SCTLR_A 	\
+	| 0)
 	bic	x0, x0, x1
-	ldr	x1, =(SCTLR_LSMAOE | SCTLR_nTLSMD | SCTLR_UCI | SCTLR_SPAN | SCTLR_UCT | SCTLR_nTWE | SCTLR_nTWI | SCTLR_DZE | SCTLR_I | SCTLR_SED | SCTLR_C | SCTLR_M | SCTLR_SA0 | SCTLR_SA | SCTLR_A | 0)
+
+	ldr	x1, =(	\
+	SCTLR_LSMAOE 	\
+	| SCTLR_nTLSMD 	\
+	| SCTLR_UCI 	\
+	| SCTLR_SPAN 	\
+	| SCTLR_UCT 	\
+	| SCTLR_nTWE 	\
+	| SCTLR_nTWI 	\
+	| SCTLR_DZE 	\
+	| SCTLR_I 	\
+	| SCTLR_SED 	\
+	| SCTLR_C 	\
+	| SCTLR_M 	\
+	| SCTLR_SA0 	\
+	| SCTLR_SA 	\
+	| SCTLR_A 	\
+	| 0)
 	orr x0, x0, x1
 	
 	ldr	x1, =(SCTLR_EE | SCTLR_EOE)
 	//orr	x0, x0, x1 /* set: BigEndian */
 	bic x0, x0, x1  /* clear: LittleEndian */
+	
+
+	ERET 	//jump to el2_entry
+	
+el2_entry:
+	MRS	x4, CurrentEl
+
+	// Determine the  EL1 Execution stat
+	MOV	X1, #0x3c5//#0b00101 		// DAIF=0000
+	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
+	
+	ADR	X1, el1_entry     	// el1_entry points to the first instruction of
+	MSR	ELR_EL2, X1       	// EL1 code.
+	ERET
+	
+el1_entry:
+	MRS	x1, CurrentEl
+
 
 mmu_enable:
- 	msr	sctlr_el1, x0	/* enabling MMU! */
+	msr	sctlr_el1, x0	/* enabling MMU! */
+	dsb	sy
 	isb
 	MRS	x4, CurrentEl	
 
@@ -250,12 +342,14 @@ mmu_enable:
 	MOV    X3, #CPU_STACK_SIZE
 	MUL    X3, X2, X3                 // Create separated stack spaces
 	SUB    X1, X1, X3                 // for each processor
+
+	ADR    X1, PHYSADDR(_el1_stack)
 	MOV    SP, X1
 	
  	// Enter kernel_entry with empty stack.
- 	mov	x4, lr
- 	ldr	lr, =kernel_exit
-
+enter_kernel:
+	mov	x4, lr
+	ldr	lr, =kernel_exit
 	br	x4
 
 ///////////////////////////////////////
