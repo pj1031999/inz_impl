@@ -1,7 +1,6 @@
 #ifndef ARMCPU_H
 #define ARMCPU_H
 
-//#include <arm/cpureg.h>
 #include <aarch64/cpureg.h>
 
 static inline unsigned arm_cpu_id(void) {

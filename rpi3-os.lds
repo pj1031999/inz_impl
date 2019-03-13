@@ -46,9 +46,8 @@ SECTIONS
 
   .bss : ALIGN(65536)
   {
-    _kernel_pde = .;
+    _level0_pagetable = .;
     . = . + 65536;
-    
     _level1_pagetable = .;
     . = . + 65536;
     _level2_pagetable = .;
@@ -56,19 +55,16 @@ SECTIONS
     _level3_pagetable = .;
     . = . + 65536;
 
-
-    _kernel_pte = .;
-    . = . + 4096;
-
-    _irq_stack = .;
-    . = . + 4096;
-
-    _svc_stack = .;
-    . = . + 4096;
-
-    _abt_stack = .;
-    . = . + 4096;
-
+    _el0_stack = .;
+    . = . + 65536;
+    _el1_stack = .;
+    . = . + 65536;
+    _el2_stack = .;
+    . = . + 65536;
+    _el3_stack = .;
+    . = . + 65536;
+    
+    
     _bss_start = .;
     *(.bss .bss.*)
     *(COMMON)

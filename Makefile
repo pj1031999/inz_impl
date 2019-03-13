@@ -34,7 +34,7 @@ include build.mk
 $(KERELF): $(KRT) $(LDSCRIPT)
 	@echo "[LD] $^ -> $@"
 	$(CC) $(LDFLAGS) $(KRT) -lgcc -Wl,-Map=kernel.map -T$(LDSCRIPT) -o $@
- 
+
 $(KERIMG): $(KERELF)
 	@echo "[OBJCOPY] $< -> $@"
 	$(OBJCOPY) $(KERELF) --gap-fill=0xff -O binary $(KERIMG)
@@ -44,7 +44,7 @@ run: build
 
 debug: build
 	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF)
-	
+
 debuggdb: build
 	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF) &
 	$(GDB) \
@@ -53,8 +53,8 @@ debuggdb: build
 	-ex 'set scheduler-locking on' \
 	-ex 'set remotetimeout unlimited' \
 	-ex 'b kernel_entry'
- 
+
 extra-clean: clean-kernel clean-klibc
 	$(RM) $(KERELF) $(KERIMG) $(KERMAP)
- 
+
 # vim: ts=8 sw=8 noet:

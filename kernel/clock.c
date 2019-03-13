@@ -34,7 +34,7 @@ static void clock_irq(unsigned irq __unused) {
 
 void clock_init(void) {
 #ifdef AARCH64
-  reg_cntfrq_el0_write(CLK_FREQ);
+  reg_cntvct_el0_write(CLK_FREQ);
   reg_cntp_tval_el0_write(CLK_FREQ);
   reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
 

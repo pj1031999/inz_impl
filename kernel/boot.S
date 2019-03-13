@@ -2,13 +2,14 @@
 // AArch64 mode 
 // To keep this in the first portion of the binary.
 
-//#include "dev/bcm2836reg.h"
-
+#include "aarch64/aarch64reg.h"
+#include "dev/bcm2836reg.h"
+	
+#define CPU_STACK_SIZE 8192
 #define UPPERADDR 0xFFFF000000000000
 #define PHYSADDR(x) ((x) - UPPERADDR)
 
 	
-//.section ".text.boot"
 .section ".init"
  
 .globl _start
@@ -16,54 +17,29 @@
  
 	
 _start:
-#if 0
-clear_cache:
-	//Disable L1 Caches
-	MRS    X0, SCTLR_EL3		// Read SCTLR_EL3.
-	MRS    X0, SCTLR_EL1		// Read SCTLR_EL1.
-	BIC    X0,   X0, #(0x1 << 2)   	// Disable D Cache.
-	MSR    SCTLR_EL3, X0         	// Write SCTLR_EL3.
-	MSR    SCTLR_EL1, X0         	// Write SCTLR_EL1.	
+	//start at el3
+	MRS	x4, CurrentEl	
 
-	// Invalidate Data cache to make the code general purpose.
-	// Calculate the cache size first and loop through each set +
-	//   way  .
-	MOV    X0, #0x0             	//  X0 = Cache level
-	MSR    CSSELR_EL1, x0		// 0x0 for L1 Dcache  0x2    for L2 Dcache.
-	MRS    X4, CCSIDR_EL1     	// Read Cache Size ID.
-	AND    X1, X4, #0x7
-	ADD    X1, X1, #0x4         	// X1 = Cache Line Size.
-	LDR    X3, =0x7FFF
-	AND    X2, X3, X4, LSR   #13	// X2 = Cache Set Number – 1.
-	LDR    X3, =0x3FF
-	AND    X3, X3, X4, LSR   #3	//  X3 = Cache Associativity Number – 1.
-	CLZ    W4,   W3             	// X4 = way position in the CISW  instruction.
-	MOV    X5, #0               	//  X5 = way counter way_loop.
-way_loop:
-	MOV    X6, #0               	//  X6 = set counter set_loop.
-set_loop:
-	LSL    X7, X5,  X4 
 
-	ORR    X7, X0, X7           	// Set way.
-	LSL    X8, X6, X1
-	ORR    X7, X7,  X8 	        // Set set.
-	DC     cisw, X7         	// Clean and Invalidate cache line.
-	ADD    X6, X6, #1           	// Increment set counter.
-	CMP    X6, X2              	// Last set reached yet?
-	BLE    set_loop             	// If not, iterate set_loop,
-	ADD    X5, X5, #1           	// else, next way.
-	CMP    X5, X3               	// Last way reached yet?
-	BLE    way_loop             	// I f not, iterate way_loop
-#endif
-	
-set_cores:	// [lr] kernel entry point
+	// You must ensure this bit is set to 1 before the caches and MMU are
+	// enabled, or any cache and TLB maintenance operations are performed.
+enable_cache:
+	MRS	X0, S3_1_C15_C2_1
+	ORR	X0, X0, #(0x1 << 6)	// The  SMP bit.
+	MSR	S3_1_C15_C2_1, X0 
+	DSB	SY
+	ISB
+
+
+	// [lr] kernel entry point
 	LDR 	lr, =kernel_entry
 
 	// [x3] core number 
 	MRS	X3, MPIDR_EL1 		// Multiprocessor Affinity Register
 	ANDS 	X3, X3, #3		
 	BEQ 	clear_bss
-
+	
+cpu_mailbox_wait:	
 	// [CPU#1-CPU#3] Wait for entry point to appear in local mailbox #3
 	ldr	x4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
 
@@ -76,238 +52,205 @@ set_cores:	// [lr] kernel entry point
 	str	lr, [x4, x3]	// clear the mailbox
 	lsr	x3, x3, #4
 
-	// [CPU#0] Clear BSS section.
+	
+	cmp	x3, #0
+	bne	no_cpu0_init
+
+
 clear_bss:
+	// [CPU#0] Clear BSS section.
+
 	ldr	x4, =PHYSADDR(_bss_start)
-	ldr	x9, =PHYSADDR(_bss_end)
-	mov	x5, #0
-	mov	x6, #0
-1:	stp 	x5, x6, [x4], #16
-	stp 	x5, x6, [x4], #16	
-	cmp	x4, x9
+	ldr	x5, =PHYSADDR(_bss_end)
+1:	stp 	xzr, xzr, [x4], #16
+	cmp	x4, x5
 	blo	1b
 
+#if 0
+clear_cache:	
+	// Disable L1 Caches
+	MRS    	X0, SCTLR_EL3		// Read SCTLR_EL3.
+	BIC    	X0,   X0, #(0x1 << 2)   // Disable D Cache.
+	MSR	SCTLR_EL3, X0         	// Write SCTLR_EL3.
 
-setup_translation:
-	TLBI ALLE1
-	DSB SY
-	ISB
-	
-#if 1
-	// Initialize translation table control registers
+	// Invalidate Data cache to make the code general purpose.
+	// Calculate the cache size first and loop through each set +
+	//   way  .
+	MOV    X0, #0x0            	//  X0 = Cache level
+	MSR    CSSELR_EL1, x0          	// 0x0 for L1 Dcache  0x2    for L2 Dcache.
 
-	LDR	X1, =0x7910	// 64KB granularity
-				// Inner-shareable.
-	MSR	TCR_EL2, X1	// Normal Inner and Outer Cacheable.
-	MSR	TCR_EL3, X1
+	MRS    X4, CCSIDR_EL1       	// Read Cache Size ID.
+	AND    X1, X4, #0x7
+	ADD    X1, X1, #0x4         	// X1 = Cache Line Size.
+	LDR    X3, =0x7FFF
+	AND    X2, X3, X4, LSR   #13  	// X2 = Cache Set Number – 1.
+	LDR    X3, =0x3FF
+	AND    X3, X3, X4, LSR   #3   	//  X3 = Cache Associativity Number – 1.
+	CLZ    W4,   W3               	// X4 = way position in the CISW  instruction.
 	
-	LDR	X1, =0xf9107910	// 64KB granularity
-				// Inner-shareable.
-	MSR	TCR_EL1, X1	// Normal Inner and Outer Cacheable.
-	DSB	SY
-	ISB
-	
-	LDR	X1, =0xFF440400	// ATTR0 Device-nGnRnE ATTR1 Device.
-	MSR	MAIR_EL3,X1
-	MSR	MAIR_EL2,X1	
-	MSR	MAIR_EL1,X1	// ATTR2 Normal Non-Cacheable.
-				// ATTR3 Normal Cacheable.
-	ISB
+	MOV    X5, #0               	//  X5 = way counter way_loop.
+way_loop:
+	MOV    X6, #0               	//  X6 = set counter set_loop.
+set_loop:
+	LSL    X7, X5,  X4 
+	ORR    X7, X0, X7           // Set way.
+	LSL    X8, X6, X1
+	ORR    X7, X7,  X8           // Set set.
+	DC     cisw, X7             // Clean and Invalidate cache line.
+	ADD    X6, X6, #1           // Increment set counter.
+	CMP    X6, X2               // Last set reached yet?
+	BLE    set_loop             // If not, iterate set_loop,
+	ADD    X5, X5, #1           // else, next way.
+	CMP    X5, X3               // Last way reached yet?
+	BLE    way_loop             // I f not, iterate way_loop.
+#endif	
+
+
+setup_translation_table:
+	/* Invalidate all TLB */
+	TLBI	ALLE1
+	tlbi	vmalle1is
+	dsb	ish
+	isb
 	
 	ADR	X0, PHYSADDR(_level2_pagetable)	// must be a 4KB-aligned address.
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
-	MSR	TTBR0_EL2, X0
-	MSR	TTBR0_EL3, X0	
+	//MSR	TTBR0_EL2, X0
+	//MSR	TTBR0_EL3, X0
 	DSB	SY
 	ISB
-
-	LDR	X2, =0x00000721
-	LDR    X5, =0x20000000	// Increase 512MB address each time.
 	
-	MOV    X4, #8192	// Set level2 block entries.
+	LDR	X2, =0x00000721
+	LDR	X5, =0x20000000	// Increase 512MB address each time.
+	MOV	X4, #8192	// Set level2 block entries.
 loop:
-	STR    X2, [X0], #8 	// Each entry occupies 2 words.
-	ADD    X2, X2, X5
-	SUBS   X4, X4, #1
-	BNE    loop
-#endif
+	STR	X2, [X0], #8 	// Each entry occupies 2 words.
+	ADD	X2, X2, X5
+	SUBS	X4, X4, #1
+	BNE	loop
 
-
-	// You must ensure this bit is set to 1 before the caches and MMU are
-	// enabled, or any cache and TLB maintenance operations are performed.
-enable_cache:
-	//It is implemented in the CPUECTLR register.
-	MRS    X0, S3_1_C15_C2_1
-	ORR    X0, X0, #(0x1 << 6)	// The  SMP bit.
-	DSB    SY
-	ISB
-	MSR    S3_1_C15_C2_1, X0 
-	DSB    SY
-	ISB
-
-	//MSR   SCTLR_EL3, XZR
-	MRS    X0, SCTLR_EL3
-
-	ORR    X0, X0, #(0x1 << 2)     	// The   C bit (data cache).
-	ORR    X0, X0, #(0x1 << 12)     // The   I bit (instruction cache).
-	ORR    X0, X0, #0x1             // The   M bit (MMU).
-
-	MSR    SCTLR_EL3, X0
-	MSR    SCTLR_EL2, X0	
-	//MSR    SCTLR_EL1, X0
-	DSB    SY
-	ISB
-
+	
+no_cpu0_init:
 change_el:
-
-#if 1
 	//Change Exception Level
 	MRS	x4, CurrentEl
 	CMP	x4, #8
 	BEQ	el2_entry
-	
-	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2.
-	mov	x4, 0b1
-	MSR    	SCTLR_EL2, x4
-	
-	MSR    HCR_EL2, XZR		// Determine the  EL2    Execution state.
-	
-	MRS    X0, SCR_EL3
-	ORR    X0, X0, #(1<<10)		// RW  EL2 Execution state is AArch64.
-	ORR    X0, X0, #(1<<0)		// NS   EL1 is Non-secure world.
-	MSR    SCR_EL3, x0
 
-	MOV    X0, #0b01001		// DAIF=0000
-	MSR    SPSR_EL3, X0 		// M[4:0]=01001 EL2h must match SCR_EL3.RW
+	LDR    X1, =0x30C50838
+	MSR    SCTLR_EL2, X1 
+	//MSR    SCTLR_EL1, X1
+	
+	// Initialize the    SCTLR_EL1 register before entering EL1.
+	MRS	X0, SCTLR_EL1	
+	ORR	X0, X0, #(0x1 << 2)	// The   C bit (data cache).
+	ORR	X0, X0, #(0x1 << 12)	// The   I bit (instruction cache).
+	//ORR	X0, X0, #0x1		// The   M bit (MMU).
+	MSR	SCTLR_EL1, X0
+	DSB	SY
+	ISB
+	
+	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
+	MSR	HCR_EL2, XZR   
+	MRS	X0, HCR_EL2
+	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
+	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	MSR	HCR_EL2, X0
+
+	
+	MRS	X0, SCR_EL3
+	ORR	X0, X0, #(1<<10)	// RW EL2 Execution state is AArch64.
+	ORR	X0, X0, #(1<<0)		// NS EL1 is Non-secure world.
+	MSR	SCR_EL3, x0
+
+	MOV	X0, #0b01001		// DAIF=0000
+	MSR	SPSR_EL3, X0 		// M[4:0]=01001 EL2h must match SCR_EL3.RW
 
 	// Determine EL2 entry.
-	ADR    X0, el2_entry     // el2_entry points to the first instruction of
-	MSR    ELR_EL3, X0       // EL2 code.
+	ADR	X0, el2_entry     	// el2_entry points to the first instruction of
+	MSR	ELR_EL3, X0       	// EL2 code.
 	ERET
 	
 el2_entry:
 	MRS	x4, CurrentEl
 
-	// Determine the  EL1    Execution state.
-	MRS    X0, HCR_EL2
-	ORR    X0,   X0, #(1<<31) 	// RW=1  EL1  Execution state is AArch64.
-	MSR    HCR_EL2, X0
-
-	MOV    X0, #0b00101      // DAIF=0000
-	MSR    SPSR_EL2, X0      // M[4:0]=00101 EL1h must match HCR_EL2.RW.
-
-	ADR    X0, el1_entry     // el1_entry points to the first instruction of
-	MSR    ELR_EL2, X0       // EL1 code.
+	// Determine the  EL1 Execution stat
+	MOV	X0, #0x3c5//#0b00101 		// DAIF=0000
+	MSR	SPSR_EL2, X0      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
+	
+	ADR	X0, el1_entry     	// el1_entry points to the first instruction of
+	MSR	ELR_EL2, X0       	// EL1 code.
 	ERET
 	
-#else
-
-	/* Try drop from el3 to el1  */
-	/*=============================================================*/
-	/*      Initialize sctlr_el1                                   */
-	/*=============================================================*/
-	// mov x0, xzr
-	// orr x0, x0, #(1 << 29)        
-	// orr x0, x0, #(1 << 28)        
-	// orr x0, x0, #(1 << 23)
-	// orr x0, x0, #(1 << 22)
-	// orr x0, x0, #(1 << 20)
-	// orr x0, x0, #(1 << 11)
-	 
-	ORR    X0, X0, #(0x1 << 2)     	// The   C bit (data cache).
-	ORR    X0, X0, #(0x1 << 12)     // The   I bit (instruction cache).
-	ORR    X0, X0, #0x1             // The   M bit (MMU).	
-	MSR    SCTLR_EL1, X0
-	DSB    SY
-	ISB
-
-	/*=============================================================*/
-	/*      Initialize scr_el3                                     */
-	/*=============================================================*/
-	mrs x0, scr_el3
-	orr x0, x0, #(1<<10)    // Lower EL is 64bits
-	ORR X0, X0, #(1<<0)	// NS EL1 is Non-secure world.
-	msr scr_el3, x0
-
-	/*=============================================================*/
-	/*      Initialize spsr_el3                                    */
-	/*=============================================================*/
-	mov x0, xzr
-	mov x0, #0b0101            /* EL2 */
-	orr x0, x0, #(1 << 8)       /* Enable SError and External Abort. */
-	orr x0, x0, #(1 << 7)       /* IRQ interrupt Process state mask. */
-	orr x0, x0, #(1 << 6)       /* FIQ interrupt Process state mask. */
-	msr spsr_el3, x0
-
-	/*=============================================================*/
-	/*      Initialize elr_el3                                     */
-	/*=============================================================*/
-	adr x0, el1_entry
-	msr elr_el3, x0
-	eret
-		
-#endif
-
 el1_entry:
 	MRS	x0, CurrentEl
 
-	// Initialize the    SCTLR_EL1 register before entering EL1.
-	MSR    SCTLR_EL1, XZR
-	MRS    X0, SCTLR_EL1
-	ORR    X0, X0, #(0x1 << 2)     	// The   C bit (data cache).
-	ORR    X0, X0, #(0x1 << 12)     // The   I bit (instruction cache).
-	ORR    X0, X0, #0x1             // The   M bit (MMU).
-	MSR    SCTLR_EL1, X0
-	DSB    SY
-	ISB
+mmu_setup:
+	dsb	sy
+	isb
+	
+	/* Invalidate all TLB */
+	dsb	ishst
+	tlbi	vmalle1is
+	dsb	ish
+	isb
+
+	ldr	x0, =(MAIR_DEVICE_nGnRnE | MAIR_NORMAL_WT | MAIR_NORMAL_NC | MAIR_NORMAL_WB)
+	msr	mair_el1, x0
+
+
+	/* TCR_EL1:IPS[34:32] = AA64MMFR0:PARange[3:0] */
+	ldr	x0, =( TCR_TxSZ(0x10) | TCR_CACHE_ATTRS | TCR_SMP_ATTRS |  TCR_TG1_64K | TCR_TG0_64K)
+	mrs	x1, id_aa64mmfr0_el1
+	bfi	x0, x1, #32, #3
+	msr	tcr_el1, x0
+
+	/*
+	 * configure SCTLR
+	 */
+	mrs	x0, sctlr_el1
+	ldr	x1, =(SCTLR_IESB | SCTLR_WXN | SCTLR_UMA | SCTLR_ITD | SCTLR_THEE | SCTLR_CP15BEN | SCTLR_SA0 | SCTLR_SA | SCTLR_A | 0)
+	bic	x0, x0, x1
+	ldr	x1, =(SCTLR_LSMAOE | SCTLR_nTLSMD | SCTLR_UCI | SCTLR_SPAN | SCTLR_UCT | SCTLR_nTWE | SCTLR_nTWI | SCTLR_DZE | SCTLR_I | SCTLR_SED | SCTLR_C | SCTLR_M | SCTLR_SA0 | SCTLR_SA | SCTLR_A | 0)
+	orr x0, x0, x1
+	
+	ldr	x1, =(SCTLR_EE | SCTLR_EOE)
+	//orr	x0, x0, x1 /* set: BigEndian */
+	bic x0, x0, x1  /* clear: LittleEndian */
+
+mmu_enable:
+ 	msr	sctlr_el1, x0	/* enabling MMU! */
+	isb
+	MRS	x4, CurrentEl	
 
 	
-	ldr x4, =0xffff0000000810c4
-	AT S1E1R, X4
-	ISB
-	MRS X6, PAR_EL1
-	ISB
-
-	MRS	X0, SCTLR_EL1
-
-
-	
-no_cpu0_init:
-
-	// Setup domains - Dom0 is usable, rest is disabled.
+// Setup domains - Dom0 is usable, rest is disabled.
 // 	mov	x4, #1
 // 	mcr	p15, 0, r4, c3, c0, 0	@ Domain Access Control Register
-
-
 // 	@ Configure exception base vector.
 // 	ldr	r4, =_exc_vector
 // 	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
 // 	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
 
-// 	@ Initialially we're running in supervisor mode.
-// 	mrs	r4, spsr
-// 	bic	r4, r4, #PSR_MODE
-	// Setup the stack for fast interrupt mode.
-// 	orr	r5, r4, #PSR_FIQ32_MODE
-// 	msr	cpsr_c, r5
-// 	ldr	sp, =_irq_stack+4096
-// 	@ Setup the stack for interrupt mode.
-// 	orr	r5, r4, #PSR_IRQ32_MODE
-// 	msr	cpsr_c, r5
-// 	ldr	sp, =_irq_stack+4096
-// 	@ Setup the stack for abort mode.
-// 	orr	r5, r4, #PSR_ABT32_MODE
-// 	msr	cpsr_c, r5
-// 	ldr	sp, =_abt_stack+4096
- 	// Setup the stack for supervisor mode.
-// 	orr	x5, x4, #PSR_SVC32_MODE
-// 	msr	cpsr_c, r5
- 	ldr	x4, =_svc_stack+4096
-	mov 	sp, x4	
-	// Continue in supervisor mode.
 
-1:
+	ldr	x4, =0xffff0000000810c4
+	AT	S1E1R, X4
+	ISB
+	MRS	X6, PAR_EL1
+	ISB
+
+	MRS	X0, SCTLR_EL1
+
+	
+	ADR    X1, PHYSADDR(_el1_stack)
+	ADD    X1, X1, #4
+	MRS    X2, MPIDR_EL1
+	AND    X2, X2, #0xFF               // X2 == CPU number.
+	MOV    X3, #CPU_STACK_SIZE
+	MUL    X3, X2, X3                 // Create separated stack spaces
+	SUB    X1, X1, X3                 // for each processor
+	MOV    SP, X1
 	
  	// Enter kernel_entry with empty stack.
  	mov	x4, lr
@@ -315,7 +258,6 @@ no_cpu0_init:
 
 	br	x4
 
-	
 ///////////////////////////////////////
 // AArch32
 ///////////////////////////////////////
