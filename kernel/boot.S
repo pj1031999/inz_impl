@@ -66,45 +66,6 @@ clear_bss:
 	cmp	x4, x5
 	blo	1b
 
-#if 1
-clear_cache:	
-	// Disable L1 Caches
-	MRS    	X0, SCTLR_EL3		// Read SCTLR_EL3.
-	BIC    	X0,   X0, #(0x1 << 2)   // Disable D Cache.
-	MSR	SCTLR_EL3, X0         	// Write SCTLR_EL3.
-
-	// Invalidate Data cache to make the code general purpose.
-	// Calculate the cache size first and loop through each set +
-	//   way  .
-	MOV    X0, #0x0            	//  X0 = Cache level
-	MSR    CSSELR_EL1, x0          	// 0x0 for L1 Dcache  0x2    for L2 Dcache.
-
-	MRS    X4, CCSIDR_EL1       	// Read Cache Size ID.
-	AND    X1, X4, #0x7
-	ADD    X1, X1, #0x4         	// X1 = Cache Line Size.
-	LDR    X3, =0x7FFF
-	AND    X2, X3, X4, LSR   #13  	// X2 = Cache Set Number – 1.
-	LDR    X3, =0x3FF
-	AND    X3, X3, X4, LSR   #3   	// X3 = Cache Associativity Number – 1.
-	CLZ    W4,   W3               	// X4 = way position in the CISW  instruction.
-	
-	MOV    X5, #0               	//  X5 = way counter way_loop.
-way_loop:
-	MOV    X6, #0               	//  X6 = set counter set_loop.
-set_loop:
-	LSL    X7, X5,  X4 
-	ORR    X7, X0, X7           // Set way.
-	LSL    X8, X6, X1
-	ORR    X7, X7,  X8           // Set set.
-	DC     cisw, X7             // Clean and Invalidate cache line.
-	ADD    X6, X6, #1           // Increment set counter.
-	CMP    X6, X2               // Last set reached yet?
-	BLE    set_loop             // If not, iterate set_loop,
-	ADD    X5, X5, #1           // else, next way.
-	CMP    X5, X3               // Last way reached yet?
-	BLE    way_loop             // I f not, iterate way_loop.
-#endif	
-
 
 setup_translation_table:
 	/* Invalidate all TLB */
@@ -131,13 +92,6 @@ loop:
 	SUBS	X4, X4, #1
 	BNE	loop
 #else
-	// Initialize translation table control registers
-	LDR    X1, =0x3520	// 4GB space 4KB granularity
-	// Inner-shareable.
-	MSR    TCR_EL3, X1	// Normal Inner and    Outer Cacheable.
-	LDR    X1, =0xFF440400	// ATTR0 Device-nGnRnE ATTR1 Device.
-	MSR    MAIR_EL3, X1     // ATTR2 Normal Non-Cacheable.
-				//   ATTR3 Normal Cacheable.
 	ADR    X0, PHYSADDR(_level0_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	//MSR    TTBR0_EL3, X0
 	MSR    TTBR1_EL1, X0
@@ -148,16 +102,16 @@ loop:
 	// Set the level 1 translation table.
 	// The first entry points to level2_pagetable.
 
-	LDR    X1, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
-	LDR    X2, =0xFFFFF000
-	AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
+	LDR    X2, = PHYSADDR(_level1_pagetable) // Must  be a 4KB align address.
+	//LDR    X1, =0xFFFFF000
+	// AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
 	ORR    X2, X2, 0x3
 	STR    X2, [X0], #8
-
+	
 	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
 	LDR    X2, =0x40000741        	// Executable Inner and    Outer Shareable.
 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
-	// AttrIdx=000 Device-nGnRnE.
+					// AttrIdx=000 Device-nGnRnE.
 
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
 	LDR    X2, =0x80000741
@@ -168,7 +122,7 @@ loop:
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
-	LDR    X0, =PHYSADDR(_level2_pagetable)  	// Base address of level2_pagetable.
+	LDR    X0, =PHYSADDR(_level1_pagetable)  	// Base address of level2_pagetable.
 	LDR    X2, =0x00000721        	// Executable Inner and Outer Shareable.
 					// R/W at all ELs secure memory.
 					// AttrIdx=011  Normal Cacheable.
@@ -190,24 +144,11 @@ change_el:
 	CMP	x4, #8
 	BEQ	el2_entry
 
-	LDR    X1, =0x30C50838
-	MSR    SCTLR_EL2, X1 
-	//MSR    SCTLR_EL1, X1
-	
-	// Initialize the    SCTLR_EL1 register before entering EL1.
-	MRS	X0, SCTLR_EL1	
-	ORR	X0, X0, #(0x1 << 2)	// The   C bit (data cache).
-	ORR	X0, X0, #(0x1 << 12)	// The   I bit (instruction cache).
-	//ORR	X0, X0, #0x1		// The   M bit (MMU).
-	MSR	SCTLR_EL1, X0
-	DSB	SY
-	ISB
-	
 	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
 	MSR	HCR_EL2, XZR   
 	MRS	X0, HCR_EL2
 	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	//ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
 	MSR	HCR_EL2, X0
 
 	
