@@ -1,13 +1,7 @@
-TARGET	= arm-none-eabi
-
-CPPFLAGS    = -I $(TOPDIR)/include
-CPUFLAGS    = -mcpu=cortex-a7 -mfpu=vfpv4-d16
-OPTFLAGS    = -Og -fomit-frame-pointer
-
-ifdef MIMIKER_ARMV8
-  TARGET = aarch64-mimiker-elf
-  CPUFLAGS = -mcpu=cortex-a53 -march=armv8-a -DAARCH64
-endif
+CPPFLAGS	= -I $(TOPDIR)/include
+OPTFLAGS	= -Og -fomit-frame-pointer
+TARGET		= aarch64-mimiker-elf
+CPUFLAGS	= -mcpu=cortex-a53 -march=armv8-a -DAARCH64
 
 CC	= $(TARGET)-gcc -g 
 AR	= $(TARGET)-ar
