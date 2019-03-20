@@ -17,10 +17,11 @@
  
 	
 _start:
-	//start at el3
+	//start at el3 or el2
 	MRS	x4, CurrentEl	
-
-
+	CMP	x4, 0x8 	//0x8 = el2
+	BEQ	set_link_register
+	
 	// You must ensure this bit is set to 1 before the caches and MMU are
 	// enabled, or any cache and TLB maintenance operations are performed.
 enable_cache:
@@ -31,6 +32,7 @@ enable_cache:
 	ISB
 
 
+set_link_register:	
 	// [lr] kernel entry point
 	LDR 	lr, =kernel_entry
 
@@ -66,6 +68,46 @@ clear_bss:
 	cmp	x4, x5
 	blo	1b
 
+#if 0
+clear_cache:
+	//Disable L1 Caches
+	MRS    X0, SCTLR_EL3		// Read SCTLR_EL3.
+	MRS    X0, SCTLR_EL1		// Read SCTLR_EL1.
+	BIC    X0,   X0, #(0x1 << 2)   	// Disable D Cache.
+	MSR    SCTLR_EL3, X0         	// Write SCTLR_EL3.
+	MSR    SCTLR_EL1, X0         	// Write SCTLR_EL1.	
+
+	// Invalidate Data cache to make the code general purpose.
+	// Calculate the cache size first and loop through each set +
+	//   way  .
+	MOV    X0, #0x0             	//  X0 = Cache level
+	MSR    CSSELR_EL1, x0		// 0x0 for L1 Dcache  0x2    for L2 Dcache.
+	MRS    X4, CCSIDR_EL1     	// Read Cache Size ID.
+	AND    X1, X4, #0x7
+	ADD    X1, X1, #0x4         	// X1 = Cache Line Size.
+	LDR    X3, =0x7FFF
+	AND    X2, X3, X4, LSR   #13	// X2 = Cache Set Number – 1.
+	LDR    X3, =0x3FF
+	AND    X3, X3, X4, LSR   #3	//  X3 = Cache Associativity Number – 1.
+	CLZ    W4,   W3             	// X4 = way position in the CISW  instruction.
+	MOV    X5, #0               	//  X5 = way counter way_loop.
+way_loop:
+	MOV    X6, #0               	//  X6 = set counter set_loop.
+set_loop:
+	LSL    X7, X5,  X4 
+
+	ORR    X7, X0, X7           	// Set way.
+	LSL    X8, X6, X1
+	ORR    X7, X7,  X8 	        // Set set.
+	DC     cisw, X7         	// Clean and Invalidate cache line.
+	ADD    X6, X6, #1           	// Increment set counter.
+	CMP    X6, X2              	// Last set reached yet?
+	BLE    set_loop             	// If not, iterate set_loop,
+	ADD    X5, X5, #1           	// else, next way.
+	CMP    X5, X3               	// Last way reached yet?
+	BLE    way_loop             	// I f not, iterate way_loop
+#endif
+	
 
 setup_translation_table:
 	/* Invalidate all TLB */
@@ -109,16 +151,16 @@ loop:
 	STR    X2, [X0], #8
 	
 	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
-	LDR    X2, =0x40000741        	// Executable Inner and    Outer Shareable.
+	LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
 					// AttrIdx=000 Device-nGnRnE.
 
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
-	LDR    X2, =0x80000741
+	LDR    X2, =0x80000721
 	STR    X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
-	LDR    X2, =0xC0000741
+	LDR    X2, =0xC0000721
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
@@ -136,34 +178,6 @@ loop:
 	BNE	loop	
 	
 #endif	
-	
-no_cpu0_init:
-change_el:
-	//Change Exception Level
-	MRS	x4, CurrentEl
-	CMP	x4, #8
-	BEQ	el2_entry
-
-	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
-	MSR	HCR_EL2, XZR   
-	MRS	X0, HCR_EL2
-	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
-	MSR	HCR_EL2, X0
-
-	
-	MRS	X0, SCR_EL3
-	ORR	X0, X0, #(1<<10)	// RW EL2 Execution state is AArch64.
-	ORR	X0, X0, #(1<<0)		// NS EL1 is Non-secure world.
-	MSR	SCR_EL3, x0
-
-	MOV	X0, #0b01001		// DAIF=0000
-	MSR	SPSR_EL3, X0 		// M[4:0]=01001 EL2h must match SCR_EL3.RW
-
-	// Determine EL2 entry.
-	ADR	X0, el2_entry     	// el2_entry points to the first instruction of
-	MSR	ELR_EL3, X0       	// EL2 code.
-
 
 mmu_setup:
 	dsb	sy
@@ -221,7 +235,7 @@ mmu_setup:
 	| SCTLR_DZE 	\
 	| SCTLR_I 	\
 	| SCTLR_SED 	\
-	| SCTLR_C 	\
+	| 0 /*SCTLR_C*/ 	\
 	| SCTLR_M 	\
 	| SCTLR_SA0 	\
 	| SCTLR_SA 	\
@@ -232,10 +246,42 @@ mmu_setup:
 	ldr	x1, =(SCTLR_EE | SCTLR_EOE)
 	//orr	x0, x0, x1 /* set: BigEndian */
 	bic x0, x0, x1  /* clear: LittleEndian */
+
+mmu_enable:
+	msr	sctlr_el1, x0	/* enabling MMU! */
+	dsb	sy
+	isb
+	MRS	x4, CurrentEl	
+
 	
+no_cpu0_init:
+	MRS	x4, CurrentEl	
+	CMP	x4, 0x8 	//0x8 = el2
+	BEQ	change_el
+	
+el3_only:	
+	MRS	X0, SCR_EL3
+	ORR	X0, X0, #(1<<10)	// RW EL2 Execution state is AArch64.
+	ORR	X0, X0, #(1<<0)		// NS EL1 is Non-secure world.
+	MSR	SCR_EL3, x0
+
+	MOV	X0, #0b01001		// DAIF=0000
+	MSR	SPSR_EL3, X0 		// M[4:0]=01001 EL2h must match SCR_EL3.RW
+
+	ADR	X0, change_el     	// el2_entry points to the first instruction of
+	MSR	ELR_EL3, X0       	// EL2 code.
 
 	ERET 	//jump to el2_entry
-	
+
+change_el:
+	//Change Exception Level
+	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
+	MSR	HCR_EL2, XZR   
+	MRS	X0, HCR_EL2
+	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
+	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	MSR	HCR_EL2, X0
+		
 el2_entry:
 	MRS	x4, CurrentEl
 
@@ -249,14 +295,6 @@ el2_entry:
 	
 el1_entry:
 	MRS	x1, CurrentEl
-
-
-mmu_enable:
-	msr	sctlr_el1, x0	/* enabling MMU! */
-	dsb	sy
-	isb
-	MRS	x4, CurrentEl	
-
 	
 // Setup domains - Dom0 is usable, rest is disabled.
 // 	mov	x4, #1
@@ -267,12 +305,18 @@ mmu_enable:
 // 	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
 
 
-	ldr	x4, =0xffff0000000810c4
+	ldr	x4, =0xffffff007e00b224
+	AT	S1E1R, X4
+	ISB
+	MRS	X6, PAR_EL1
+	ISB
+	ldr	x4, =0x7e00b224
 	AT	S1E1R, X4
 	ISB
 	MRS	X6, PAR_EL1
 	ISB
 
+	
 	MRS	X0, SCTLR_EL1
 
 	

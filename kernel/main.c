@@ -1,5 +1,6 @@
 /* main.c - the entry point for the kernel */
 
+#include <aarch64/cpu.h>
 #include <types.h>
 #include <klibc.h>
 #include <cons.h>
@@ -12,13 +13,6 @@
 #include <pmman.h>
 #include <pcpu.h>
 #include <smp.h>
-
-#ifdef AARCH64
-#include <aarch64/cpu.h>
-
-#else
-#include <arm/cpu.h>
-#endif
 
 
 extern uint8_t _brk_limit;
@@ -66,11 +60,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   smp_bootstrap();
   va_bootstrap();
 
-#ifdef AARCH64
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
-#else
-  printf("Config Register: %08x\n", armreg_sctlr_read());
-#endif
   printf("Framebuffer address: %p\n", screen->pixels);
 
   clock_init();

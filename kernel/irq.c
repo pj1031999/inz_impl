@@ -1,11 +1,4 @@
-#ifdef AARCH64
 #include <aarch64/cpu.h>
-
-#else
-#include <arm/cpu.h>
-#endif
-
-
 #include <types.h>
 #include <klibc.h>
 #include <rpi/irq.h>
@@ -37,7 +30,6 @@ static irq_handler_t _handler_vec[BCM2835_NIRQ + BCM2836_NIRQ];
   }
 
 void bcm2835_irq_init(void) {
-#ifdef AARCH64
 /* #define PERIPHERAL_BASE 0x3F000000 */
 /* #define INTERRUPTS_PENDING (INTERRUPTS_BASE + 0x200) */
   
@@ -47,13 +39,6 @@ void bcm2835_irq_init(void) {
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQBDISABLE), -1);
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ1DISABLE), -1);
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ2DISABLE), -1);
-
-  
-#else
-  mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQBDISABLE), -1);
-  mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ1DISABLE), -1);
-  mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ2DISABLE), -1);
-#endif
 }
 
 void bcm2835_irq_register(unsigned irq, irq_handler_t handler) {

@@ -7,7 +7,7 @@ extern uint8_t _kernel[];
 
 static inline void mmio_write(uint32_t reg, uint32_t data) {
   uint32_t *ptr = (void *)(reg + _kernel);
-  __asm__ volatile("str %[data], [%[reg]]"
+  __asm__ __volatile__("str %[data], [%[reg]]"
                    :
                    : [reg] "r"(ptr), [data] "r"(data));
 }
@@ -15,7 +15,7 @@ static inline void mmio_write(uint32_t reg, uint32_t data) {
 static inline uint32_t mmio_read(uint32_t reg) {
   uint32_t *ptr = (void *)(reg + _kernel);
   uint32_t data;
-  __asm__ volatile("ldr %[data], [%[reg]]"
+  __asm__ __volatile__("ldr %[data], [%[reg]]"
                    : [data] "=r"(data)
                    : [reg] "r"(ptr));
   return data;
