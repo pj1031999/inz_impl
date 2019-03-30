@@ -12,7 +12,7 @@ PHDRS
 
 SECTIONS
 {
-  _kernel = 0xFFFFFF0000000000;
+  _kernel = 0xffffFF0000000000;
   _stack_size = 4096;
 
   .init 0x80000 : AT(0x80000) ALIGN(4096)
@@ -44,16 +44,16 @@ SECTIONS
     _data_end = .;
   } : data
 
-  .bss : ALIGN(65536)
+  .bss : ALIGN(32768)
   {
     _level0_pagetable = .;
-    . = . + 65536;
+    . = . + 32768;
     _level1_pagetable = .;
-    . = . + 65536;
+    . = . + 32768;
     _level2_pagetable = .;
-    . = . + 65536;
+    . = . + 32768;
     _level3_pagetable = .;
-    . = . + 65536;
+    . = . + 32768;
 
     . = . + 65536; 
     _el0_stack = .;
@@ -70,8 +70,16 @@ SECTIONS
     *(.bss .bss.*)
     *(COMMON)
     _bss_end = .;
+    
   }
-
+    . = ALIGN(0x00001000);
+	  idmap_dir = .;
+	  .data.idmapd : {. += (3* (1 << 12));}
+	  . = ALIGN(0x00001000);
+	  pg_dir = .;
+	  .data.pgd : { . += (3 * (1 << 12)); }
+  
+  
   . += 32768; /* for physical memory manager bitmap */
 
   _brk_limit = ALIGN(4096);

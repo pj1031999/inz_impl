@@ -1,9 +1,10 @@
 CPPFLAGS	= -I $(TOPDIR)/include
-OPTFLAGS	= -Og -fomit-frame-pointer
+OPTFLAGS	= -O0 -fomit-frame-pointer -ggdb
 TARGET		= aarch64-mimiker-elf
-CPUFLAGS	= -mcpu=cortex-a53 -march=armv8-a -DAARCH64
+CPUFLAGS	= -mcpu=cortex-a53+nofp -march=armv8-a+nofp -mgeneral-regs-only -DAARCH64 -nostartfiles -ffreestanding  -MMD -ggdb
 
-CC	= $(TARGET)-gcc -g 
+
+CC	= $(TARGET)-gcc -g
 AR	= $(TARGET)-ar
 GDB	= $(TARGET)-gdb
 RANLIB	= $(TARGET)-ranlib
@@ -39,11 +40,11 @@ endif
 
 # Disable all built-in recipes
 .SUFFIXES:
- 
+
 %.o: %.c
 	@echo "[CC] $< -> $@"
 	$(CC) $(CFLAGS) -c $< -o $@
- 
+
 %.o: %.S
 	@echo "[AS] $< -> $@"
 	$(CC) $(ASFLAGS) -c $< -o $@

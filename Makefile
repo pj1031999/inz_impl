@@ -2,7 +2,7 @@ TOPDIR := $(realpath .)
 
 LDFLAGS   = -nostdlib -nostartfiles -nodefaultlibs
 QEMU	  = qemu-mimiker-aarch64
-QEMUFLAGS = -smp 4 -M raspi3 -gdb tcp::9000 -serial stdio
+QEMUFLAGS = -smp 4 -M raspi3 -gdb tcp::9000 -serial stdio -d int,mmu,page
 GDB	  = aarch64-mimiker-elf-gdb
 LDSCRIPT  = rpi3-os.lds
 
@@ -32,13 +32,12 @@ debug: build
 	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF)
 
 debuggdb: build
-	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF) &
 	$(GDB) \
 	-ex "file $(KERELF)" \
 	-ex 'target extended-remote localhost:9000' \
 	-ex 'set scheduler-locking on' \
 	-ex 'set remotetimeout unlimited' \
-	-ex 'b kernel_entry'
+	-x gdbinit
 
 extra-clean: clean-kernel clean-klibc
 	$(RM) $(KERELF) $(KERIMG) $(KERMAP)

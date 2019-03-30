@@ -19,7 +19,10 @@ SOURCES_C := \
 
 SOURCES_ASM := \
 	boot.S \
-	evec.S
+	boot2.S \
+	evec.S \
+	timer.S \
+	mm.S
 
 build: kernel.a
 

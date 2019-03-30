@@ -31,3 +31,16 @@ __interrupt("ABORT") void exc_data_abort(void) {
   printf("Illegal %s access at %p (type=%x)!\n",
          (dfsr & FAULT_WRITE) ? "write" : "read", dfar, dfsr & FAULT_TYPE_MASK);
 }
+
+static uint32_t ticks = 0;
+__interrupt("ABORT") void  clock_irq(void) {
+#define CLK_FREQ 192000000
+
+  uint32_t val = reg_cntp_tval_el0_read();
+  reg_cntp_tval_el0_write(val + CLK_FREQ);
+  reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
+
+  //arm_isb();
+  ticks++;
+  printf("tick %d!\n", ticks);
+}

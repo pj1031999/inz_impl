@@ -1,20 +1,17 @@
-#ifdef AARCH64
-// AArch64 mode 
-// To keep this in the first portion of the binary.
-
 #include "aarch64/aarch64reg.h"
+#include "aarch64/exception.S"
 #include "dev/bcm2836reg.h"
+
 	
 #define CPU_STACK_SIZE 4096
-#define UPPERADDR 0xFFFFFF0000000000
-#define PHYSADDR(x) ((x) - UPPERADDR)
+#define UPPERADDR 0xffffFF0000000000
+#define PHYSADDR(x) ((x) - (UPPERADDR))
 
 	
 .section ".init"
  
 .globl _start
 .local no_cpu0_init
- 
 	
 _start:
 	//start at el3 or el2
@@ -47,7 +44,7 @@ cpu_mailbox_wait:
 
 	lsl	x3, x3, #4
 2:	wfe
-	ldr	lr, [x4, x3]	// read mailbox #3 for n-th CPU
+	ldr	w30, [x4, x3]	// lr == x30 there id no wlr |  read mailbox #3 for n-th CPU
 	cmp	lr, #0
 	beq	2b
 	
@@ -117,11 +114,9 @@ setup_translation_table:
 	isb
 
 #if 0	
-	ADR	X0, PHYSADDR(_level2_pagetable)	// must be a 4KB-aligned address.
+	ADR	X0, PHYSADDR(_level0_pagetable)	// must be a 4KB-aligned address.
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
-	//MSR	TTBR0_EL2, X0
-	//MSR	TTBR0_EL3, X0
 	DSB	SY
 	ISB
 	
@@ -134,48 +129,59 @@ loop:
 	SUBS	X4, X4, #1
 	BNE	loop
 #else
-	ADR    X0, PHYSADDR(_level0_pagetable)	// ttb0_base must be a 4KB-aligned address.
-	//MSR    TTBR0_EL3, X0
+	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	MSR    TTBR1_EL1, X0
 	MSR    TTBR0_EL1, X0
 	
-	// Set up translation table entries in memory with looped store
-	// instructions.
-	// Set the level 1 translation table.
-	// The first entry points to level2_pagetable.
-
-	LDR    X2, = PHYSADDR(_level1_pagetable) // Must  be a 4KB align address.
-	//LDR    X1, =0xFFFFF000
-	// AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
+	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
 	ORR    X2, X2, 0x3
+	LDR    X2, =0x00000721
 	STR    X2, [X0], #8
 	
-	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
+	
+	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
+	//ORR    X2, X2, 0x3
 	LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
+	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
 					// AttrIdx=000 Device-nGnRnE.
-
+	
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
 	LDR    X2, =0x80000721
+	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
 	LDR    X2, =0xC0000721
+	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
-	LDR    X0, =PHYSADDR(_level1_pagetable)  	// Base address of level2_pagetable.
-	LDR    X2, =0x00000721        	// Executable Inner and Outer Shareable.
+	LDR    X0, =PHYSADDR(_level2_pagetable) 
+	LDR    X2, =0x00000721
+	MOV    X4, #4096      
+	LDR    X5, =0x00200000
+loop:
+	STR    X2, [X0], #8   
+	ADD    X2, X2, X5
+	SUBS   X4, X4, #1
+	BNE	loop
+
+
+
+//	LDR    X0, =PHYSADDR(_level3_pagetable)  	// Base address of level2_pagetable.
+//	LDR    X2, =0x40000721        	// Executable Inner and Outer Shareable.
 					// R/W at all ELs secure memory.
 					// AttrIdx=011  Normal Cacheable.
 
-	MOV    X4, #512			// Set 512 level2 block entries.
-	LDR    X5, =0x00200000        	// Increase 2MB address each time.
-loop:
-	STR    X2, [X0], #8 		// Each entry occupies 2 words.
-	ADD    X2, X2, X5
-	SUBS   X4, X4, #1
-	BNE	loop	
+// 	MOV    X4, #1024		// Set 512 level2 block entries.
+// 	LDR    X5, =0x00200000        	// Increase 2MB address each time.
+// loop2:
+// 	STR    X2, [X0], #8 		// Each entry occupies 2 words.
+// 	ADD    X2, X2, X5
+// 	SUBS   X4, X4, #1
+// 	BNE	loop2	
+
 	
 #endif	
 
@@ -194,6 +200,12 @@ mmu_setup:
 	| MAIR_ATTR(MAIR_NORMAL_WT, 2) \
 	| MAIR_ATTR(MAIR_NORMAL_NC, 1) \
 	| MAIR_ATTR(MAIR_NORMAL_WB, 0))
+	//ldr	x0, =( \
+	//MAIR_ATTR(MAIR_DEVICE_nGnRnE, 3) \
+	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 2) \
+	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 1) \
+	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 0))
+
 	msr	mair_el1, x0
 
 
@@ -285,6 +297,20 @@ change_el:
 el2_entry:
 	MRS	x4, CurrentEl
 
+	// Disable trapping of   accessing in EL3 and EL2.
+	//MSR       CPTR_EL3, XZR
+	//MSR       CPTR_EL3, XZR
+
+	// Disable access tra pping in EL1 and EL0.
+	//MOV    X1, #(0x3 << 20)       // FPEN disables trapping to EL1.
+	//MSR    CPACR_EL1, X1
+	//ISB 
+
+	/* Enable access to the physical timers at EL1 */
+	MRS	x2, cnthctl_el2
+	ORR	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
+	MSR	cnthctl_el2, x2
+	
 	// Determine the  EL1 Execution stat
 	MOV	X1, #0x3c5//#0b00101 		// DAIF=0000
 	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
@@ -296,29 +322,21 @@ el2_entry:
 el1_entry:
 	MRS	x1, CurrentEl
 	
-// Setup domains - Dom0 is usable, rest is disabled.
-// 	mov	x4, #1
-// 	mcr	p15, 0, r4, c3, c0, 0	@ Domain Access Control Register
-// 	@ Configure exception base vector.
-// 	ldr	r4, =_exc_vector
-// 	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
-// 	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
-
-
 	ldr	x4, =0xffffff007e00b224
 	AT	S1E1R, X4
 	ISB
 	MRS	X6, PAR_EL1
 	ISB
-	ldr	x4, =0x7e00b224
+	ldr	x4, =0x400000dc
 	AT	S1E1R, X4
 	ISB
 	MRS	X6, PAR_EL1
 	ISB
-
-	
 	MRS	X0, SCTLR_EL1
 
+	/* Load the exception vectors */
+	LDR 	x2, =exception_vectors
+	MSR 	vbar_el1, x2
 	
 	ADR    X1, PHYSADDR(_el1_stack)
 	ADD    X1, X1, #4
@@ -330,6 +348,8 @@ el1_entry:
 
 	ADR    X1, PHYSADDR(_el1_stack)
 	MOV    SP, X1
+
+	msr    daifclr, #3
 	
  	// Enter kernel_entry with empty stack.
 enter_kernel:
@@ -337,152 +357,5 @@ enter_kernel:
 	ldr	lr, =kernel_exit
 	br	x4
 
-///////////////////////////////////////
-// AArch32
-///////////////////////////////////////
-#else // AARCH32
-
-@ boot.S - assembly startup code
-
-#include "arm/cpureg.h"
-#include "dev/bcm2836reg.h"
-
-#define __BIT(__n) (1 << (__n))
-#define PHYSADDR(x) ((x) - 0x80000000)
- 
-.section ".init"
- 
-.globl _start
-.local no_cpu0_init
- 
-@ Entry point for the kernel.
-@ r15 -> should begin execution at 0x8000.
-@ r0 -> 0x00000000
-@ r1 -> machid
-@ r2 -> atags
-@ preserve these registers as argument for the kernel
-
-_start:
-	@ Enable data & instruction caches.
-	mrc	p15, 0, r4, c1, c0, 0	@ System Control Register
-	orr	r4, r4, #CPU_CONTROL_DC_ENABLE
-	orr	r4, r4, #CPU_CONTROL_IC_ENABLE
-	mcr	p15, 0, r4, c1, c0, 0
-
-	@ You must ensure this bit is set to 1 before the caches and MMU are
-	@ enabled, or any cache and TLB maintenance operations are performed.
-	mrc	p15, 0, r4, c1, c0, 1	@ Read Auxiliary Control Register
-	orr	r4, r4, #CORTEXA9_AUXCTL_SMP
-	mcr	p15, 0, r4, c1, c0, 1
-
-	@ [lr] kernel entry point
-	ldr	lr, =kernel_entry
-
-	@ [r3] core number 
-	mrc	p15, 0, r3, c0, c0, 5	@ Multiprocessor Affinity Register
-	ands	r3, r3, #3		@ CORTEXA9_MPIDR_CPUID
-	beq	1f
-
-	@ [CPU#1-CPU#3] Wait for entry point to appear in local mailbox #3
-	ldr	r4, = BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
-
-2:	wfe
-	ldr	lr, [r4, r3, lsl #4]	@ read mailbox #3 for n-th CPU
-	cmp	lr, #0
-	beq	2b
-
-	str	lr, [r4, r3, lsl #4]	@ clear the mailbox
 	
-	@ Set up initial page table pointer.
-1:	ldr	r4, =PHYSADDR(_kernel_pde)
-	mcr	p15, 0, r4, c2, c0, 0	@ Translation Table Base Register 0
-
-	@ [CPU#0] Fill in initial page table.
-	cmp	r3, #0
-	bne	no_cpu0_init
-
-	@ 1:1 mapping for first 2GiB
-	mov	r5, #0x0140E		@ TEX=1, APX=0, AP=1, C=1, B=1, section
-	mov	r6, #2048
-1:	str	r5, [r4], #4
-	add	r5, r5, #1024*1024	@ map next 1MiB section
-	subs	r6, r6, #1
-	bhi	1b
-
-	@ Remap first 2GiB to 0x8000_0000
-	movt	r5, 0
-	mov	r6, #2048
-1:	str	r5, [r4], #4
-	add	r5, r5, #1024*1024	@ map next 1MiB section
-	subs	r6, r6, #1
-	bhi	1b
-
-	@ [CPU#0] Clear BSS section.
-	ldr	r4, =PHYSADDR(_bss_start)
-	ldr	r9, =PHYSADDR(_bss_end)
-	mov	r5, #0
-	mov	r6, #0
-	mov	r7, #0
-	mov	r8, #0
-1:	stmia	r4!, {r5-r8}		@ Store 16 bytes at once.
-	cmp	r4, r9
-	blo	1b
-
-no_cpu0_init:
-	@ Setup domains - Dom0 is usable, rest is disabled.
-	mov	r4, #1
-	mcr	p15, 0, r4, c3, c0, 0	@ Domain Access Control Register
-
-	@ Enable MMU in ARMv6 mode.
-	mov	r4, #TTBCR_S_PD1	@ Don't use TTBR1, PD aligned to 16KiB
-	mcr	p15, 0, r4, c2, c0, 2	@ Translation Table Base Control
-
-	mrc	p15, 0, r4, c1, c0, 0	@ Control Register
-	movw	r5, #CPU_CONTROL_MMU_ENABLE
-	movt	r5, #(CPU_CONTROL_XP_ENABLE >> 16)
-	orr	r4, r4, r5
-	dsb
-	mcr	p15, 0, r4, c1, c0, 0	@ Control Register
-	isb
-
-	@ Configure exception base vector.
-	ldr	r4, =_exc_vector
-	mcr	p15, 0, r4, c12, c0, 0	@ Secure or Non-secure VBAR
-	mcr	p15, 0, r4, c12, c0, 1	@ Monitor Vector Base Address Register
-
-	@ Initialially we're running in supervisor mode.
-	mrs	r4, spsr
-	bic	r4, r4, #PSR_MODE
-	@ Setup the stack for fast interrupt mode.
-	orr	r5, r4, #PSR_FIQ32_MODE
-	msr	cpsr_c, r5
-	ldr	sp, =_irq_stack+4096
-	@ Setup the stack for interrupt mode.
-	orr	r5, r4, #PSR_IRQ32_MODE
-	msr	cpsr_c, r5
-	ldr	sp, =_irq_stack+4096
-	@ Setup the stack for abort mode.
-	orr	r5, r4, #PSR_ABT32_MODE
-	msr	cpsr_c, r5
-	ldr	sp, =_abt_stack+4096
-	@ Setup the stack for supervisor mode.
-	orr	r5, r4, #PSR_SVC32_MODE
-	msr	cpsr_c, r5
-	ldr	sp, =_svc_stack+4096
-	@ Continue in supervisor mode.
-
-	@ Cheat for CPU#1-CPU#3 for now.
-	cmp	r3, #0
-	beq	1f
-	ldr	sp, =0x8000
-	sub	sp, r3, lsl #12
-1:
- 
-	@ Enter kernel_main with empty stack.
-	mov	r4, lr
-	ldr	lr, =kernel_exit
-	bx	r4
-
-@ vim: ft=armv5 ts=8 sw=8 noet
-	
-#endif	
+//vim: ft=armv5 ts=8 sw=8 noet	

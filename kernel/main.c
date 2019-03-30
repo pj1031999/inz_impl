@@ -51,24 +51,25 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   bcm2836_local_irq_init();
   arm_irq_enable();
 
-  pm_init();
-  pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
-  pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
+  //pm_init();
+  //pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
+  //pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
 
   puts("CPU#0 started!");
 
-  smp_bootstrap();
-  va_bootstrap();
+  //smp_bootstrap();
+  //va_bootstrap();
 
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
   clock_init();
-  uart0_cons.init(NULL);
+  // uart0_cons.init(NULL);
 
   puts("Type letter 'q' to halt machine!");
-  while (getchar() != 'q')
-    ;
+  // while (getchar() != 'q');
+  for(;;);
+  kernel_exit();
 }
 
 noreturn void kernel_exit() {

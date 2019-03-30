@@ -32,7 +32,6 @@ void smp_bootstrap() {
   for (int cpu = 1; cpu < 4; cpu++)
     mbox_send(cpu, 3, (uint32_t)(long)smp_entry);
 
-    
   do {
     __asm__ volatile("wfe");
   } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));
