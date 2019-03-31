@@ -34,7 +34,7 @@ __interrupt("ABORT") void exc_data_abort(void) {
 
 static uint32_t ticks = 0;
 __interrupt("ABORT") void  clock_irq(void) {
-#define CLK_FREQ 192000000
+#define CLK_FREQ 19200000
 
   uint32_t val = reg_cntp_tval_el0_read();
   reg_cntp_tval_el0_write(val + CLK_FREQ);

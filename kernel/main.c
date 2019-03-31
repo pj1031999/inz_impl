@@ -57,7 +57,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   puts("CPU#0 started!");
 
-  //smp_bootstrap();
+  smp_bootstrap();
   //va_bootstrap();
 
   printf("Config Register: %08x\n", reg_sctlr_el1_read());

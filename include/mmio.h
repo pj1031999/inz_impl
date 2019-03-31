@@ -7,7 +7,7 @@ extern uint8_t _kernel[];
 
 static __attribute__((noinline)) void mmio_write(uint32_t reg, uint32_t data) {
   uint32_t *ptr = (void *)(reg + _kernel);
-  __asm__ __volatile__("str %[data], [%[reg]]"
+  __asm__ __volatile__("str %w[data], [%[reg]]"
                    :
                    : [reg] "r"(ptr), [data] "r"(data));
 }

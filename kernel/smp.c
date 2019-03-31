@@ -34,7 +34,7 @@ void smp_bootstrap() {
 
   do {
     __asm__ volatile("wfe");
-  } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));
+  } while (mbox_recv(0, 3) != (__BIT(3) |  __BIT(2) | __BIT(1)));
 
   mbox_clr(0, 3, -1);
 }

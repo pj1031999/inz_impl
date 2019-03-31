@@ -1,8 +1,6 @@
 #include "aarch64/aarch64reg.h"
-#include "aarch64/exception.S"
 #include "dev/bcm2836reg.h"
 
-	
 #define CPU_STACK_SIZE 4096
 #define UPPERADDR 0xffffFF0000000000
 #define PHYSADDR(x) ((x) - (UPPERADDR))
@@ -18,7 +16,7 @@ _start:
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
 	BEQ	set_link_register
-	
+
 	// You must ensure this bit is set to 1 before the caches and MMU are
 	// enabled, or any cache and TLB maintenance operations are performed.
 enable_cache:
@@ -28,7 +26,7 @@ enable_cache:
 	DSB	SY
 	ISB
 
-
+	
 set_link_register:	
 	// [lr] kernel entry point
 	LDR 	lr, =kernel_entry
@@ -48,12 +46,12 @@ cpu_mailbox_wait:
 	cmp	lr, #0
 	beq	2b
 	
-	str	lr, [x4, x3]	// clear the mailbox
+	str	w30, [x4, x3]	// clear the mailbox
 	lsr	x3, x3, #4
 
 	
 	cmp	x3, #0
-	bne	no_cpu0_init
+	bne	setup_translation_table //no_cpu0_init
 
 
 clear_bss:
@@ -335,18 +333,19 @@ el1_entry:
 	MRS	X0, SCTLR_EL1
 
 	/* Load the exception vectors */
-	LDR 	x2, =exception_vectors
+	//LDR 	x2, =exception_vectors
+	LDR 	x2, =_exc_vector
 	MSR 	vbar_el1, x2
 	
 	ADR    X1, PHYSADDR(_el1_stack)
-	ADD    X1, X1, #4
+	//ADD    X1, X1, #4
 	MRS    X2, MPIDR_EL1
 	AND    X2, X2, #0xFF               // X2 == CPU number.
 	MOV    X3, #CPU_STACK_SIZE
 	MUL    X3, X2, X3                 // Create separated stack spaces
 	SUB    X1, X1, X3                 // for each processor
 
-	ADR    X1, PHYSADDR(_el1_stack)
+	//ADR    X1, PHYSADDR(_el1_stack)
 	MOV    SP, X1
 
 	msr    daifclr, #3
