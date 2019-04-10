@@ -39,6 +39,22 @@ void va_bootstrap(void) {
 
 extern cons_t uart0_cons;
 
+void test_exc(){
+  printf("\n*** TESTS START ***\n");
+  
+  int *p = (int*)0xffff92380475fff;
+  printf("", p, *p);
+
+
+  __asm__ __volatile__("svc #0x0" :: );
+  __asm__ __volatile__("hvc #0x0" :: );
+  __asm__ __volatile__("smc #0x0" :: );
+
+
+  
+  printf("\n*** TESTS END ***\n");
+}
+
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
@@ -51,29 +67,33 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   bcm2836_local_irq_init();
   arm_irq_enable();
 
-  //pm_init();
-  //pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
-  //pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
+  pm_init();
+  pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
+  pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
 
   puts("CPU#0 started!");
 
   smp_bootstrap();
-  //va_bootstrap();
+  va_bootstrap();
 
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
   clock_init();
-  // uart0_cons.init(NULL);
+  uart0_cons.init(NULL);
+
+  //test_exc();
 
   puts("Type letter 'q' to halt machine!");
-  // while (getchar() != 'q');
+  while (getchar() != 'q');
+
+    
   for(;;);
-  kernel_exit();
+  //kernel_exit();
 }
 
 noreturn void kernel_exit() {
   arm_irq_disable();
-  printf("*** CPU#%d halted! ***", arm_cpu_id());
+  printf("\n*** CPU#%d halted! ***", arm_cpu_id());
   for (;;);
 }
