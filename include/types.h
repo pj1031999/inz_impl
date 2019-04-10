@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdnoreturn.h>
 
-typedef unsigned long paddr_t;
-typedef unsigned long vaddr_t;
+typedef unsigned long long paddr_t;
+typedef unsigned long long vaddr_t;
 
 #endif /* !TYPES_H */

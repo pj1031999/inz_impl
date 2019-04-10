@@ -3,7 +3,8 @@
 #include <aarch64/cpu.h>
 
 static pcpu_t _pcpu_data[BCM2836_NCPUS];
-extern pde_t _level0_pagetable[4096];
+//extern int _stack_size;
+extern pde_t _level0_pagetable[];
 
 void pcpu_init(void) {
   pcpu_t *pcpu = &_pcpu_data[arm_cpu_id()];
