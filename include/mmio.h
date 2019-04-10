@@ -15,7 +15,7 @@ static __attribute__((noinline)) void mmio_write(uint32_t reg, uint32_t data) {
 static __attribute__((noinline)) uint32_t mmio_read(uint32_t reg) {
   uint32_t *ptr = (void *)(reg + _kernel);
   uint32_t data;
-  __asm__ __volatile__("ldr %[data], [%[reg]]"
+  __asm__ __volatile__("ldr %w[data], [%[reg]]"
                    : [data] "=r"(data)
                    : [reg] "r"(ptr));
   return data;
