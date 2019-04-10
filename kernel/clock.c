@@ -1,18 +1,17 @@
 /* clock.c - System timer */
 
-#include <clock.h>
 #include <aarch64/cpu.h>
-#include <aarch64/cpureg.h>
 #include <klibc.h>
 #include <rpi/irq.h>
 
-#define CLK_FREQ 19200000
+//#define CLK_FREQ 192000000
 
 static uint32_t ticks = 0;
+uint64_t clk_freq = 0;
 
-static void clock_irq_org(unsigned irq __unused) {
-  uint32_t val = reg_cntp_tval_el0_read();
-  reg_cntp_tval_el0_write(val + CLK_FREQ);
+static void clock_irq(unsigned irq __unused) {
+  uint64_t val = reg_cntp_cval_el0_read();
+  reg_cntp_cval_el0_write(val + clk_freq);
   reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
 
   arm_isb();
@@ -23,16 +22,17 @@ static void clock_irq_org(unsigned irq __unused) {
 void clock_init(void) {
 
   //reg_cntvct_el0_write(CLK_FREQ);
-  reg_cntp_tval_el0_write(CLK_FREQ);
+  clk_freq = reg_cntfrq_el0_read();
+  reg_cntp_cval_el0_write(clk_freq);
   reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
 
   arm_isb();
 
   /* Enable CP0 physical timer interrupt. */
-  bcm2836_local_irq_register(BCM2836_INT_CNTPSIRQ, clock_irq_org);
+  bcm2836_local_irq_register(BCM2836_INT_CNTPSIRQ, clock_irq);
   bcm2836_local_irq_enable(BCM2836_INT_CNTPSIRQ);
 
-  bcm2836_local_irq_register(BCM2836_INT_CNTPNSIRQ, clock_irq_org);
+  bcm2836_local_irq_register(BCM2836_INT_CNTPNSIRQ, clock_irq);
   bcm2836_local_irq_enable(BCM2836_INT_CNTPNSIRQ);
 
 }
