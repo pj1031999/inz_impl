@@ -63,7 +63,7 @@ clear_bss:
 	cmp	x4, x5
 	blo	1b
 
-#if 0
+#if 1
 clear_cache:
 	//Disable L1 Caches
 	MRS    X0, SCTLR_EL3		// Read SCTLR_EL3.
