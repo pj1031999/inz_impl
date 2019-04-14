@@ -2,7 +2,16 @@
 #include "dev/bcm2836reg.h"
 
 #define CPU_STACK_SIZE 4096
+
+//#define PAGE64
+	
+#ifdef PAGE64
+#define UPPERADDR 0xffff000000000000
+#else
 #define UPPERADDR 0xffffFF0000000000
+#endif
+
+	
 #define PHYSADDR(x) ((x) - (UPPERADDR))
 
 	
@@ -63,47 +72,6 @@ clear_bss:
 	cmp	x4, x5
 	blo	1b
 
-#if 1
-clear_cache:
-	//Disable L1 Caches
-	MRS    X0, SCTLR_EL3		// Read SCTLR_EL3.
-	MRS    X0, SCTLR_EL1		// Read SCTLR_EL1.
-	BIC    X0,   X0, #(0x1 << 2)   	// Disable D Cache.
-	MSR    SCTLR_EL3, X0         	// Write SCTLR_EL3.
-	MSR    SCTLR_EL1, X0         	// Write SCTLR_EL1.	
-
-	// Invalidate Data cache to make the code general purpose.
-	// Calculate the cache size first and loop through each set +
-	//   way  .
-	MOV    X0, #0x0             	//  X0 = Cache level
-	MSR    CSSELR_EL1, x0		// 0x0 for L1 Dcache  0x2    for L2 Dcache.
-	MRS    X4, CCSIDR_EL1     	// Read Cache Size ID.
-	AND    X1, X4, #0x7
-	ADD    X1, X1, #0x4         	// X1 = Cache Line Size.
-	LDR    X3, =0x7FFF
-	AND    X2, X3, X4, LSR   #13	// X2 = Cache Set Number – 1.
-	LDR    X3, =0x3FF
-	AND    X3, X3, X4, LSR   #3	//  X3 = Cache Associativity Number – 1.
-	CLZ    W4,   W3             	// X4 = way position in the CISW  instruction.
-	MOV    X5, #0               	//  X5 = way counter way_loop.
-way_loop:
-	MOV    X6, #0               	//  X6 = set counter set_loop.
-set_loop:
-	LSL    X7, X5,  X4 
-
-	ORR    X7, X0, X7           	// Set way.
-	LSL    X8, X6, X1
-	ORR    X7, X7,  X8 	        // Set set.
-	DC     cisw, X7         	// Clean and Invalidate cache line.
-	ADD    X6, X6, #1           	// Increment set counter.
-	CMP    X6, X2              	// Last set reached yet?
-	BLE    set_loop             	// If not, iterate set_loop,
-	ADD    X5, X5, #1           	// else, next way.
-	CMP    X5, X3               	// Last way reached yet?
-	BLE    way_loop             	// I f not, iterate way_loop
-#endif
-	
-
 setup_translation_table:
 	/* Invalidate all TLB */
 	TLBI	ALLE1
@@ -111,7 +79,7 @@ setup_translation_table:
 	dsb	ish
 	isb
 
-#if 0	
+#ifdef PAGE64	
 	ADR	X0, PHYSADDR(_level0_pagetable)	// must be a 4KB-aligned address.
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
@@ -127,58 +95,93 @@ loop:
 	SUBS	X4, X4, #1
 	BNE	loop
 #else
-	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
+// 	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
+// 	MSR    TTBR1_EL1, X0
+// 	MSR    TTBR0_EL1, X0
+// 	
+// 	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
+// 	ORR    X2, X2, 0x3
+// 	LDR    X2, =0x00000721
+// 	STR    X2, [X0], #8
+// 	
+// 	
+// 	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
+// 	//ORR    X2, X2, 0x3
+// 	LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
+// 	//ADD    X2, X2, #4096
+// 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
+// 					// AttrIdx=000 Device-nGnRnE.
+// 	
+// 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
+// 	LDR    X2, =0x80000721
+// 	//ADD    X2, X2, #4096
+// 	STR    X2, [X0], #8
+// 
+// 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
+// 	LDR    X2, =0xC0000721
+// 	//ADD    X2, X2, #4096
+// 	STR    X2, [X0], #8
+// 
+// 	// Set level 2 translation table.
+// 	LDR    X0, =PHYSADDR(_level2_pagetable) 
+// 	LDR    X2, =0x00000721
+// 	MOV    X4, #4096      
+// 	LDR    X5, =0x00200000
+// loop:
+// 	STR    X2, [X0], #8   
+// 	ADD    X2, X2, X5
+// 	SUBS   X4, X4, #1
+// 	BNE	loop
+	//
+	// Initialize translation table control registers
+	LDR    X1, =0x3520	// 4GB space 4KB granularity
+	// Inner-shareable.
+	MSR    TCR_EL3, X1	// Normal Inner and    Outer Cacheable.
+	LDR    X1, =0xFF440400	// ATTR0 Device-nGnRnE ATTR1 Device.
+	MSR    MAIR_EL3, X1     // ATTR2 Normal Non-Cacheable.
+				//   ATTR3 Normal Cacheable.
+	ADR    X0, PHYSADDR(_level0_pagetable)	// ttb0_base must be a 4KB-aligned address.
+	//MSR    TTBR0_EL3, X0
 	MSR    TTBR1_EL1, X0
 	MSR    TTBR0_EL1, X0
 	
-	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
+	// Set up translation table entries in memory with looped store
+	// instructions.
+	// Set the level 1 translation table.
+	// The first entry points to level2_pagetable.
+
+	LDR    X1, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
+	LDR    X2, =0xFFFFF000
+	AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
 	ORR    X2, X2, 0x3
-	LDR    X2, =0x00000721
 	STR    X2, [X0], #8
-	
-	
-	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
-	//ORR    X2, X2, 0x3
-	LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
-	//ADD    X2, X2, #4096
+
+	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
+	LDR    X2, =0x40000741        	// Executable Inner and    Outer Shareable.
 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
-					// AttrIdx=000 Device-nGnRnE.
-	
+	// AttrIdx=000 Device-nGnRnE.
+
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
-	LDR    X2, =0x80000721
-	//ADD    X2, X2, #4096
+	LDR    X2, =0x80000741
 	STR    X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
-	LDR    X2, =0xC0000721
-	//ADD    X2, X2, #4096
+	LDR    X2, =0xC0000741
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
-	LDR    X0, =PHYSADDR(_level2_pagetable) 
-	LDR    X2, =0x00000721
-	MOV    X4, #4096      
-	LDR    X5, =0x00200000
-loop:
-	STR    X2, [X0], #8   
-	ADD    X2, X2, X5
-	SUBS   X4, X4, #1
-	BNE	loop
-
-
-
-//	LDR    X0, =PHYSADDR(_level3_pagetable)  	// Base address of level2_pagetable.
-//	LDR    X2, =0x40000721        	// Executable Inner and Outer Shareable.
+	LDR    X0, =PHYSADDR(_level2_pagetable)  	// Base address of level2_pagetable.
+	LDR    X2, =0x00000721        	// Executable Inner and Outer Shareable.
 					// R/W at all ELs secure memory.
 					// AttrIdx=011  Normal Cacheable.
 
-// 	MOV    X4, #1024		// Set 512 level2 block entries.
-// 	LDR    X5, =0x00200000        	// Increase 2MB address each time.
-// loop2:
-// 	STR    X2, [X0], #8 		// Each entry occupies 2 words.
-// 	ADD    X2, X2, X5
-// 	SUBS   X4, X4, #1
-// 	BNE	loop2	
+	MOV    X4, #512			// Set 512 level2 block entries.
+	LDR    X5, =0x00200000        	// Increase 2MB address each time.
+loop:
+	STR    X2, [X0], #8 		// Each entry occupies 2 words.
+	ADD    X2, X2, X5
+	SUBS   X4, X4, #1
+	BNE	loop	
 
 	
 #endif	
@@ -208,6 +211,17 @@ mmu_setup:
 
 
 	/* TCR_EL1:IPS[34:32] = AA64MMFR0:PARange[3:0] */
+#ifdef PAGE64
+	ldr	x0, =(\
+	TCR_TxSZ(16)\
+	| TCR_CACHE_ATTRS\
+	| TCR_SMP_ATTRS\
+	| TCR_TGx_(64K))
+	mrs	x1, id_aa64mmfr0_el1
+	bfi	x0, x1, #32, #3
+	msr	tcr_el1, x0
+
+#else
 	ldr	x0, =(\
 	TCR_TxSZ(24)\
 	| TCR_CACHE_ATTRS\
@@ -216,7 +230,8 @@ mmu_setup:
 	mrs	x1, id_aa64mmfr0_el1
 	bfi	x0, x1, #32, #3
 	msr	tcr_el1, x0
-
+#
+endif
 	/*
 	 * configure SCTLR
 	 */
@@ -270,6 +285,7 @@ no_cpu0_init:
 	BEQ	change_el
 	
 el3_only:	
+
 	MRS	X0, SCR_EL3
 	ORR	X0, X0, #(1<<10)	// RW EL2 Execution state is AArch64.
 	ORR	X0, X0, #(1<<0)		// NS EL1 is Non-secure world.
