@@ -4,7 +4,7 @@
 #include <klibc.h>
 #include <rpi/irq.h>
 
-//#define CLK_FREQ 192000000
+#define CLK_FREQ 192000000
 
 static uint32_t ticks = 0;
 static uint64_t clk_freq = 0;
@@ -22,7 +22,7 @@ static void clock_irq(unsigned irq __unused) {
 void clock_init(void) {
 
   //reg_cntvct_el0_write(CLK_FREQ);
-  clk_freq = reg_cntfrq_el0_read();
+  clk_freq = CLK_FREQ*5;//reg_cntfrq_el0_read();
   reg_cntp_cval_el0_write(clk_freq );
   reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
 

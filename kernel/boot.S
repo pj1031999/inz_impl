@@ -8,7 +8,7 @@
 #ifdef PAGE64
 #define UPPERADDR 0xffff000000000000
 #else
-#define UPPERADDR 0xffffFF0000000000
+#define UPPERADDR 0xffffFFFF00000000
 #endif
 
 	
@@ -95,95 +95,43 @@ loop:
 	SUBS	X4, X4, #1
 	BNE	loop
 #else
-// 	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
-// 	MSR    TTBR1_EL1, X0
-// 	MSR    TTBR0_EL1, X0
-// 	
-// 	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
-// 	ORR    X2, X2, 0x3
-// 	LDR    X2, =0x00000721
-// 	STR    X2, [X0], #8
-// 	
-// 	
-// 	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
-// 	//ORR    X2, X2, 0x3
-// 	LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
-// 	//ADD    X2, X2, #4096
-// 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
-// 					// AttrIdx=000 Device-nGnRnE.
-// 	
-// 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
-// 	LDR    X2, =0x80000721
-// 	//ADD    X2, X2, #4096
-// 	STR    X2, [X0], #8
-// 
-// 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
-// 	LDR    X2, =0xC0000721
-// 	//ADD    X2, X2, #4096
-// 	STR    X2, [X0], #8
-// 
-// 	// Set level 2 translation table.
-// 	LDR    X0, =PHYSADDR(_level2_pagetable) 
-// 	LDR    X2, =0x00000721
-// 	MOV    X4, #4096      
-// 	LDR    X5, =0x00200000
-// loop:
-// 	STR    X2, [X0], #8   
-// 	ADD    X2, X2, X5
-// 	SUBS   X4, X4, #1
-// 	BNE	loop
-	//
-	// Initialize translation table control registers
-	LDR    X1, =0x3520	// 4GB space 4KB granularity
-	// Inner-shareable.
-	MSR    TCR_EL3, X1	// Normal Inner and    Outer Cacheable.
-	LDR    X1, =0xFF440400	// ATTR0 Device-nGnRnE ATTR1 Device.
-	MSR    MAIR_EL3, X1     // ATTR2 Normal Non-Cacheable.
-				//   ATTR3 Normal Cacheable.
-	ADR    X0, PHYSADDR(_level0_pagetable)	// ttb0_base must be a 4KB-aligned address.
-	//MSR    TTBR0_EL3, X0
+	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	MSR    TTBR1_EL1, X0
 	MSR    TTBR0_EL1, X0
 	
-	// Set up translation table entries in memory with looped store
-	// instructions.
-	// Set the level 1 translation table.
-	// The first entry points to level2_pagetable.
-
-	LDR    X1, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
-	LDR    X2, =0xFFFFF000
-	AND    X2, X1, X2             // NSTable=0 APTable=0 XNTable=0 PXNTable=0.
+	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
 	ORR    X2, X2, 0x3
+	//LDR    X2, =0x00000721
 	STR    X2, [X0], #8
-
-	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF.
-	LDR    X2, =0x40000741        	// Executable Inner and    Outer Shareable.
+	
+	
+	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
+	//ORR    X2, X2, 0x3
+	//LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
+	ADD    X2, X2, #4096
 	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
-	// AttrIdx=000 Device-nGnRnE.
-
+					// AttrIdx=000 Device-nGnRnE.
+	
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
-	LDR    X2, =0x80000741
+	LDR    X2, =0x80000721
+	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
-	LDR    X2, =0xC0000741
+	LDR    X2, =0xC0000721
+	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
-	LDR    X0, =PHYSADDR(_level2_pagetable)  	// Base address of level2_pagetable.
-	LDR    X2, =0x00000721        	// Executable Inner and Outer Shareable.
-					// R/W at all ELs secure memory.
-					// AttrIdx=011  Normal Cacheable.
-
-	MOV    X4, #512			// Set 512 level2 block entries.
-	LDR    X5, =0x00200000        	// Increase 2MB address each time.
+	LDR    X0, =PHYSADDR(_level2_pagetable) 
+	LDR    X2, =0x00000739
+	MOV    X4, #4096      
+	LDR    X5, =0x00200000
 loop:
-	STR    X2, [X0], #8 		// Each entry occupies 2 words.
+	STR    X2, [X0], #8   
 	ADD    X2, X2, X5
 	SUBS   X4, X4, #1
-	BNE	loop	
-
-	
+	BNE	loop
 #endif	
 
 mmu_setup:
@@ -223,15 +171,14 @@ mmu_setup:
 
 #else
 	ldr	x0, =(\
-	TCR_TxSZ(24)\
+	TCR_TxSZ(32)\
 	| TCR_CACHE_ATTRS\
 	| TCR_SMP_ATTRS\
 	| TCR_TGx_(4K))
 	mrs	x1, id_aa64mmfr0_el1
 	bfi	x0, x1, #32, #3
 	msr	tcr_el1, x0
-#
-endif
+#endif
 	/*
 	 * configure SCTLR
 	 */
@@ -331,6 +278,7 @@ el2_entry:
 	
 	ADR	X1, el1_entry     	// el1_entry points to the first instruction of
 	MSR	ELR_EL2, X1       	// EL1 code.
+	ISB
 	ERET
 	
 el1_entry:

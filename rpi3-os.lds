@@ -13,7 +13,7 @@ PHDRS
 SECTIONS
 {
   /* _kernel = 0xffff000000000000;	 */
-   _kernel = 0xffffFF0000000000;
+   _kernel = 0xffffFFFF00000000;
   _stack_size = 4096;
 
   .init 0x80000 : AT(0x80000) ALIGN(4096)
