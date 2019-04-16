@@ -19,6 +19,8 @@ typedef struct {
 static GFX_INIT_REQUEST init_request;
 
 window_t screen;
+static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
+
 
 window_t *gfx_set_videomode(unsigned w, unsigned h) {
   init_request.width = init_request.buffer_width = w;
@@ -39,7 +41,6 @@ window_t *gfx_set_videomode(unsigned w, unsigned h) {
    * Needs to be aligned to 16 bytes as the bottom 4 bits of the address
    * passed to VideoCore are used for the mailbox number
    */
-  volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
 
   /* Physical memory address of the mailbuffer, for passing to VC */
   unsigned long physical_mb = (unsigned long)mailbuffer;

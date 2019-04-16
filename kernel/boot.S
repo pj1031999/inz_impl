@@ -98,7 +98,12 @@ loop:
 	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	MSR    TTBR1_EL1, X0
 	MSR    TTBR0_EL1, X0
-	
+
+	// LDR    X2, = PHYSADDR(_level1_pagetable) // Must  be a 4KB align address.
+	// ORR    X2, X2, 0x3
+	// STR    X2, [X0], #8
+	// ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
+
 	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
 	ORR    X2, X2, 0x3
 	//LDR    X2, =0x00000721
@@ -118,13 +123,13 @@ loop:
 	STR    X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
-	LDR    X2, =0xC0000721
+	LDR    X2, =0x00000721
 	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
 	// Set level 2 translation table.
 	LDR    X0, =PHYSADDR(_level2_pagetable) 
-	LDR    X2, =0x00000739
+	LDR    X2, =0x00000721
 	MOV    X4, #4096      
 	LDR    X5, =0x00200000
 loop:
