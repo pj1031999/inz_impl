@@ -2,29 +2,17 @@
 #include "dev/bcm2836reg.h"
 
 #define CPU_STACK_SIZE 4096
-
-//#define PAGE64
-	
-#ifdef PAGE64
-#define UPPERADDR 0xffff000000000000
-#else
 #define UPPERADDR 0xffffFFFF00000000
-#endif
-
-	
 #define PHYSADDR(x) ((x) - (UPPERADDR))
-
 	
 .section ".init"
  
 .globl _start
-.local no_cpu0_init
-	
 _start:
 	//start at el3 or el2
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
-	BEQ	set_link_register
+	BEQ	set_link_register //if el2 then jump else:   
 
 	// You must ensure this bit is set to 1 before the caches and MMU are
 	// enabled, or any cache and TLB maintenance operations are performed.
@@ -79,65 +67,25 @@ setup_translation_table:
 	dsb	ish
 	isb
 
-#ifdef PAGE64	
-	ADR	X0, PHYSADDR(_level0_pagetable)	// must be a 4KB-aligned address.
-	MSR	TTBR1_EL1, X0
-	MSR	TTBR0_EL1, X0
-	DSB	SY
-	ISB
-	
-	LDR	X2, =0x00000721
-	LDR	X5, =0x20000000	// Increase 512MB address each time.
-	MOV	X4, #8192	// Set level2 block entries.
-loop:
-	STR	X2, [X0], #8 	// Each entry occupies 2 words.
-	ADD	X2, X2, X5
-	SUBS	X4, X4, #1
-	BNE	loop
-#else
 	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	MSR    TTBR1_EL1, X0
 	MSR    TTBR0_EL1, X0
 
-	// LDR    X2, = PHYSADDR(_level1_pagetable) // Must  be a 4KB align address.
-	// ORR    X2, X2, 0x3
-	// STR    X2, [X0], #8
-	// ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
-
-	LDR    X2, = PHYSADDR(_level2_pagetable) // Must  be a 4KB align address.
-	ORR    X2, X2, 0x3
-	//LDR    X2, =0x00000721
+	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
+	LDR    X2, =0x00000721
 	STR    X2, [X0], #8
+
+	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF. Map 1:1
+	LDR    X2, =0x40000721        	
+	STR    X2, [X0], #8  
 	
-	
-	//LDR    X2, = PHYSADDR(_level3_pagetable) // Must  be a 4KB align address.
-	//ORR    X2, X2, 0x3
-	//LDR    X2, =0x40000721        	// Executable Inner and    Outer Shareable.
-	ADD    X2, X2, #4096
-	STR    X2, [X0], #8       	//   R/W at all ELs secure memory
-					// AttrIdx=000 Device-nGnRnE.
-	
-	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF.
+	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF. Map 1:1
 	LDR    X2, =0x80000721
-	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
 
-	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF.
+	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF. Mapped into first GB because Video Core memory mapping
 	LDR    X2, =0x00000721
-	//ADD    X2, X2, #4096
 	STR    X2, [X0], #8
-
-	// Set level 2 translation table.
-	LDR    X0, =PHYSADDR(_level2_pagetable) 
-	LDR    X2, =0x00000721
-	MOV    X4, #4096      
-	LDR    X5, =0x00200000
-loop:
-	STR    X2, [X0], #8   
-	ADD    X2, X2, X5
-	SUBS   X4, X4, #1
-	BNE	loop
-#endif	
 
 mmu_setup:
 	dsb	sy
