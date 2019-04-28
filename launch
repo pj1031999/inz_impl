@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import shutil
+import shlex
+import subprocess
+from libtmux import Server, Session
+
+
+TMUX_CONF = './.tmux.conf'
+SOCKET = 'rpi3'
+SESSION = 'rpi3'
+TARGET = 'aarch64'
+FIRST_UID = 1000
+
+class Launchable():
+    def __init__(self, name, cmd):
+        self.name = name
+        self.cmd = cmd
+        self.window = None
+        self.options = []
+
+    def configure(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def start(self, session):
+        cmd = ' '.join([self.cmd] + list(map(shlex.quote, self.options)))
+        self.window = session.new_window(
+            attach=False, window_name=self.name, window_shell=cmd)
+
+def gdb_port():
+    return 24000 + (os.getuid() - FIRST_UID) * 10
+
+class QEMU(Launchable):
+    def __init__(self):
+        super().__init__('qemu', shutil.which('qemu-system-' + TARGET))
+
+    def configure(self, debug=False, graphics=False, kernel='', args=''):
+        self.options = [
+            #'-nodefaults',
+            #'-device', 'VGA',
+            '-machine', 'raspi3',
+            '-smp', '4',
+            '-cpu', 'cortex-a53',
+            '-icount', 'shift=4,sleep=on',
+            '-kernel', kernel,
+            '-gdb', 'tcp::{},server,wait'.format(gdb_port()),
+            '-serial', 'stdio',
+            '-d', 'int,mmu,page']
+
+        if args:
+            self.options += ['-append', ' '.join(args)]
+        if debug:
+            self.options += ['-S']
+        if not graphics:
+            self.options += ['-display', 'none']
+
+class GDB(Launchable):
+    COMMAND = TARGET + '-none-elf-gdb'
+
+    def __init__(self, name=None, cmd=None):
+        super().__init__(name or 'gdb', cmd or GDB.COMMAND)
+        # gdbtui & cgdb output is garbled if there is no delay
+        self.cmd = 'sleep 0.25 && ' + self.cmd
+
+    def configure(self, kernel=''):
+        if self.name == 'gdb':
+            self.options += ['-ex=set prompt \033[35;1m(gdb) \033[0m']
+        self.options += [
+            '-iex=set auto-load safe-path {}/'.format(os.getcwd()),
+            '-ex=set tcp connect-timeout 30',
+            '-ex=target remote localhost:{}'.format(gdb_port()),
+            '-ex=continue',
+            '--silent', kernel]
+
+def uart_port(num):
+    assert num >= 0 and num < 9
+    return gdb_port() + 1 + num
+
+class SOCAT(Launchable):
+    def __init__(self, name):
+        super().__init__(name, 'socat')
+
+    def configure(self, uart_num):
+        port = uart_port(uart_num)
+        # The simulator will only open the server after some time has
+        # passed.  To minimize the delay, keep reconnecting until success.
+        self.options = [
+            'STDIO', 'tcp:localhost:{},retry,forever'.format(port)]
+        
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description='Launch kernel in RPi3 board AArch64 simulator.')
+    parser.add_argument('-k', '--kernel', metavar='KERNEL', type=str,
+                        default='kernel8.elf',
+                        help='Kernel image file in ELF format.')
+    parser.add_argument('args', metavar='ARGS', type=str, nargs='*',
+                        help='Kernel arguments.')
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Start debugging session.')
+    parser.add_argument('-g', '--graphics', action='store_true',
+                        help='Enable display output.')
+        
+
+    args = parser.parse_args()
+
+    # Check if the kernel file is available
+    if not os.path.isfile(args.kernel):
+        raise SystemExit('%s: file does not exist!' % args.kernel)
+
+    sim = QEMU()
+    sim.configure(debug=args.debug, graphics=args.graphics, kernel=args.kernel,
+                  args=args.args)
+
+    uart = SOCAT('/dev/tty1')
+    uart.configure(uart_num=0)
+    
+    if args.debug:
+         dbg = GDB()
+         dbg.configure(kernel=args.kernel)
+    else:
+         dbg = None
+
+    
+    subprocess.run(['tmux', '-f', TMUX_CONF, '-L', SOCKET, 'start-server'])
+
+    server = Server(config_file=TMUX_CONF, socket_name=SOCKET)
+
+    if server.has_session(SESSION):
+        server.kill_session(SESSION)
+
+    session = server.new_session(session_name=SESSION, attach=False,
+                                 window_name=':0', window_command='sleep 1')
+
+    try:
+        sim.start(session)
+        uart.start(session)
+        if dbg:
+            dbg.start(session)
+
+        session.kill_window(':0')
+        session.select_window(dbg.name if dbg else '/dev/cons')
+        session.attach_session()
+    finally:
+        try:
+            session.kill_session()
+        except:
+            pass
+        
+server.kill_server()
