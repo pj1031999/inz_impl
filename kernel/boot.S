@@ -98,80 +98,20 @@ mmu_setup:
 	isb
 
 	ldr	x0, =( \
-	MAIR_ATTR(MAIR_DEVICE_nGnRnE, 3) \
-	| MAIR_ATTR(MAIR_NORMAL_WT, 2) \
-	| MAIR_ATTR(MAIR_NORMAL_NC, 1) \
-	| MAIR_ATTR(MAIR_NORMAL_WB, 0))
-	//ldr	x0, =( \
-	//MAIR_ATTR(MAIR_DEVICE_nGnRnE, 3) \
-	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 2) \
-	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 1) \
-	//| MAIR_ATTR(MAIR_DEVICE_nGnRnE, 0))
-
-	msr	mair_el1, x0
-
-
-	/* TCR_EL1:IPS[34:32] = AA64MMFR0:PARange[3:0] */
-#ifdef PAGE64
-	ldr	x0, =(\
-	TCR_TxSZ(16)\
-	| TCR_CACHE_ATTRS\
-	| TCR_SMP_ATTRS\
-	| TCR_TGx_(64K))
+		TCR_TxSZ(32) \
+		| TCR_TGx_(4K) \
+	)
 	mrs	x1, id_aa64mmfr0_el1
 	bfi	x0, x1, #32, #3
 	msr	tcr_el1, x0
 
-#else
-	ldr	x0, =(\
-	TCR_TxSZ(32)\
-	| TCR_CACHE_ATTRS\
-	| TCR_SMP_ATTRS\
-	| TCR_TGx_(4K))
-	mrs	x1, id_aa64mmfr0_el1
-	bfi	x0, x1, #32, #3
-	msr	tcr_el1, x0
-#endif
-	/*
-	 * configure SCTLR
-	 */
-	mrs	x0, sctlr_el1
-	ldr	x1, =(	\
-	SCTLR_IESB 	\
-	| SCTLR_WXN 	\
-	| SCTLR_UMA 	\
-	| SCTLR_ITD 	\
-	| SCTLR_THEE 	\
-	| SCTLR_CP15BEN \
-	| SCTLR_SA0 	\
-	| SCTLR_SA 	\
-	| SCTLR_A 	\
-	| 0)
-	bic	x0, x0, x1
-
-	ldr	x1, =(	\
-	SCTLR_LSMAOE 	\
-	| SCTLR_nTLSMD 	\
-	| SCTLR_UCI 	\
-	| SCTLR_SPAN 	\
-	| SCTLR_UCT 	\
-	| SCTLR_nTWE 	\
-	| SCTLR_nTWI 	\
-	| SCTLR_DZE 	\
-	| SCTLR_I 	\
-	| SCTLR_SED 	\
-	| 0 /*SCTLR_C*/ 	\
-	| SCTLR_M 	\
-	| SCTLR_SA0 	\
-	| SCTLR_SA 	\
-	| SCTLR_A 	\
-	| 0)
+	ldr	x1, =( \
+		SCTLR_M	\
+		| SCTLR_I \
+		| SCTLR_C \
+	)
 	orr x0, x0, x1
 	
-	ldr	x1, =(SCTLR_EE | SCTLR_EOE)
-	//orr	x0, x0, x1 /* set: BigEndian */
-	bic x0, x0, x1  /* clear: LittleEndian */
-
 mmu_enable:
 	msr	sctlr_el1, x0	/* enabling MMU! */
 	dsb	sy
