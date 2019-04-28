@@ -15,6 +15,11 @@ KRT = kernel/kernel.a klibc/klibc.a font/font.a
 
 build: build-kernel build-klibc build-font $(KERIMG)
 
+toolchain:
+	make -C toolchain/openOCD PREFIX=$(PWD)/toolchain
+	make -C toolchain/gnu 	PREFIX=$(PWD)/toolchain
+	make -C toolchain/qemu 	PREFIX=$(PWD)/toolchain
+
 include build.mk
 
 $(KERELF): $(KRT) $(LDSCRIPT)
@@ -28,16 +33,17 @@ $(KERIMG): $(KERELF)
 run: build
 	$(QEMU) $(QEMUFLAGS) -kernel $(KERELF)
 
-debug: build
-	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF)
+# debug: build
+# 	$(QEMU) $(QEMUFLAGS) -S -kernel $(KERELF)
 
-debuggdb: build
-	$(GDB) \
-	-ex "file $(KERELF)" \
-	-ex 'target extended-remote localhost:9000' \
-	-ex 'set scheduler-locking on' \
-	-ex 'set remotetimeout unlimited' \
-	-x gdbinit
+# debuggdb: build
+# 	$(GDB) \
+# 	-ex "file $(KERELF)" \
+# 	-ex 'target extended-remote localhost:9000' \
+# 	-ex 'set scheduler-locking on' \
+# 	-ex 'set remotetimeout unlimited' \
+# 	-x gdbinit
+
 
 extra-clean: clean-kernel clean-klibc
 	$(RM) $(KERELF) $(KERIMG) $(KERMAP)

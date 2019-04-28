@@ -35,7 +35,7 @@ def gdb_port():
 
 class QEMU(Launchable):
     def __init__(self):
-        super().__init__('qemu', shutil.which('qemu-system-' + TARGET))
+        super().__init__('qemu', shutil.which('qemu-rpi3-' + TARGET))
 
     def configure(self, debug=False, graphics=False, kernel='', args=''):
         self.options = [
@@ -58,7 +58,7 @@ class QEMU(Launchable):
             self.options += ['-display', 'none']
 
 class GDB(Launchable):
-    COMMAND = TARGET + '-none-elf-gdb'
+    COMMAND = TARGET + '-rpi3-elf-gdb'
 
     def __init__(self, name=None, cmd=None):
         super().__init__(name or 'gdb', cmd or GDB.COMMAND)
