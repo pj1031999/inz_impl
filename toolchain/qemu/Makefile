@@ -41,7 +41,7 @@ $(QEMU)/.build: $(QEMU)/.configure
 qemu-install: $(QEMU)/.install
 $(QEMU)/.install: $(QEMU)/.build
 	cd $(QEMUDIR) && $(MAKE) install
-	mv $(PWD)/bin/qemu-system-aarch64 $(PWD)/bin/qemu-rpi3-aarch64
+	mv $(PWD)/bin/bin/qemu-system-aarch64 $(PWD)/bin/bin/qemu-rpi3-aarch64
 	touch $@
 
 clean:
