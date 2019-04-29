@@ -30,96 +30,93 @@ set_link_register:
 
 	// [x3] core number 
 	MRS	X3, MPIDR_EL1 		// Multiprocessor Affinity Register
-	ANDS 	X3, X3, #3		
-	BEQ 	clear_bss
+	ANDS	X3, X3, #3
+	BEQ	clear_bss
 	
 cpu_mailbox_wait:	
 	// [CPU#1-CPU#3] Wait for entry point to appear in local mailbox #3
-	ldr	x4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
+	LDR	x4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
 
-	lsl	x3, x3, #4
-2:	wfe
-	ldr	w30, [x4, x3]	// lr == x30 there id no wlr |  read mailbox #3 for n-th CPU
-	cmp	lr, #0
-	beq	2b
+	LSL	x3, x3, #4
+2:	WFE
+	LDR	w30, [x4, x3]	// lr == x30 there id no wlr |  read mailbox #3 for n-th CPU
+	CMP	lr, #0
+	BEQ	2b
 	
-	str	w30, [x4, x3]	// clear the mailbox
-	lsr	x3, x3, #4
+	STR	w30, [x4, x3]	// clear the mailbox
+	LSR	x3, x3, #4
 
 	
-	cmp	x3, #0
-	bne	setup_translation_table //no_cpu0_init
+	CMP	x3, #0
+	BNE	setup_translation_table
 
 
 clear_bss:
 	// [CPU#0] Clear BSS section.
 
-	ldr	x4, =PHYSADDR(_bss_start)
-	ldr	x5, =PHYSADDR(_bss_end)
-1:	stp 	xzr, xzr, [x4], #16
-	cmp	x4, x5
-	blo	1b
+	LDR	x4, =PHYSADDR(_bss_start)
+	LDR	x5, =PHYSADDR(_bss_end)
+1:	STP 	xzr, xzr, [x4], #16
+	CMP	x4, x5
+	BLO	1b
 
 setup_translation_table:
 	/* Invalidate all TLB */
 	TLBI	ALLE1
-	tlbi	vmalle1is
-	dsb	ish
-	isb
+	TLBI	vmalle1is
+	DSB	ish
+	ISB
 
-	ADR    X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
-	MSR    TTBR1_EL1, X0
-	MSR    TTBR0_EL1, X0
+	ADR	X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
+	MSR	TTBR1_EL1, X0
+	MSR	TTBR0_EL1, X0
 
 	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
-	LDR    X2, =0x00000721
-	STR    X2, [X0], #8
+	LDR	X2, =0x00000721
+	STR	X2, [X0], #8
 
 	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF. Map 1:1
-	LDR    X2, =0x40000721        	
-	STR    X2, [X0], #8  
+	LDR	X2, =0x40000721        	
+	STR	X2, [X0], #8  
 	
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF. Map 1:1
-	LDR    X2, =0x80000721
-	STR    X2, [X0], #8
+	LDR	X2, =0x80000721
+	STR	X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF. Mapped into first GB because Video Core memory mapping
-	LDR    X2, =0x00000721
-	STR    X2, [X0], #8
+	LDR	X2, =0x00000721
+	STR	X2, [X0], #8
 
 mmu_setup:
-	dsb	sy
-	isb
+	DSB	sy
+	ISB
 	
 	/* Invalidate all TLB */
-	dsb	ishst
-	tlbi	vmalle1is
-	dsb	ish
-	isb
+	DSB	ishst
+	TLBI	vmalle1is
+	DSB	ish
+	ISB	
 
-	ldr	x0, =( \
+	LDR	x0, =( \
 		TCR_TxSZ(32) \
 		| TCR_TGx_(4K) \
 	)
-	mrs	x1, id_aa64mmfr0_el1
-	bfi	x0, x1, #32, #3
-	msr	tcr_el1, x0
+	MRS	x1, id_aa64mmfr0_el1
+	BFI	x0, x1, #32, #3
+	MSR	tcr_el1, x0
 
-	ldr	x1, =( \
+	LDR	x1, =( \
 		SCTLR_M	\
 		| SCTLR_I \
 		| SCTLR_C \
 	)
-	orr x0, x0, x1
+	ORR	x0, x0, x1
 	
 mmu_enable:
-	msr	sctlr_el1, x0	/* enabling MMU! */
-	dsb	sy
-	isb
-	MRS	x4, CurrentEl	
-
+	MSR	sctlr_el1, x0	/* enabling MMU! */
+	DSB	sy
+	ISB	
 	
-no_cpu0_init:
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
 	BEQ	change_el
@@ -137,15 +134,14 @@ el3_only:
 	ADR	X0, change_el     	// el2_entry points to the first instruction of
 	MSR	ELR_EL3, X0       	// EL2 code.
 
-	ERET 	//jump to el2_entry
+	ERET	//jump to el2_entry
 
 change_el:
-	//Change Exception Level
 	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
 	MSR	HCR_EL2, XZR   
 	MRS	X0, HCR_EL2
 	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	ORR 	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	ORR	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
 	MSR	HCR_EL2, X0
 		
 el2_entry:
@@ -165,14 +161,13 @@ el2_entry:
 	ORR	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
 	MSR	cnthctl_el2, x2
 	
-	// Determine the  EL1 Execution stat
-	MOV	X1, #0x3c5//#0b00101 		// DAIF=0000
+	// Determine the  EL1 Execution state
+	MOV	X1, #0x3c5//#0b00101 	// DAIF=0000
 	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
 	
 	ADR	X1, el1_entry     	// el1_entry points to the first instruction of
 	MSR	ELR_EL2, X1       	// EL1 code.
-	ISB
-	ERET
+	ERET	
 	
 el1_entry:
 	MRS	x1, CurrentEl
@@ -209,9 +204,9 @@ el1_entry:
 	
  	// Enter kernel_entry with empty stack.
 enter_kernel:
-	mov	x4, lr
-	ldr	lr, =kernel_exit
-	br	x4
+	MOV	x4, lr
+	LDR	lr, =kernel_exit
+	BR	x4
 
 	
 //vim: ft=armv5 ts=8 sw=8 noet	
