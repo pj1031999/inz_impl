@@ -145,17 +145,6 @@ change_el:
 	MSR	HCR_EL2, X0
 		
 el2_entry:
-	MRS	x4, CurrentEl
-
-	// Disable trapping of   accessing in EL3 and EL2.
-	//MSR       CPTR_EL3, XZR
-	//MSR       CPTR_EL3, XZR
-
-	// Disable access tra pping in EL1 and EL0.
-	//MOV    X1, #(0x3 << 20)       // FPEN disables trapping to EL1.
-	//MSR    CPACR_EL1, X1
-	//ISB 
-
 	/* Enable access to the physical timers at EL1 */
 	MRS	x2, cnthctl_el2
 	ORR	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
@@ -170,42 +159,27 @@ el2_entry:
 	ERET	
 	
 el1_entry:
-	MRS	x1, CurrentEl
-	
-	ldr	x4, =0xffffff007e00b224
-	AT	S1E1R, X4
-	ISB
-	MRS	X6, PAR_EL1
-	ISB
-	ldr	x4, =0x400000dc
-	AT	S1E1R, X4
-	ISB
-	MRS	X6, PAR_EL1
-	ISB
-	MRS	X0, SCTLR_EL1
-
 	/* Load the exception vectors */
-	//LDR 	x2, =exception_vectors
-	LDR 	x2, =_exc_vector
-	MSR 	vbar_el1, x2
-	
-	ADR    X1, PHYSADDR(_el1_stack)
-	//ADD    X1, X1, #4
-	MRS    X2, MPIDR_EL1
-	AND    X2, X2, #0xFF               // X2 == CPU number.
-	MOV    X3, #CPU_STACK_SIZE
-	MUL    X3, X2, X3                 // Create separated stack spaces
-	SUB    X1, X1, X3                 // for each processor
+	LDR	x2, =_exc_vector
+	MSR	vbar_el1, x2
 
-	//ADR    X1, PHYSADDR(_el1_stack)
-	MOV    SP, X1
+	/* Set stack address */
+	//ADR	X1, PHYSADDR(_el1_stack)
+	LDR	X1, =_el1_stack
+	MRS	X2, MPIDR_EL1
+	AND	X2, X2, #0xFF               // X2 == CPU number.
+	MOV	X3, #CPU_STACK_SIZE
+	MUL	X3, X2, X3                 // Create separated stack spaces
+	SUB	X1, X1, X3                 // for each processor
 
-	msr    daifclr, #3
+	MOV	SP, X1
+	msr	daifclr, #3
 	
  	// Enter kernel_entry with empty stack.
 enter_kernel:
 	MOV	x4, lr
 	LDR	lr, =kernel_exit
+	//MSR	TTBR0_EL1, XZR // turn off user space adress translation
 	BR	x4
 
 	
