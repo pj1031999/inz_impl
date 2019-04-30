@@ -42,14 +42,15 @@ cpu_mailbox_wait:
 	LDR	w30, [x4, x3]	// lr == x30 there id no wlr |  read mailbox #3 for n-th CPU
 	CMP	lr, #0
 	BEQ	2b
+
+	LDR	x1, =_kernel
+	ADD	lr, lr, x1
 	
 	STR	w30, [x4, x3]	// clear the mailbox
 	LSR	x3, x3, #4
-
 	
 	CMP	x3, #0
 	BNE	setup_translation_table
-
 
 clear_bss:
 	// [CPU#0] Clear BSS section.
@@ -164,7 +165,6 @@ el1_entry:
 	MSR	vbar_el1, x2
 
 	/* Set stack address */
-	//ADR	X1, PHYSADDR(_el1_stack)
 	LDR	X1, =_el1_stack
 	MRS	X2, MPIDR_EL1
 	AND	X2, X2, #0xFF               // X2 == CPU number.
@@ -173,13 +173,26 @@ el1_entry:
 	SUB	X1, X1, X3                 // for each processor
 
 	MOV	SP, X1
-	msr	daifclr, #3
+	MSR	daifclr, #3
+
+turn_off:
+// turn off user space adress translation
+	LDR	x4, =turn_off_user_space
+	LDR	x1, =_kernel
+
+	ADD	x1, x1, x4
+	BR	x1
+
+turn_off_user_space:
+	MSR	TTBR0_EL1, XZR
 	
- 	// Enter kernel_entry with empty stack.
+// Enter kernel_entry with empty stack.
 enter_kernel:
+
 	MOV	x4, lr
 	LDR	lr, =kernel_exit
-	//MSR	TTBR0_EL1, XZR // turn off user space adress translation
+	DSB	SY
+	ISB
 	BR	x4
 
 	
