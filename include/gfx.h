@@ -2,9 +2,12 @@
 #define GFX_H
 
 #include <types.h>
+#include <rpi/vc_prop.h>
 
 typedef struct font font_t;
 typedef uint32_t color_t;
+static volatile unsigned int _mail_buffer[256] __attribute__((aligned (16)));
+
 
 #define color(r,g,b) \
   (color_t)((((r) & 255) << 16) | (((g) & 255) << 8) | ((b) & 255))
@@ -29,6 +32,23 @@ void gfx_rect_draw(window_t *win, unsigned x, unsigned y,
 
 static inline void gfx_set_bg_col(window_t *win, color_t color) {
   win->bg_col = color;
+}
+
+struct vcprop_tag_allocbuf*
+get_response_tag_allocbuf(const unsigned int mailbuffer[], const uint32_t c);
+
+uint32_t
+set_mailbufer( unsigned int mailbuffer[], unsigned w, unsigned h);
+
+
+#define fill(vcprop_tag_name)						\
+  size_t fill_##vcprop_tag_name(					\
+				volatile unsigned int mailbuffer[]	\
+				, size_t c				\
+				, struct vcprop_tag_name val)		\
+{									\
+  *(struct vcprop_tag_name*)(&mailbuffer[c]) =  val;			\
+  return sizeof(struct vcprop_tag_name) / sizeof mailbuffer[0];		\
 }
 
 #endif /* !GFX_H */

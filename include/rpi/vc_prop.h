@@ -39,6 +39,7 @@
 struct vcprop_tag {
 	uint32_t vpt_tag;
 #define	VCPROPTAG_NULL			0x00000000
+#define	VCPROPTAG_END			0x00000000
 #define	VCPROPTAG_GET_FIRMWAREREV	0x00000001
 #define	VCPROPTAG_GET_BOARDMODEL	0x00010001
 #define	VCPROPTAG_GET_BOARDREVISION	0x00010002
@@ -346,6 +347,15 @@ struct vcprop_tag_allocmem {
 #define MEM_FLAG_NO_INIT	(1 << 5) /* don't initialise (default is initialise to all ones */
 #define MEM_FLAG_HINT_PERMALOCK	(1 << 6) /* Likely to be locked for long periods of time. */
 };
+
+struct vcprop_tag_request {
+  uint32_t vpt_tag; // = VCPROPTAG_REQUEST;
+};
+
+struct vcprop_tag_terminate {
+  uint32_t vpt_tag; // = VCPROPTAG_END;
+};
+
 
 /* also for unlock and release */
 struct vcprop_tag_lockmem {
