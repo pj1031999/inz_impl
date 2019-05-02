@@ -6,3 +6,5 @@ kernel.map
 *.a
 *.d
 *~
+
+toolchain
