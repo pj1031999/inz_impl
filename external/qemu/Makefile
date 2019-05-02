@@ -8,6 +8,8 @@ QEMUDIR := $(QEMU)-build
 CC = gcc -g
 CFLAGS = -O2 -Wall
 
+PREFIX ?= $(ROOTDIR)/local
+
 all: qemu-install
 
 ### Qemu
@@ -26,7 +28,7 @@ $(QEMU)/.configure: $(QEMU)/.unpack
 	mkdir $(QEMUDIR)
 	cd $(QEMUDIR) && \
 		../$(QEMU)/configure \
-		--prefix=$(PWD)/bin/ \
+		--prefix=$(PREFIX) \
 		--enable-fdt \
 		--target-list=,aarch64-softmmu
 	sed -i -e '/qemu_.*dir=/s,/qemu,/qemu-rpi3,' \
@@ -41,14 +43,12 @@ $(QEMU)/.build: $(QEMU)/.configure
 qemu-install: $(QEMU)/.install
 $(QEMU)/.install: $(QEMU)/.build
 	cd $(QEMUDIR) && $(MAKE) install
-	mv $(PWD)/bin/bin/qemu-system-aarch64 $(PWD)/bin/bin/qemu-rpi3-aarch64
+	mv $(PREFIX)/bin/qemu-system-aarch64 $(PREFIX)/bin/qemu-rpi3-aarch64
 	touch $@
 
 clean:
 qemu-clean:
 	$(RM) -r $(QEMUDIR)
 	$(RM) -r $(QEMU)
-	$(RM) -r $(PWD)/bin/
 
 .PHONY: qemu-unpack qemu-configure qemu-build qemu-install qemu-clean
-
