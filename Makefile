@@ -16,9 +16,9 @@ KRT = kernel/kernel.a klibc/klibc.a font/font.a
 build: build-kernel build-klibc build-font $(KERIMG)
 
 toolchain:
-	make -C toolchain/openOCD PREFIX=$(PWD)/toolchain
-	make -C toolchain/gnu 	PREFIX=$(PWD)/toolchain
-	make -C toolchain/qemu 	PREFIX=$(PWD)/toolchain
+	make -C external/openOCD PREFIX=$(PWD)/toolchain
+	make -C external/gnu PREFIX=$(PWD)/toolchain
+	make -C external/qemu PREFIX=$(PWD)/toolchain
 
 include build.mk
 
@@ -44,8 +44,9 @@ run: build
 # 	-ex 'set remotetimeout unlimited' \
 # 	-x gdbinit
 
-
 extra-clean: clean-kernel clean-klibc
 	$(RM) $(KERELF) $(KERIMG) $(KERMAP)
+
+.PHONY: run build toolchain
 
 # vim: ts=8 sw=8 noet:
