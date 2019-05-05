@@ -126,11 +126,11 @@ static void irq_dispatch(uint32_t reg, unsigned irq_base) {
   }
 }
 
-__interrupt("IRQ") void exc_irq(void) {
+void exc_irq(void) {
   unsigned cpu = arm_cpu_id();
   /* Firstly, dispatch local interrupts. */
   irq_dispatch(INTC_IRQPENDING_N(cpu), BCM2836_INT_BASECPUN(cpu));
-  /* AFAIU all peripheral interrupts are routed to CPU#0. */
+
   if (cpu == 0) {
     irq_dispatch(BCM2835_ARMICU(BCM2835_INTC_IRQBPENDING),
                  BCM2835_INT_BASICBASE);
@@ -141,6 +141,6 @@ __interrupt("IRQ") void exc_irq(void) {
   }
 }
 
-__interrupt("FIQ") void exc_fast_irq(void) {
+void exc_fast_irq(void) {
   panic("System must not generate Fast Interrupts!");
 }

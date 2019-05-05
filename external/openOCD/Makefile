@@ -8,6 +8,8 @@ OOCDDIR := $(OOCD)-build
 CC = gcc -g
 CFLAGS = -O2 -Wall
 
+PREFIX ?= $(ROOTDIR)/local
+
 all: openocd-install
 
 ### OpenOCD
@@ -23,7 +25,7 @@ $(OOCD)/.configure: $(OOCD)-download
 	sed -i 's/'"'"'openocd'"'"'/'"'"'openocd-rpi3'"'"'/g' configure
 	cd $(OOCDDIR) && \
 	    ../$(OOCD)/configure \
-	    --prefix=$(PWD)/bin/ \
+	    --prefix=$(PREFIX) \
 	    --program-suffix='-rpi3' \
 	    --enable-jlink
 	touch $@
@@ -41,8 +43,7 @@ $(OOCD)/.install: $(OOCD)/.build
 clean: openocd-clean
 openocd-clean:
 	$(RM) -r $(OOCDDIR)
-	$(PWD)/bin/
-	
+
 distclean: clean
 	$(RM) -r $(OOCD)
 

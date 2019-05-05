@@ -39,15 +39,16 @@ class QEMU(Launchable):
 
     def configure(self, debug=False, graphics=False, kernel='', args=''):
         self.options = [
-            #'-nodefaults',
-            #'-device', 'VGA',
+            '-nodefaults',
             '-machine', 'raspi3',
             '-smp', '4',
             '-cpu', 'cortex-a53',
-            '-icount', 'shift=4,sleep=on',
+            #'-icount', 'shift=3,sleep=on',
             '-kernel', kernel,
             '-gdb', 'tcp::{},server,wait'.format(gdb_port()),
-            '-serial', 'stdio',
+            #'-serial', 'stdio',
+            '-serial', 'none',
+            '-serial', 'tcp:127.0.0.1:{},server,wait'.format(uart_port(0)),
             '-d', 'int,mmu,page']
 
         if args:
@@ -72,7 +73,6 @@ class GDB(Launchable):
             '-iex=set auto-load safe-path {}/'.format(os.getcwd()),
             '-ex=set tcp connect-timeout 30',
             '-ex=target remote localhost:{}'.format(gdb_port()),
-            '-ex=continue',
             '--silent', kernel]
 
 def uart_port(num):
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             dbg.start(session)
 
         session.kill_window(':0')
-        session.select_window(dbg.name if dbg else '/dev/cons')
+        session.select_window(dbg.name if dbg else sim.name)
         session.attach_session()
     finally:
         try:
