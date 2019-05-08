@@ -72,7 +72,7 @@ class GDB(Launchable):
             '-iex=set auto-load safe-path {}/'.format(os.getcwd()),
             '-ex=set tcp connect-timeout 30',
             '-ex=target remote localhost:{}'.format(gdb_port()),
-            '-ex=continue',
+            #'-ex=continue',
             '--silent', kernel]
 
 def uart_port(num):
@@ -95,13 +95,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description='Launch kernel in RPi3 board AArch64 simulator.')
+
     parser.add_argument('-k', '--kernel', metavar='KERNEL', type=str,
                         default='kernel8.elf',
                         help='Kernel image file in ELF format.')
+
     parser.add_argument('args', metavar='ARGS', type=str, nargs='*',
                         help='Kernel arguments.')
+
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Start debugging session.')
+
     parser.add_argument('-g', '--graphics', action='store_true',
                         help='Enable display output.')
         

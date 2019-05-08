@@ -152,7 +152,7 @@ el2_entry:
 	MSR	cnthctl_el2, x2
 	
 	// Determine the  EL1 Execution state
-	MOV	X1, #0x3c5//#0b00101 	// DAIF=0000
+	MOV	X1, #0x3c5	 	// DAIF=0000
 	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
 	
 	ADR	X1, el1_entry     	// el1_entry points to the first instruction of
@@ -173,7 +173,7 @@ el1_entry:
 	SUB	X1, X1, X3                 // for each processor
 
 	MOV	SP, X1
-	MSR	daifclr, #3
+	MSR	DAIFClr, #3
 
 turn_off:
 // turn off user space adress translation
