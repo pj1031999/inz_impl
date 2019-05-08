@@ -174,23 +174,24 @@ el1_entry:
 
 	MOV	SP, X1
 	MSR	DAIFClr, #3
-
-turn_off:
-// turn off user space adress translation
-	LDR	x4, =turn_off_user_space
-	LDR	x1, =_kernel
-
-	ADD	x1, x1, x4
-	BR	x1
-
-turn_off_user_space:
-	MSR	TTBR0_EL1, XZR
-	
+  
 // Enter kernel_entry with empty stack.
 enter_kernel:
 
 	MOV	x4, lr
-	LDR	lr, =kernel_exit
+	LDR	lr, =kernel_exit  
+  
+//turn_off:
+// turn off user space adress translation
+//	LDR	x3, =turn_off_user_space
+//	LDR	x1, =_kernel
+
+//	ADD	x1, x1, x3
+//	BR	x1
+
+//turn_off_user_space:
+//	MSR	TTBR0_EL1, XZR
+
 	DSB	SY
 	ISB
 	BR	x4

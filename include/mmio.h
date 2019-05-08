@@ -2,8 +2,7 @@
 #define MMIO_H
 
 #include <types.h>
-
-extern uint8_t _kernel[];
+#include <mmu.h>
 
 static __attribute__((noinline)) void mmio_write(uint32_t reg, uint32_t data) {
   uint32_t *ptr = (void *)(reg + _kernel);

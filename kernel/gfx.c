@@ -1,10 +1,8 @@
 #include <rpi/vc_mbox.h>
 #include <gfx.h>
+#include <mmu.h>
 #include <font.h>
 #include <klibc.h>
-
-extern void* _kernel;
-#define mem_p2v(X) (X+(unsigned long long)&_kernel)
 
 window_t screen;
 

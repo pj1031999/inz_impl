@@ -86,10 +86,6 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   puts("Type letter 'q' to halt machine!");
   while (getchar() != 'q');
-
-    
-  for(;;);
-  //kernel_exit();
 }
 
 noreturn void kernel_exit() {
