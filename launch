@@ -89,7 +89,7 @@ class SOCAT(Launchable):
         # The simulator will only open the server after some time has
         # passed.  To minimize the delay, keep reconnecting until success.
         self.options = [
-            'STDIO', 'tcp:localhost:{},retry,forever'.format(port)]
+            'STDIO,raw,echo=0,crnl', 'tcp:localhost:{},retry,forever'.format(port)]
         
 
 if __name__ == '__main__':
