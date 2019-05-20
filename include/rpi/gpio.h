@@ -32,4 +32,13 @@ enum {
 /* \brief Configures input pin as pull-up or pull-down. */
 void gpio_set_pull(unsigned pin, unsigned pud);
 
+/*
+ * \brief delay function
+ * \param delay number of cycles to delay
+ *
+ * This just loops <delay> times in a way that the compiler
+ * won't optimize away.
+ */
+void delay(int64_t count);
+
 #endif /* !RPI_GPIO_H */
