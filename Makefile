@@ -16,9 +16,9 @@ KRT = kernel/kernel.a klibc/klibc.a font/font.a
 build: build-kernel build-klibc build-font $(KERIMG)
 
 toolchain:
+	make -C external/qemu PREFIX=$(PWD)/toolchain
 	make -C external/openOCD PREFIX=$(PWD)/toolchain
 	make -C external/gnu PREFIX=$(PWD)/toolchain
-	make -C external/qemu PREFIX=$(PWD)/toolchain
 
 include build.mk
 

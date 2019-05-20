@@ -15,11 +15,12 @@ all: openocd-install
 ### OpenOCD
 
 $(OOCD)-download: $(OOCD)
-$(OOCD) :
+$(OOCD)/.download :
 	git clone https://git.code.sf.net/p/openocd/code $(OOCD)
+	touch $@
 
 openocd-configure: $(OOCD)/.configure
-$(OOCD)/.configure: $(OOCD)-download
+$(OOCD)/.configure: $(OOCD)/.download
 	rm -rf $(OOCDDIR) &&	mkdir $(OOCDDIR)
 	cd $(OOCD) && ./bootstrap && \
 	sed -i 's/'"'"'openocd'"'"'/'"'"'openocd-rpi3'"'"'/g' configure
@@ -48,5 +49,5 @@ distclean: clean
 	$(RM) -r $(OOCD)
 
 
-.PHONY: openocd-unpack openocd-configure openocd-build openocd-install openocd-clean
+.PHONY: openocd-configure openocd-build openocd-install openocd-clean
 
