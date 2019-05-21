@@ -191,20 +191,19 @@ enter_kernel:
 	MOV	x4, lr
 	LDR	lr, =kernel_exit  
   
-//turn_off:
+turn_off:
 // turn off user space adress translation
-//	LDR	x3, =turn_off_user_space
-//	LDR	x1, =_kernel
+	LDR	x3, =turn_off_user_space
+	LDR	x1, =_kernel
 
-//	ADD	x1, x1, x3
-//	BR	x1
+	ADD	x1, x1, x3
+	BR	x1
 
-//turn_off_user_space:
-//	MSR	TTBR0_EL1, XZR
+turn_off_user_space:
+	MSR	TTBR0_EL1, XZR
 
 	DSB	SY
 	ISB
 	BR	x4
 
-	
 //vim: ft=armv5 ts=8 sw=8 noet	
