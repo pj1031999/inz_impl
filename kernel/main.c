@@ -30,13 +30,6 @@ void cons_bootstrap(unsigned cpu) {
   cons_init(make_gfx_cons(&win, NULL));
 }
 
-void va_bootstrap(void) {
-  /* Disable mapping for lower 2GiB */
-  for (int i = 0; i < 2048; i++)
-    pcpu()->pdtab[i].raw = PDE_TYPE_FAULT;
-  /* TODO: TLB flush needed here */
-}
-
 extern cons_t uart0_cons;
 
 void test_exc(){
@@ -74,7 +67,6 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   puts("CPU#0 started!");
 
   smp_bootstrap();
-  va_bootstrap();
 
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
