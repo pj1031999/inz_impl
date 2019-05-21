@@ -94,7 +94,7 @@ setup_translation_table:
 	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
 
 	LDR	X2, =PHYSADDR(_level2_pagetable)
-	ORR	X2, X2, #0x3
+	ORR	X2, X2, #L1_TABLE
 	STR	X2, [X0], #8
 
 	// Set level 2 translation table.
@@ -103,29 +103,41 @@ setup_translation_table:
 	LDR	X7, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC))
 	MOV	X8, #0x200
 	LDR	X9, =0x00200000	//2MB
-loop:
+1:
 	STR	X7, [X6], #8
 	ADD	X7, X7, X9
 	SUBS	X8, X8, #1
-	BNE     loop
+	BNE     1b
 
 	MOV	X7, XZR
 	LDR	X7, =( (0x1 * 0x00200000) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB) )
 	LDR	X6, =PHYSADDR(0x1 * 0x8 +_level2_pagetable )
 	MOV	X8, #0x100	// first half of ram for arm
-loop2:
+1:
 	STR	X7, [X6], #8
 	ADD	X7, X7, X9
 	SUBS	X8, X8, #1
-	BNE	loop2
+	BNE	1b
 
 
 	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF. Map 1:1
-	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM))
-	LDR	X2, =0x40000000
-	ORR	X2, X2, X1
+	LDR 	X1, =(_page_table_size)
+	LDR	X2, =PHYSADDR(_level2_pagetable)
+	ADD	X2, X2, X1
+	MOV	X6, X2
+	ORR	X2, X2, #L1_TABLE
 	STR	X2, [X0], #8
-	
+
+	// Set level 2 translation table.
+	MOV	X7, XZR
+	LDR	X7, =( 0x40000000 | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC) )
+	MOV	X8, #0x1
+1:
+	STR	X7, [X6], #8
+	ADD	X7, X7, X9
+	SUBS	X8, X8, #1
+	BNE     1b
+
 
 mmu_setup:
 	DSB	sy
