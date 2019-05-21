@@ -35,21 +35,34 @@ set_link_register:
 	
 cpu_mailbox_wait:	
 	// [CPU#1-CPU#3] Wait for entry point to appear in local mailbox #3
-	LDR	x4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
+	LSL	X3, X3, #4
+	LDR	X1, =_kernel
 
-	LSL	x3, x3, #4
+	// jump address
+	LDR	X4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX3_CLRN(0)
 2:	WFE
-	LDR	w30, [x4, x3]	// lr == x30 there id no wlr |  read mailbox #3 for n-th CPU
-	CMP	lr, #0
+	LDR	W30, [X4, X3]	// lr == x30 there is no wlr |  read mailbox #3 for n-th CPU
+	CMP	LR, #0
 	BEQ	2b
+	
+	STR	W30, [X4, X3]	// clear the mailbox
+	ADD	LR, LR, X1
 
-	LDR	x1, =_kernel
-	ADD	lr, lr, x1
-	
-	STR	w30, [x4, x3]	// clear the mailbox
-	LSR	x3, x3, #4
-	
-	CMP	x3, #0
+	DSB	SY
+	ISB
+
+	// stack address
+	LDR	X4, =BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX1_CLRN(0)
+3:	NOP
+	LDR	W29, [X4, X3]
+	CMP	W29, #0
+	BEQ	3b
+
+	STR	W29, [X4, X3]
+	ADD	X29, X29, X1
+
+	LSR	X3, X3, #4
+	CMP	X3, #0
 	BNE	setup_translation_table
 
 clear_bss:
@@ -60,6 +73,9 @@ clear_bss:
 1:	STP 	xzr, xzr, [x4], #16
 	CMP	x4, x5
 	BLO	1b
+
+	/* Set stack address core0 */
+	LDR	X29, =_el1_stack
 
 setup_translation_table:
 	/* Invalidate all TLB */
@@ -165,14 +181,8 @@ el1_entry:
 	MSR	vbar_el1, x2
 
 	/* Set stack address */
-	LDR	X1, =_el1_stack
-	MRS	X2, MPIDR_EL1
-	AND	X2, X2, #0xFF               // X2 == CPU number.
-	MOV	X3, #CPU_STACK_SIZE
-	MUL	X3, X2, X3                 // Create separated stack spaces
-	SUB	X1, X1, X3                 // for each processor
+	MOV	SP, X29
 
-	MOV	SP, X1
 	MSR	DAIFClr, #3
   
 // Enter kernel_entry with empty stack.

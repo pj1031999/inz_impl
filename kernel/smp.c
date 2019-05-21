@@ -9,8 +9,19 @@
 #include <rpi/vc_mbox.h>
 
 extern void cons_bootstrap(unsigned);
+extern const void* _stack_size;
+extern const void* _el1_stack;
 
-static void smp_intro(){
+static inline uint64_t stack_addr_read() {
+  uint64_t data;
+  __asm__ ("mov %[data], sp"
+                   : [data] "=r"(data)
+                   : );
+  return data;
+}
+
+static inline void smp_intro(){
+
   unsigned cpu = arm_cpu_id();
   pcpu_init();
   cons_bootstrap(cpu);
@@ -18,6 +29,7 @@ static void smp_intro(){
   arm_irq_enable();
 
   printf("CPU#%d started!\n", cpu);
+  printf("Stack Pointer: %p\n", stack_addr_read());
   mbox_set(0, 3, __BIT(cpu));
 }
 
@@ -78,11 +90,16 @@ static void led_blink(){
 }
 
 void smp_bootstrap() {
-  int cpu = 1;
-  mbox_send(cpu++, 3, (uint32_t)(long)smp_entry);
-  mbox_send(cpu++, 3, (uint32_t)(long)led_blink);
-  mbox_send(cpu++, 3, (uint32_t)(long)gpio_blink);
+#define L2I (uint32_t)(uint64_t)
 
+  int cpu = 0;
+  mbox_send(cpu+1, 3, L2I smp_entry);
+  mbox_send(cpu+2, 3, L2I led_blink);
+  mbox_send(cpu+3, 3, L2I gpio_blink);  
+
+  mbox_send(cpu+1, 1,  L2I ( L2I &_el1_stack - 1* L2I &_stack_size));
+  mbox_send(cpu+2, 1,  L2I ( L2I &_el1_stack - 2* L2I &_stack_size));
+  mbox_send(cpu+3, 1,  L2I ( L2I &_el1_stack - 3* L2I &_stack_size));
   do {
     __asm__ volatile("wfe");
   } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));
