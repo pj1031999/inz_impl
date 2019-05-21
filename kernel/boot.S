@@ -93,8 +93,6 @@ setup_translation_table:
 
 	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
 
-	//LDR	X2, =0x00000000
-	//ORR	X2, X2, X1
 	LDR	X2, =PHYSADDR(_level2_pagetable)
 	ORR	X2, X2, #0x3
 	STR	X2, [X0], #8
@@ -128,17 +126,6 @@ loop2:
 	ORR	X2, X2, X1
 	STR	X2, [X0], #8
 	
-	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF. Map 1:1
-	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB))
-	LDR	X2, =0x80000000
-	ORR	X2, X2, X1
-	//STR	X2, [X0], #8
-
-	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF. Mapped into first GB because Video Core memory mapping
-	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC))
-	LDR	X2, =0x00000000
-	ORR	X2, X2, X1
-	//STR	X2, [X0], #8
 
 mmu_setup:
 	DSB	sy
