@@ -1,4 +1,5 @@
 #include "aarch64/aarch64reg.h"
+#include "aarch64/pte.h"
 #include "dev/bcm2836reg.h"
 
 #define CPU_STACK_SIZE 4096
@@ -88,25 +89,69 @@ setup_translation_table:
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
 
+#define PTE_ATTR L1_BLOCK | ATTR_AF | ATTR_SH(ATTR_SH_IS) | ATTR_NS | ATTR_AP(ATTR_AP_RW)
+
 	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
-	LDR	X2, =0x00000721
+
+	//LDR	X2, =0x00000000
+	//ORR	X2, X2, X1
+	LDR	X2, =PHYSADDR(_level2_pagetable)
+	ORR	X2, X2, #0x3
 	STR	X2, [X0], #8
+
+	// Set level 2 translation table.
+	LDR	X6, =PHYSADDR(_level2_pagetable)
+	MOV	X7, XZR
+	LDR	X7, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC))
+	MOV	X8, #0x200
+	LDR	X9, =0x00200000	//2MB
+loop:
+	STR	X7, [X6], #8
+	ADD	X7, X7, X9
+	SUBS	X8, X8, #1
+	BNE     loop
+
+	MOV	X7, XZR
+	LDR	X7, =( (0x1 * 0x00200000) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB) )
+	LDR	X6, =PHYSADDR(0x1 * 0x8 +_level2_pagetable )
+	MOV	X8, #0x100	// first half of ram for arm
+loop2:
+	STR	X7, [X6], #8
+	ADD	X7, X7, X9
+	SUBS	X8, X8, #1
+	BNE	loop2
+
 
 	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF. Map 1:1
-	LDR	X2, =0x40000721        	
-	STR	X2, [X0], #8  
+	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM))
+	LDR	X2, =0x40000000
+	ORR	X2, X2, X1
+	STR	X2, [X0], #8
 	
 	// The third entry is 1GB block from 0x80000000 to 0xBFFFFFFF. Map 1:1
-	LDR	X2, =0x80000721
-	STR	X2, [X0], #8
+	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB))
+	LDR	X2, =0x80000000
+	ORR	X2, X2, X1
+	//STR	X2, [X0], #8
 
 	// The fourth entry is 1GB block from 0xC0000000 to 0xFFFFFFFF. Mapped into first GB because Video Core memory mapping
-	LDR	X2, =0x00000721
-	STR	X2, [X0], #8
+	LDR 	X1, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC))
+	LDR	X2, =0x00000000
+	ORR	X2, X2, X1
+	//STR	X2, [X0], #8
 
 mmu_setup:
 	DSB	sy
 	ISB
+
+	LDR 	X0, =(	\
+	MAIR_ATTR(MAIR_DEVICE_nGnRnE, 	ATTR_DEVICE_MEM) \
+        | MAIR_ATTR(MAIR_NORMAL_NC, 	ATTR_NORMAL_MEM_NC) 	\
+	| MAIR_ATTR(MAIR_NORMAL_WB, 	ATTR_NORMAL_MEM_WB) 	\
+	| MAIR_ATTR(MAIR_NORMAL_WT, 	ATTR_NORMAL_MEM_WT)	\
+	)
+	MSR MAIR_EL1, X0
+
 	
 	/* Invalidate all TLB */
 	DSB	ishst

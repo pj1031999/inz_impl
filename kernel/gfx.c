@@ -31,6 +31,7 @@ window_t *gfx_set_videomode(unsigned w, unsigned h) {
    * screenbase needs to be the screen address in virtual memory
    */
   unsigned long long  physical_screenbase = alloc_buff->address;
+  physical_screenbase &= ~0xc0000000;
   unsigned long long screenbase = mem_p2v(physical_screenbase);
   
   screen = (window_t){
