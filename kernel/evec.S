@@ -24,86 +24,58 @@
  * SUCH DAMAGE.
  *
  */
-
 #include "aarch64/assym.h"
-	
-.section ".evec"
-.globl _exc_vector
 
-#define ENTRY(sym)                      \
-    .text; .globl sym; .align 2; .type sym,#function; sym:
-#define EENTRY(sym)                     \
-    .globl  sym; sym:
-#define END(sym) .size sym, . - sym
-#define EEND(sym)
+#define ENTRY(sym) .globl sym; .align 2; .type sym, #function; sym:
+#define END(sym)   .size sym, . - sym
 
-	
+	.section ".text"
+
 .macro	save_registers el
 .if \el == 1
 	mov	x18, sp
-	sub	sp, sp, #128
+	//sub	sp, sp, #128
 .endif
 	sub	sp, sp, #(TF_SIZE + 16)
- 	stp	x29, x30, [sp, #(TF_SIZE)]
+	stp	x29, x30, [sp, #(TF_SIZE)]
 	stp	x28, x29, [sp, #(TF_X + 28 * 8)]
- 	stp	x26, x27, [sp, #(TF_X + 26 * 8)]
- 	stp	x24, x25, [sp, #(TF_X + 24 * 8)]
- 	stp	x22, x23, [sp, #(TF_X + 22 * 8)]
- 	stp	x20, x21, [sp, #(TF_X + 20 * 8)]
- 	stp	x18, x19, [sp, #(TF_X + 18 * 8)]
- 	stp	x16, x17, [sp, #(TF_X + 16 * 8)]
- 	stp	x14, x15, [sp, #(TF_X + 14 * 8)]
- 	stp	x12, x13, [sp, #(TF_X + 12 * 8)]
- 	stp	x10, x11, [sp, #(TF_X + 10 * 8)]
- 	stp	x8,  x9,  [sp, #(TF_X + 8  * 8)]
- 	stp	x6,  x7,  [sp, #(TF_X + 6  * 8)]
- 	stp	x4,  x5,  [sp, #(TF_X + 4  * 8)]
- 	stp	x2,  x3,  [sp, #(TF_X + 2  * 8)]
- 	stp	x0,  x1,  [sp, #(TF_X + 0  * 8)]
- 	mrs	x10, elr_el1
- 	mrs	x11, spsr_el1
+	stp	x26, x27, [sp, #(TF_X + 26 * 8)]
+	stp	x24, x25, [sp, #(TF_X + 24 * 8)]
+	stp	x22, x23, [sp, #(TF_X + 22 * 8)]
+	stp	x20, x21, [sp, #(TF_X + 20 * 8)]
+	stp	x18, x19, [sp, #(TF_X + 18 * 8)]
+	stp	x16, x17, [sp, #(TF_X + 16 * 8)]
+	stp	x14, x15, [sp, #(TF_X + 14 * 8)]
+	stp	x12, x13, [sp, #(TF_X + 12 * 8)]
+	stp	x10, x11, [sp, #(TF_X + 10 * 8)]
+	stp	x8,  x9,  [sp, #(TF_X + 8  * 8)]
+	stp	x6,  x7,  [sp, #(TF_X + 6  * 8)]
+	stp	x4,  x5,  [sp, #(TF_X + 4  * 8)]
+	stp	x2,  x3,  [sp, #(TF_X + 2  * 8)]
+	stp	x0,  x1,  [sp, #(TF_X + 0  * 8)]
+	mrs	x10, elr_el1
+	mrs	x11, spsr_el1
  	mrs	x12, esr_el1
 .if \el == 0
- 	mrs	x18, sp_el0
+	mrs	x18, sp_el0
 .endif
 	str	x10, [sp, #(TF_ELR)]
 	stp	w11, w12, [sp, #(TF_SPSR)]
 	stp	x18,  lr, [sp, #(TF_SP)]
 	mrs	x18, tpidr_el1
 	add	x29, sp, #(TF_SIZE)
-.if \el == 0
- 	/* Apply the SSBD (CVE-2018-3639) workaround if needed */
-// 	ldr	x1, [x18, #PC_SSBD]
-// 	cbz	x1, 1f
-// 	mov	w0, #1
-// 	blr	x1
-1:
-.endif
 .endm
 
 .macro	restore_registers el
-.if \el == 1
-	msr	daifset, #2
- 	/*
- 	 * Disable interrupts, x18 may change in the interrupt exception
- 	 * handler.  For EL0 exceptions, do_ast already did this.
- 	 */
-.endif
-.if \el == 0
- 	/* Remove the SSBD (CVE-2018-3639) workaround if needed */
-// 	ldr	x1, [x18, #PC_SSBD]
-// 	cbz	x1, 1f
-// 	mov	w0, #0
-// 	blr	x1
-1:
-.endif
+	//msr	daifset, #2
+
 	ldp	x18,  lr, [sp, #(TF_SP)]
 	ldp	x10, x11, [sp, #(TF_ELR)]
-.if \el == 0
- 	msr	sp_el0, x18
+.if \el	== 0
+	msr	sp_el0, x18
 .endif
- 	msr	spsr_el1, x11
- 	msr	elr_el1, x10
+	msr	spsr_el1, x11
+	msr	elr_el1, x10
 	ldp	x0,  x1,  [sp, #(TF_X + 0  * 8)]
 	ldp	x2,  x3,  [sp, #(TF_X + 2  * 8)]
 	ldp	x4,  x5,  [sp, #(TF_X + 4  * 8)]
@@ -113,60 +85,31 @@
 	ldp	x12, x13, [sp, #(TF_X + 12 * 8)]
 	ldp	x14, x15, [sp, #(TF_X + 14 * 8)]
 	ldp	x16, x17, [sp, #(TF_X + 16 * 8)]
-.if \el == 0
- 	/*
- 	 * We only restore the callee saved registers when returning to
- 	 * userland as they may have been updated by a system call or signal.
- 	 */
+//.if \el == 0
+	/*
+	* We only restore the callee saved registers when returning to
+	* userland as they may have been updated by a system call or signal.
+	*/
 	ldp	x18, x19, [sp, #(TF_X + 18 * 8)]
 	ldp	x20, x21, [sp, #(TF_X + 20 * 8)]
 	ldp	x22, x23, [sp, #(TF_X + 22 * 8)]
 	ldp	x24, x25, [sp, #(TF_X + 24 * 8)]
 	ldp	x26, x27, [sp, #(TF_X + 26 * 8)]
 	ldp	x28, x29, [sp, #(TF_X + 28 * 8)]
-.else
- 	ldr	     x29, [sp, #(TF_X + 29 * 8)]
+//.else
+.if \el == 1
+	ldr     x29, [sp, #(TF_X + 29 * 8)]
 .endif
+
 .if \el == 0
- 	add	sp, sp, #(TF_SIZE + 16)
+	add	sp, sp, #(TF_SIZE + 16)
 .else
- 	mov	sp, x18
- 	mrs	x18, tpidr_el1
+	mov	sp, x18
+	mrs	x18, tpidr_el1
 .endif
 .endm
 
-.macro	do_ast
-// 	mrs	x19, daif
-// 	/* Make sure the IRQs are enabled before calling ast() */
-// 	bic	x19, x19, #PSR_I
-// 1:
-// 	/* Disable interrupts */
-// 	msr	daifset, #2
-// 
-// 	/* Read the current thread flags */
-// 	ldr	x1, [x18, #PC_CURTHREAD]	/* Load curthread */
-// 	ldr	x2, [x1, #TD_FLAGS]
-// 
-// 	/* Check if we have either bits set */
-// 	mov	x3, #((TDF_ASTPENDING|TDF_NEEDRESCHED) >> 8)
-// 	lsl	x3, x3, #8
-// 	and	x2, x2, x3
-// 	cbz	x2, 2f
-// 
-// 	/* Restore interrupts */
-// 	msr	daif, x19
-// 
-// 	/* handle the ast */
-// 	mov	x0, sp
-// 	bl	_C_LABEL(ast)
-// 
-// 	/* Re-check for new ast scheduled */
-// 	b	1b
-// 2:
-.endm
 
-
-	
 ENTRY(handle_el1h_sync)
 	save_registers 1
 	mov	x0, sp
@@ -175,104 +118,84 @@ ENTRY(handle_el1h_sync)
 	eret
 END(handle_el1h_sync)
 
+
 ENTRY(handle_el1h_irq)
 	save_registers 1
-	mov	x0, sp
-	//bl	intr_irq_handler
 	bl	exc_irq
 	restore_registers 1
 	eret
 END(handle_el1h_irq)
 
+
 ENTRY(handle_el0_sync)
 	save_registers 0
-	//ldr	x0, [x18, #PC_CURTHREAD]
-	mov	x1, sp
-	//str	x1, [x0, #TD_FRAME]
+	mov	x0, sp
 	bl	do_el0_sync
-	do_ast
 	restore_registers 0
 	eret
 END(handle_el0_sync)
 
+
 ENTRY(handle_el0_irq)
 	save_registers 0
-	mov	x0, sp
-	//bl	intr_irq_handler
 	bl	exc_irq
-	do_ast
 	restore_registers 0
 	eret
 END(handle_el0_irq)
 
-ENTRY(handle_serror)
-	save_registers 0
-	mov	x0, sp
-1:	bl	do_serror
-	b	1b
-END(handle_serror)
 
-ENTRY(handle_empty_exception)
-	save_registers 0
-	mov	x0, sp
-1:	bl	unhandled_exception
-	b	1b
-END(handle_empty_exception)
-//END(handle_unhandled_exception)
-
-.macro	vempty
+.macro	vempty0	name
 	.align 7
-	b	handle_empty_exception
-.endm
-
-.macro	vector	name
-	.align 7
-	b	handle_\name
-.endm
-
-.macro	vempty2	name
-	.align 7
-ENTRY(handle_empty_exception_\name)
+	.global vempty0_\name
+vempty0_\name:
 	save_registers 0
 	mov	x0, sp
 1:	bl	\name
 	b	1b
-END(handle_empty_exception_\name)
 .endm
 
-	
-.align 11
-.globl exception_vectors
+
+.macro	vempty1	name
+	.align 7
+	.global vempty1_\name
+vempty1_\name:
+	save_registers 1
+	mov	x0, sp
+1:	bl	\name
+	b	1b
+.endm
+
+
+.macro	vector	name
+	.align 7
+	.global vector_\name
+vector_\name:
+	b	handle_\name
+.endm
+
+	.section ".evec"
+	.align 11
+	.globl _exc_vector
+
 _exc_vector:
-/*
- * Exception taken from current Exception Level with SP_EL0.
- * (These shouldn't happen)
- */
-	vempty2 trap_el1t_sync
-	vempty2 trap_el1t_irq
-	vempty2 trap_el1t_fiq
-	vempty2 trap_el1t_error
-	// vempty			/* Synchronous EL1t */
-	// vempty			/* IRQ EL1t */
-	// vempty			/* FIQ EL1t */
-	// vempty			/* Error EL1t */
-	
-	vector el1h_sync	/* Synchronous EL1h */
-	vector el1h_irq		/* IRQ EL1h */
-	//vempty			/* FIQ EL1h */
-	vempty2  trap_el1h_fiq
-	vector serror		/* Error EL1h */
+	vempty1	trap_el1t_sync	/* Synchronous EL1t */
+	vempty1 trap_el1t_irq 	/* IRQ EL1t */
+	vempty1 trap_el1t_fiq 	/* FIQ EL1t */
+	vempty1 trap_el1t_error	/* Error EL1t */
 
-	vector el0_sync		/* Synchronous 64-bit EL0 */
-	vector el0_irq		/* IRQ 64-bit EL0 */
-	vempty			/* FIQ 64-bit EL0 */
-	vector serror		/* Error 64-bit EL0 */
+	vector	el1h_sync	/* Synchronous EL1h */
+	vector	el1h_irq	/* IRQ EL1h */
+	vempty1 trap_el1h_fiq  	/* FIQ EL1h */
+	vempty1	trap_el1h_error	/* Error EL1h */
 
-	vector el0_sync		/* Synchronous 32-bit EL0 */
-	vector el0_irq		/* IRQ 32-bit EL0 */
-	//vempty			/* FIQ 32-bit EL0 */
-	vempty2 trap_el0_32fiq
-	vector serror		/* Error 32-bit EL0 */
+	vector	el0_sync	/* Synchronous 64-bit EL0 */
+	vector	el0_irq		/* IRQ 64-bit EL0 */
+	vempty0	trap_el0_fiq	/* FIQ 64-bit EL0 */
+	vempty0	trap_el0_error	/* Error 64-bit EL0 */
 
-	
+	vempty0	trap_el0_32sync	/* Synchronous 32-bit EL0 */
+	vempty0	trap_el0_32irq	/* IRQ 32-bit EL0 */
+	vempty0	trap_el0_32fiq	/* FIQ 32-bit EL0 */
+	vempty0	trap_el0_32error/* Error 32-bit EL0 */
+
 //@ vim: ft=armv5 ts=8 sw=8 noet
