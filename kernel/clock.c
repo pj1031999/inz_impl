@@ -3,6 +3,7 @@
 #include <aarch64/cpu.h>
 #include <klibc.h>
 #include <rpi/irq.h>
+#include <pmap.h>
 
 #define CLK_FREQ 192000000
 
@@ -16,6 +17,14 @@ static void clock_irq(unsigned irq __unused) {
 
   arm_isb();
   ticks++;
+
+  vaddr_t va = ticks * 0x00024321 + 0xffffFFFF00000000;
+  paddr_t pa = 0;
+  if(ticks % 4 == 0)
+    pa = *((uint64_t*)va);
+
+  pmap_kextract(va, &pa);
+  printf("\t %.16p -> %.8p af=%d db=%d \t", va, pa, pmap_is_referenced(va), pmap_is_modified(va));
   printf("tick %d!\n", ticks);
 }
 
