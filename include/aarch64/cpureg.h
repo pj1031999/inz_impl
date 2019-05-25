@@ -87,8 +87,8 @@ AARCH64REG_READ_INLINE(ctr_el0)		// Cache Type Register
 
 AARCH64REG_READ_INLINE(dczid_el0)	// Data Cache Zero ID Register
 
-#define	DCZID_DZP		__BIT(4)	// Data Zero Prohibited
-#define	DCZID_BS		__BITS(3,0)	// Block Size (log2 - 2)
+//#define	DCZID_DZP		__BIT(4)	// Data Zero Prohibited
+//#define	DCZID_BS		__BITS(3,0)	// Block Size (log2 - 2)
 
 AARCH64REG_READ_INLINE(fpcr)		// Floating Point Control Register
 AARCH64REG_WRITE_INLINE(fpcr)
@@ -355,12 +355,12 @@ AARCH64REG_READ_INLINE(revidr_el1)
 AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Regiser
 AARCH64REG_WRITE_INLINE(cpacr_el1)
 
-#define	CPACR_TTA		__BIT(28)	 // System Register Access Traps
-#define	CPACR_FPEN		__BITS(21,20)
-#define  CPACR_FPEN_NONE	 __SHIFTIN(0, CPACR_FPEN)
-#define	 CPACR_FPEN_EL1		 __SHIFTIN(1, CPACR_FPEN)
-#define	 CPACR_FPEN_NONE_2	 __SHIFTIN(2, CPACR_FPEN)
-#define	 CPACR_FPEN_ALL		 __SHIFTIN(3, CPACR_FPEN)
+// #define	CPACR_TTA		__BIT(28)	 // System Register Access Traps
+// #define	CPACR_FPEN		__BITS(21,20)
+// #define  CPACR_FPEN_NONE	 __SHIFTIN(0, CPACR_FPEN)
+// #define	 CPACR_FPEN_EL1		 __SHIFTIN(1, CPACR_FPEN)
+// #define	 CPACR_FPEN_NONE_2	 __SHIFTIN(2, CPACR_FPEN)
+// #define	 CPACR_FPEN_ALL		 __SHIFTIN(3, CPACR_FPEN)
 
 AARCH64REG_READ_INLINE(csselr_el1)	// Cache Size Selection Register
 AARCH64REG_WRITE_INLINE(csselr_el1)
@@ -529,7 +529,7 @@ AARCH64REG_WRITE_INLINE(par_el1)
 #define	 PAR_SHA_INNER		 3
 #define	PAR_PTW			__BIT(8)	// F=1 partial table walk
 #define	PAR_FST			__BITS(6,1)	// F=1 fault status code
-#define	PAR_F			__BIT(0)	// translation failed
+//#define	PAR_F			__BIT(0)	// translation failed
 
 AARCH64REG_READ_INLINE(rmr_el1)		// Reset Management Register
 AARCH64REG_WRITE_INLINE(rmr_el1)
@@ -540,31 +540,31 @@ AARCH64REG_WRITE_INLINE(rvbar_el1)
 AARCH64REG_READ_INLINE(sctlr_el1)	// System Control Register
 AARCH64REG_WRITE_INLINE(sctlr_el1)
 
-#define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0, write 0
-#define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0, write 1
-#define	SCTLR_M			__BIT(0)
-#define	SCTLR_A			__BIT(1)
-#define	SCTLR_C			__BIT(2)
-#define	SCTLR_SA		__BIT(3)
-#define	SCTLR_SA0		__BIT(4)
-#define	SCTLR_CP15BEN		__BIT(5)
-#define	SCTLR_THEE		__BIT(6)
-#define	SCTLR_ITD		__BIT(7)
-#define	SCTLR_SED		__BIT(8)
-#define	SCTLR_UMA		__BIT(9)
-#define	SCTLR_I			__BIT(12)
-#define	SCTLR_DZE		__BIT(14)
-#define	SCTLR_UCT		__BIT(15)
-#define	SCTLR_nTWI		__BIT(16)
-#define	SCTLR_nTWE		__BIT(18)
-#define	SCTLR_WXN		__BIT(19)
-#define	SCTLR_IESB		__BIT(21)
-#define	SCTLR_SPAN		__BIT(23)
-#define	SCTLR_EOE		__BIT(24)
-#define	SCTLR_EE		__BIT(25)
-#define	SCTLR_UCI		__BIT(26)
-#define	SCTLR_nTLSMD		__BIT(28)
-#define	SCTLR_LSMAOE		__BIT(29)
+// #define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0, write 0
+// #define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0, write 1
+// #define	SCTLR_M			__BIT(0)
+// #define	SCTLR_A			__BIT(1)
+// #define	SCTLR_C			__BIT(2)
+// #define	SCTLR_SA		__BIT(3)
+// #define	SCTLR_SA0		__BIT(4)
+// #define	SCTLR_CP15BEN		__BIT(5)
+// #define	SCTLR_THEE		__BIT(6)
+// #define	SCTLR_ITD		__BIT(7)
+// #define	SCTLR_SED		__BIT(8)
+// #define	SCTLR_UMA		__BIT(9)
+// #define	SCTLR_I			__BIT(12)
+// #define	SCTLR_DZE		__BIT(14)
+// #define	SCTLR_UCT		__BIT(15)
+// #define	SCTLR_nTWI		__BIT(16)
+// #define	SCTLR_nTWE		__BIT(18)
+// #define	SCTLR_WXN		__BIT(19)
+// #define	SCTLR_IESB		__BIT(21)
+// #define	SCTLR_SPAN		__BIT(23)
+// #define	SCTLR_EOE		__BIT(24)
+// #define	SCTLR_EE		__BIT(25)
+// #define	SCTLR_UCI		__BIT(26)
+// #define	SCTLR_nTLSMD		__BIT(28)
+// #define	SCTLR_LSMAOE		__BIT(29)
 
 // current EL stack pointer
 static __inline uint64_t
@@ -848,17 +848,17 @@ AARCH64REG_WRITE_INLINE(pmcntenset_el0)
 AARCH64REG_READ_INLINE(pmcr_el0)
 AARCH64REG_WRITE_INLINE(pmcr_el0)
 
-#define	PMCR_IMP		__BITS(31,24)	// Implementor code
-#define	PMCR_IDCODE		__BITS(23,16)	// Identification code
-#define	PMCR_N			__BITS(15,11)	// Number of event counters
-#define	PMCR_LC			__BIT(6)	// Long cycle counter enable
-#define	PMCR_DP			__BIT(5)	// Disable cycle counter when event
-						// counting is prohibited
-#define	PMCR_X			__BIT(4)	// Enable export of events
-#define	PMCR_D			__BIT(3)	// Clock divider
-#define	PMCR_C			__BIT(2)	// Cycle counter reset
-#define	PMCR_P			__BIT(1)	// Event counter reset
-#define	PMCR_E			__BIT(0)	// Enable
+// #define	PMCR_IMP		__BITS(31,24)	// Implementor code
+// #define	PMCR_IDCODE		__BITS(23,16)	// Identification code
+// #define	PMCR_N			__BITS(15,11)	// Number of event counters
+// #define	PMCR_LC			__BIT(6)	// Long cycle counter enable
+// #define	PMCR_DP			__BIT(5)	// Disable cycle counter when event
+// 						// counting is prohibited
+// #define	PMCR_X			__BIT(4)	// Enable export of events
+// #define	PMCR_D			__BIT(3)	// Clock divider
+// #define	PMCR_C			__BIT(2)	// Cycle counter reset
+// #define	PMCR_P			__BIT(1)	// Event counter reset
+// #define	PMCR_E			__BIT(0)	// Enable
 
 
 AARCH64REG_READ_INLINE(pmevcntr1_el0)
@@ -906,10 +906,10 @@ AARCH64REG_READ_INLINE(cntfrq_el0)
 AARCH64REG_READ_INLINE(cnthctl_el2)
 AARCH64REG_WRITE_INLINE(cnthctl_el2)
 
-#define	CNTHCTL_EVNTDIR		__BIT(3)
-#define	CNTHCTL_EVNTEN		__BIT(2)
-#define	CNTHCTL_EL1PCEN		__BIT(1)
-#define	CNTHCTL_EL1PCTEN	__BIT(0)
+// #define	CNTHCTL_EVNTDIR		__BIT(3)
+// #define	CNTHCTL_EVNTEN		__BIT(2)
+// #define	CNTHCTL_EL1PCEN		__BIT(1)
+// #define	CNTHCTL_EL1PCTEN	__BIT(0)
 
 AARCH64REG_READ_INLINE(cntkctl_el1)
 AARCH64REG_WRITE_INLINE(cntkctl_el1)
@@ -997,15 +997,15 @@ AARCH64REG_READWRITE_INLINE2(icc_sgi1r_el1, s3_0_c12_c11_5)
 AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 
 // ICC_SRE_EL1: Interrupt Controller System Register Enable register
-#define	ICC_SRE_EL1_DIB		__BIT(2)
-#define	ICC_SRE_EL1_DFB		__BIT(1)
-#define	ICC_SRE_EL1_SRE		__BIT(0)
+// #define	ICC_SRE_EL1_DIB		__BIT(2)
+// #define	ICC_SRE_EL1_DFB		__BIT(1)
+// #define	ICC_SRE_EL1_SRE		__BIT(0)
 
 // ICC_SRE_EL2: Interrupt Controller System Register Enable register
-#define	ICC_SRE_EL2_EN		__BIT(3)
-#define	ICC_SRE_EL2_DIB		__BIT(2)
-#define	ICC_SRE_EL2_DFB		__BIT(1)
-#define	ICC_SRE_EL2_SRE		__BIT(0)
+// #define	ICC_SRE_EL2_EN		__BIT(3)
+// #define	ICC_SRE_EL2_DIB		__BIT(2)
+// #define	ICC_SRE_EL2_DFB		__BIT(1)
+// #define	ICC_SRE_EL2_SRE		__BIT(0)
 
 // ICC_BPR[01]_EL1: Interrupt Controller Binary Point Register 0/1
 #define	ICC_BPR_EL1_BinaryPoint	__BITS(2,0)

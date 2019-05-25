@@ -33,7 +33,7 @@
 #ifndef _MACHINE_FRAME_H_
 #define	_MACHINE_FRAME_H_
 
-#include <aarch64/cpureg.h>
+#include <aarch64/aarch64reg.h>
 #include <klibc.h>
 
 /*
