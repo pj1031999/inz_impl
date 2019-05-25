@@ -16,6 +16,7 @@ SOURCES_C := \
 	smp.c \
 	uart.c \
 	vc_mbox.c \
+	pagetable_setup.c \
 
 SOURCES_ASM := \
 	boot.S \

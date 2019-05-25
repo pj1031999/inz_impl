@@ -5,12 +5,13 @@
 #define CPU_STACK_SIZE 4096
 #define UPPERADDR 0xffffFFFF00000000
 #define PHYSADDR(x) ((x) - (UPPERADDR))
-	
+
 .section ".init"
- 
+
 .globl _start
 _start:
 	//start at el3 or el2
+	MRS 	X4, ID_MMFR2_EL1
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
 	BEQ	set_link_register //if el2 then jump else:   
@@ -89,55 +90,21 @@ setup_translation_table:
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
 
-#define PTE_ATTR L1_BLOCK | ATTR_AF | ATTR_SH(ATTR_SH_IS) | ATTR_NS | ATTR_AP(ATTR_AP_RW)
+	//tmp stack setup
+	LDR	X1, =_el1_stack
+	LDR	X2, =_kernel
+	SUBS	X1, X1, X2
+	MRS	X2, MPIDR_EL1
+	AND	X2, X2, #0xFF			// X2 == CPU number.
+	MOV	X3, #CPU_STACK_SIZE
+	MUL	X3, X2, X3			// Create separated stack spaces
+	SUB	X1, X1, X3			// for each processor
+	MOV	SP, X1
 
-	// The first entry is 1GB block from 0x00000000 to 0x3FFFFFFF. Map 1:1
-
-	LDR	X2, =PHYSADDR(_level2_pagetable)
-	ORR	X2, X2, #L1_TABLE
-	STR	X2, [X0], #8
-
-	// Set level 2 translation table.
-	LDR	X6, =PHYSADDR(_level2_pagetable)
-	MOV	X7, XZR
-	LDR	X7, =(PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC))
-	MOV	X8, #0x200
-	LDR	X9, =0x00200000	//2MB
-1:
-	STR	X7, [X6], #8
-	ADD	X7, X7, X9
-	SUBS	X8, X8, #1
-	BNE     1b
-
-	MOV	X7, XZR
-	LDR	X7, =( (0x1 * 0x00200000) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB) )
-	LDR	X6, =PHYSADDR(0x1 * 0x8 +_level2_pagetable )
-	MOV	X8, #0x100	// first half of ram for arm
-1:
-	STR	X7, [X6], #8
-	ADD	X7, X7, X9
-	SUBS	X8, X8, #1
-	BNE	1b
-
-
-	// The second entry is 1GB block from 0x40000000 to 0x7FFFFFFF. Map 1:1
-	LDR 	X1, =(_page_table_size)
-	LDR	X2, =PHYSADDR(_level2_pagetable)
-	ADD	X2, X2, X1
-	MOV	X6, X2
-	ORR	X2, X2, #L1_TABLE
-	STR	X2, [X0], #8
-
-	// Set level 2 translation table.
-	MOV	X7, XZR
-	LDR	X7, =( 0x40000000 | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC) )
-	MOV	X8, #0x1
-1:
-	STR	X7, [X6], #8
-	ADD	X7, X7, X9
-	SUBS	X8, X8, #1
-	BNE     1b
-
+	MOV	x27, LR				//LR contains target function (e.g. kernel_entry)
+	BL	page_table_fill_level_1
+	BL	page_table_fill_level_2
+	MOV	LR, x27
 
 mmu_setup:
 	DSB	sy
@@ -172,7 +139,7 @@ mmu_setup:
 		| SCTLR_C \
 	)
 	ORR	x0, x0, x1
-	
+
 mmu_enable:
 	MSR	sctlr_el1, x0	/* enabling MMU! */
 	DSB	sy
@@ -226,9 +193,8 @@ el1_entry:
 
 	/* Set stack address */
 	MOV	SP, X29
-
 	MSR	DAIFClr, #3
-  
+
 // Enter kernel_entry with empty stack.
 enter_kernel:
 
