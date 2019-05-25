@@ -25,10 +25,12 @@
  *
  */
 
-
+#include <aarch64/aarch64reg.h>
 #include <aarch64/cpureg.h>
 #include <klibc.h>
+#include <pmap.h>
 #include <aarch64/frame.h>
+#include <aarch64/pte.h>
 
 #define nitems(x)   (sizeof((x)) / sizeof((x)[0]))
 
@@ -46,48 +48,50 @@ static void print_registers(struct trapframe *frame)
   printf("spsr:         %8x\n", frame->tf_spsr);
 }
 
-
-/* #define FAULT_WRITE	0x0800	/\* fault was due to write (ARMv6+) *\/ */
-/* #define FAULT_TYPE_MASK 0x0f */
-/*   printf("Illegal %s access at %p (type=%x)!\n", */
-/*          (dfsr & FAULT_WRITE) ? "write" : "read", dfar, dfsr & FAULT_TYPE_MASK); */
-
-void unhandled_exception(struct trapframe *frame);
+void unhandled_exception(struct trapframe *frame)
+{
+  uint64_t far = reg_far_el1_read();
+  uint64_t esr = reg_esr_el1_read();
+  
+  print_registers(frame);
+  printf(" far: %16lx\n", far);
+  printf(" esr:         %.8lx\n", esr);
+}
 
 void do_el1h_sync(__unused struct trapframe *frame)
 {
+    uint32_t exception;
+    uint64_t esr, far, dfsc, *entry = NULL;
+
+    /* Read the esr register to get the exception details */
+    esr = reg_esr_el1_read(); //frame->tf_esr;
+    exception = ESR_ELx_EXCEPTION(esr);
+
+    switch(exception)
+      {
+      case ESR_EC_DATA_ABT_EL1:
+	far  = reg_far_el1_read();
+	dfsc = esr & ESR_ISS_DATAABORT_DFSC;
+
+	if(dfsc == ESR_ISS_FSC_ACCESS_FAULT_2)
+	  {
+	    get_block_entry(far, &entry);
+	    *entry |=  ATTR_AF | ATTR_DBM;
+	  }
+
+	return;
+	
+      default: break
+      }
+    
   unhandled_exception(frame);
+  panic(__func__);
 }
 
 void do_el0_sync(__unused struct trapframe *frame)
 {
   unhandled_exception(frame);
-}
-
-void do_serror(struct trapframe *frame)
-{
-  uint64_t esr, far;
-
-  far = reg_far_el1_read();
-  esr = reg_esr_el1_read();
-  
-  print_registers(frame);
-  printf(" far: %16lx\n", far);
-  printf(" esr:         %.8lx\n", esr);
-  panic("Unhandled System Error");
-}
-
-void unhandled_exception(struct trapframe *frame)
-{
-  uint64_t esr, far;
-
-  far = reg_far_el1_read();
-  esr = reg_esr_el1_read();
-  
-  print_registers(frame);
-  printf(" far: %16lx\n", far);
-  printf(" esr:         %.8lx\n", esr);
-  panic("Unhandled exception");
+  panic(__func__);
 }
 
 #define bad_trap_panic(trapfunc)		\
@@ -95,14 +99,22 @@ void unhandled_exception(struct trapframe *frame)
   {						\
     printf("%s\n", __func__);			\
     unhandled_exception(tf);			\
+    printf("Unhandled:  ");			\
+    panic(__func__);				\
   }
+
 bad_trap_panic(trap_el1t_sync)
 bad_trap_panic(trap_el1t_irq)
 bad_trap_panic(trap_el1t_fiq)
 bad_trap_panic(trap_el1t_error)
+
 bad_trap_panic(trap_el1h_fiq)
 bad_trap_panic(trap_el1h_error)
+
 bad_trap_panic(trap_el0_fiq)
 bad_trap_panic(trap_el0_error)
+
+bad_trap_panic(trap_el0_32sync)
+bad_trap_panic(trap_el0_32irq)
 bad_trap_panic(trap_el0_32fiq)
 bad_trap_panic(trap_el0_32error)
