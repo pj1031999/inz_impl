@@ -127,7 +127,7 @@
 #define	Ln_ADDR_MASK	(Ln_ENTRIES - 1)
 #define	Ln_TABLE_MASK	((1 << 12) - 1)
 
-#define Ln_VALID-	__BIT(0)
+#define Ln_VALID	__BIT(0)
 #define Ln_TABLE_PA	__BITS(47, 12)
 #define L1_BLOCK_OA	__BITS(47, 30)  /* 1GB */
 #define L2_BLOCK_OA	__BITS(47, 21)  /* 2MB */

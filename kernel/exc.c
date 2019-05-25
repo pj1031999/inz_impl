@@ -81,7 +81,7 @@ void do_el1h_sync(__unused struct trapframe *frame)
 
 	return;
 	
-      default: break
+      default: break;
       }
     
   unhandled_exception(frame);
