@@ -7,6 +7,7 @@
 #include <aarch64/cpu.h>
 #include <rpi/gpio.h>
 #include <rpi/vc_mbox.h>
+#include <pmman.h>
 
 extern void cons_bootstrap(unsigned);
 extern const void* _stack_size;
@@ -97,9 +98,17 @@ void smp_bootstrap() {
   mbox_send(cpu+2, 3, L2I led_blink);
   mbox_send(cpu+3, 3, L2I gpio_blink);  
 
-  mbox_send(cpu+1, 1,  L2I ( L2I &_el1_stack - 1* L2I &_stack_size));
-  mbox_send(cpu+2, 1,  L2I ( L2I &_el1_stack - 2* L2I &_stack_size));
-  mbox_send(cpu+3, 1,  L2I ( L2I &_el1_stack - 3* L2I &_stack_size));
+  paddr_t s1 = pm_alloc(L2I &_stack_size);
+  paddr_t s2 = pm_alloc(L2I &_stack_size);
+  paddr_t s3 = pm_alloc(L2I &_stack_size);
+  
+  mbox_send(cpu+1, 1,  s1);
+  mbox_send(cpu+2, 1,  s2);
+  mbox_send(cpu+3, 1,  s3);
+
+  /* mbox_send(cpu+1, 1,  L2I ( L2I &_el1_stack - 1* L2I &_stack_size)); */
+  /* mbox_send(cpu+2, 1,  L2I ( L2I &_el1_stack - 2* L2I &_stack_size)); */
+  /* mbox_send(cpu+3, 1,  L2I ( L2I &_el1_stack - 3* L2I &_stack_size)); */
   do {
     __asm__ volatile("wfe");
   } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));
