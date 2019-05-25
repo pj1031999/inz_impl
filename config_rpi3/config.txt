@@ -1,0 +1,29 @@
+# https://elinux.org/RPiconfig
+# https://www.raspberrypi.org/documentation/configuration/config-txt/
+
+[pi3]
+
+# load the kernel to the memory address 0x0 also run in el3 instead el2
+# kernel_old=1
+
+# forces the kernel loading system to assume a 64-bit kernel - new way
+ arm_64bit = 1
+# make the ARM start in 64-mode. - old way
+# arm_control=0x200
+
+# stop start.elf from filling in ATAGS (memory from 0x100) before launching the kernel.
+# https://jsandler18.github.io/extra/atags.html
+# https://stackoverflow.com/questions/24448680/what-are-atags-for-a-device-that-uses-linux-kernel
+disable_commandline_tags=1
+
+kernel_address=0x80000
+enable_jtag_gpio=1
+# dtoverlay = ft3-disable-bt
+
+# framebuffer_swap=0
+# hdmi_safe=1
+# hdmi_drive=2
+# hdmi_group=2
+# hdmi_mode=82
+
+[all]
