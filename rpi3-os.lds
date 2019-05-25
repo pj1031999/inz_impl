@@ -10,12 +10,12 @@ PHDRS
   data   PT_LOAD FLAGS(6); /* read-write */
 }
 
+PROVIDE(_page_table_size = 4096);	/*512 entries 8 bytes each*/
+PROVIDE(_stack_size = 32768);
+PROVIDE(_kernel = 0xffffFFFF00000000);
+
 SECTIONS
 {
-  /* _kernel = 0xffff000000000000;	 */
-  _kernel = 0xffffFFFF00000000;
-  _stack_size = 4096;
-
   .init 0x80000 : AT(0x80000) ALIGN(4096)
   {
     KEEP(*(.init .init.*))
@@ -26,6 +26,7 @@ SECTIONS
   .text _kernel + _init_end : AT(_init_end) ALIGN(4096)
   {
     *(.evec);
+    . = ALIGN(2048);
     _text_start = .;
     *(.text .text.*)
     _text_end = .;
@@ -45,42 +46,37 @@ SECTIONS
     _data_end = .;
   } : data
 
+  .pagetable : ALIGN(4096)
+  {
+    _level1_pagetable = .;
+    . = . + _page_table_size;	/*entry == 1GB, contain 2 entries*/
+    . = ALIGN(4096);
+
+    _level2_pagetable = .;
+    . = . + _page_table_size;	/*first  GB, entry == 2MB, contain 512 entries*/
+    . = ALIGN(4096);
+
+    . = . + _page_table_size;	/*second GB, entry == 2MB, contain 1 entry*/
+    . = ALIGN(4096);
+    
+    _level3_pagetable = .;
+    . = . + _page_table_size;	/*row == 4KB*/
+  }
+
+  .stack : ALIGN(32768)
+  {
+    . = . + _stack_size;	/* stack increases by subtraction */
+    _el1_stack = .;		/* core0 kernel space stack */
+  }
+
   .bss : ALIGN(32768)
   {
-    _level0_pagetable = .;
-    . = . + 32768;
-    _level1_pagetable = .;
-    . = . + 32768;
-    _level2_pagetable = .;
-    . = . + 32768;
-    _level3_pagetable = .;
-    . = . + 32768;
-
-    . = . + 65536; 
-    _el0_stack = .;
-    . = . + 65536;
-    _el1_stack = .;
-    . = . + 65536;
-    _el2_stack = .;
-    . = . + 65536;
-    _el3_stack = .;
-    . = . + 65536;
-    
-    
     _bss_start = .;
     *(.bss .bss.*)
     *(COMMON)
     _bss_end = .;
-    
   }
-    . = ALIGN(0x00001000);
-	  idmap_dir = .;
-	  .data.idmapd : {. += (3* (1 << 12));}
-	  . = ALIGN(0x00001000);
-	  pg_dir = .;
-	  .data.pgd : { . += (3 * (1 << 12)); }
-  
-  
+
   . += 32768; /* for physical memory manager bitmap */
 
   _brk_limit = ALIGN(4096);
