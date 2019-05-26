@@ -102,8 +102,8 @@ setup_translation_table:
 	MOV	SP, X1
 
 	MOV	x27, LR				//LR contains target function (e.g. kernel_entry)
-	BL	page_table_fill_level_1
-	BL	page_table_fill_level_2
+	BL	page_table_fill_inner_nodes
+	BL	page_table_fill_leaves
 	MOV	LR, x27
 
 mmu_setup:

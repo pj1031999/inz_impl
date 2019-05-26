@@ -12,14 +12,25 @@ bool get_block_entry(vaddr_t va, uint64_t **res_entry){
   
   uint32_t l1_idx = pmap_l1_index(va & ~kernel);
   uint32_t l2_idx = pmap_l2_index(va & ~kernel);
+  uint32_t l3_idx = pmap_l3_index(va & ~kernel);
 
-  uint64_t entry = _level1_pagetable[l1_idx];
-  uint64_t *l2pt = (uint64_t*)(kernel | (entry & Ln_TABLE_PA));
+  uint64_t *l1pte = _level1_pagetable;
+  uint64_t *l2pte = (uint64_t*)(kernel | (l1pte[l1_idx] & Ln_TABLE_PA));
+  uint64_t *entry = &l2pte[l2_idx];
 
-  if(!(entry & l2pt[l2_idx] & Ln_VALID))
+  if(!( l1pte[l1_idx] & l2pte[l2_idx] & Ln_VALID ))
     return false;
   
-  *res_entry = &l2pt[l2_idx];
+  if( (l2pte[l2_idx] & L2_TABLE) == L2_TABLE){
+    uint64_t *l3pte = (uint64_t*)(kernel | (l2pte[l2_idx] & Ln_TABLE_PA));
+
+    if( (l3pte[l3_idx] & L3_PAGE) != L3_PAGE )
+      return false;
+
+    entry = &l3pte[l3_idx];
+  }
+
+  *res_entry = entry;
   return true;
 }
 
@@ -27,11 +38,9 @@ bool get_block_entry(vaddr_t va, uint64_t **res_entry){
 void pmap_kenter(vaddr_t __attribute__((unused)) va,
 		 paddr_t __attribute__((unused)) pa,
 		 flags_t __attribute__((unused)) flags){
-  
 }
 
-void pmap_kremove(vaddr_t __attribute__((unused)) va,
-		  size_t __attribute__((unused)) size){
+void pmap_kremove(vaddr_t va, size_t size){
 
   assert(size % 0x1000 == 0);
   size_t pages = size/0x1000;
@@ -57,7 +66,7 @@ bool pmap_kextract(vaddr_t va, paddr_t *pa_p){
   if(!(par & PAR_F))
     { //if not fail
       
-      *pa_p = (paddr_t)((par & PAR_PA) | (va & L2_OFFSET));
+      *pa_p = (paddr_t)((par & PAR_PA) | (va & L3_OFFSET));
       //printf("\t %.16p -> %.8p  (%p) \t", va, *pa_p, par);
       return true;
 
@@ -68,8 +77,12 @@ bool pmap_kextract(vaddr_t va, paddr_t *pa_p){
 
   if( !get_block_entry(va, &entry) )
     return false;
-    
-  *pa_p = (paddr_t)((*entry & L2_BLOCK_OA) | (va & L2_OFFSET));
+
+  if( (*entry & L3_PAGE) == L3_PAGE) //level 3 page entry - 4KB
+    *pa_p = (paddr_t)((*entry & L3_PAGE_OA)  | (va & L3_OFFSET));
+  else //level 2 block entry - 2MB
+    *pa_p = (paddr_t)((*entry & L2_BLOCK_OA) | (va & L2_OFFSET));
+  
   return true;
 }
 
