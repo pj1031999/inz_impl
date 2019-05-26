@@ -40,7 +40,7 @@ page_table_fill_leaves(void)
   uint64_t *_level3_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level3_pagetable);
 
   // kernel page
-  entry = PTE_ATTR | ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_NC) | L3_PAGE;
+  entry = PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WB);
   for(int i = 0; i < 512; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }

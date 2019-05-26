@@ -1,4 +1,5 @@
 #include <pmap.h>
+#include <pmman.h>
 #include <klibc.h>
 #include <aarch64/cpureg.h>
 #include <aarch64/aarch64reg.h>
@@ -35,20 +36,43 @@ bool get_block_entry(vaddr_t va, uint64_t **res_entry){
 }
 
 
-void pmap_kenter(vaddr_t __attribute__((unused)) va,
-		 paddr_t __attribute__((unused)) pa,
+static inline void invalidate_cache(vaddr_t va){
+  __asm__ __volatile__
+    (
+     "LSR %[vaddr], %[vaddr], #12 \n"
+     //"TLBI vmalle1 \n"
+     "TLBI VAAE1, %[vaddr] \n"
+     "ISB \n"
+     :
+     : [vaddr] "r" (va)
+     : "memory" 
+     );
+}
+
+void pmap_kenter(vaddr_t va, paddr_t pa,
 		 flags_t __attribute__((unused)) flags){
+
+  assert(pa % PAGESIZE == 0);
+
+  uint64_t *entry = NULL;
+  if(get_block_entry(va, &entry)){
+    *entry = (*entry & ~L3_PAGE_OA) | (pa & L3_PAGE_OA);
+  }
+  
+  invalidate_cache(va);
 }
 
 void pmap_kremove(vaddr_t va, size_t size){
 
-  assert(size % 0x1000 == 0);
-  size_t pages = size/0x1000;
+  assert(size % PAGESIZE == 0);
+  size_t pages = size / PAGESIZE;
   
   uint64_t *entry = NULL;
   while(pages--)
     if(get_block_entry(va, &entry))
       *entry = 0x0;
+
+  invalidate_cache(va);
 }
 
 bool pmap_kextract(vaddr_t va, paddr_t *pa_p){
@@ -56,6 +80,7 @@ bool pmap_kextract(vaddr_t va, paddr_t *pa_p){
   __asm__ __volatile__
     (
      "AT S1E1R, %[vaddr] \n"
+     "DSB sy \n"
      "ISB \n"
      :: [vaddr] "r"(va)
      );
@@ -82,21 +107,25 @@ bool pmap_kextract(vaddr_t va, paddr_t *pa_p){
     *pa_p = (paddr_t)((*entry & L3_PAGE_OA)  | (va & L3_OFFSET));
   else //level 2 block entry - 2MB
     *pa_p = (paddr_t)((*entry & L2_BLOCK_OA) | (va & L2_OFFSET));
-  
+
   return true;
 }
 
 extern uint64_t _level2_pagetable[];
 bool pmap_is_referenced(vaddr_t __attribute__((unused)) va){
   uint64_t *entry = NULL;
-  get_block_entry(va, &entry);
-  return *entry & ATTR_AF;
+  if( get_block_entry(va, &entry) )
+    return *entry & ATTR_AF;
+
+  return false;
 }
 
 bool pmap_is_modified(vaddr_t __attribute__((unused)) va){
   uint64_t *entry = NULL;
-  get_block_entry(va, &entry);
-  return *entry & ATTR_DBM;
+  if( get_block_entry(va, &entry) )
+    return *entry & ATTR_DBM;
+
+  return false;
 }
 
 
@@ -104,10 +133,14 @@ void pmap_clear_referenced(vaddr_t va){
   uint64_t *entry = NULL;
   if(get_block_entry(va, &entry))
     *entry &= ~ATTR_AF;
+
+  invalidate_cache(va);
 }
 
 void pmap_clear_modified(vaddr_t __attribute__((unused)) va){
   uint64_t *entry = NULL;
   if(get_block_entry(va, &entry))
     *entry &= ~ATTR_DBM;
+
+  invalidate_cache(va);
 }

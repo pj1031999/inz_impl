@@ -77,9 +77,9 @@ void do_el1h_sync(__unused struct trapframe *frame)
 	  {
 	    get_block_entry(far, &entry);
 	    *entry |=  ATTR_AF | ATTR_DBM;
+	    return;
 	  }
-
-	return;
+	break;
 	
       default: break;
       }
