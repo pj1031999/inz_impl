@@ -61,7 +61,8 @@ void unhandled_exception(struct trapframe *frame)
 void do_el1h_sync(__unused struct trapframe *frame)
 {
     uint32_t exception;
-    uint64_t esr, far, dfsc, *entry = NULL;
+    uint64_t esr, far, dfsc;
+    pt_entry_t *entry = NULL;
 
     /* Read the esr register to get the exception details */
     esr = reg_esr_el1_read(); //frame->tf_esr;

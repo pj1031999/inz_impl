@@ -11,19 +11,17 @@
 static uint32_t ticks = 0;
 static uint64_t clk_freq = 0;
 
-extern uint64_t *_kernel;
-
-#define TEST 1
+#define TEST 2
 static void pmap_test(){
-#if TEST == 0
+#if TEST == 0 //kremove
   paddr_t alloc_p = pm_alloc(PAGESIZE);
   vaddr_t *alloc_v = (vaddr_t*)((uint64_t)&_kernel | (uint64_t)alloc_p);
   *alloc_v = 0xcafebabe; 
   printf("\t alloc_v = %p \t *alloc_v = %x \n", alloc_v, *alloc_v);
-  pmap_kremove((vaddr_t)alloc_v, PAGESIZE);
+  pmap_kremove((vaddr_t)alloc_v, PAGESIZE); // kernel panic
   printf("\t alloc_v = %p \t *alloc_v = %x \t", alloc_v, *alloc_v);
 
-#elif TEST == 1
+#elif TEST == 1 //kenter
   paddr_t alloc1_p = pm_alloc(PAGESIZE);
   vaddr_t *alloc1_v = (vaddr_t*)((uint64_t)&_kernel | (uint64_t)alloc1_p);
   *alloc1_v = 0x1; 
@@ -47,19 +45,17 @@ static void pmap_test(){
   printf("\t alloc2_v = %p \t *alloc2_v = %x \t phys = %p \n", alloc2_v, *alloc2_v, pa2);
 
   
-#elif TEST == 2
+#elif TEST == 2 // referenced / modified / kextract / access flag set
   vaddr_t va = (ticks-1) * 0x000010000 + 0xffffFFFF00054321;
   paddr_t pa = 0;
 
-  if(ticks % 2 == 0)
+  if(ticks % 2 == 0) // exception do_el1_sync -> set af
     pa = *((uint64_t*)va);
 
   if(ticks % 8 == 0){
     pmap_clear_referenced(va);
     pmap_clear_modified(va);
   }
-
-  //pmap_kremove(va, PAGESIZE);
 
   pmap_kextract(va, &pa);
   printf("\t %.16p -> %.8p af=%d db=%d \t", va, pa, pmap_is_referenced(va), pmap_is_modified(va));
