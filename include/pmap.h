@@ -19,6 +19,6 @@ bool pmap_is_modified(vaddr_t);
 void pmap_clear_referenced(vaddr_t);
 void pmap_clear_modified(vaddr_t);
 
-pt_lvl_t get_block_entry(vaddr_t, pt_entry_t**);
+void pmap_data_abort_access_fault(vaddr_t);
 
 #endif /* !_PMAP_H_ */

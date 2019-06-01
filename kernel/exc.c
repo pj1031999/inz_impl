@@ -61,9 +61,9 @@ void unhandled_exception(struct trapframe *frame)
 void do_el1h_sync(__unused struct trapframe *frame)
 {
     uint32_t exception;
-    uint64_t esr, far, dfsc;
-    pt_entry_t *entry = NULL;
-
+    uint64_t esr, dfsc;
+    vaddr_t far;
+    
     /* Read the esr register to get the exception details */
     esr = reg_esr_el1_read(); //frame->tf_esr;
     exception = ESR_ELx_EXCEPTION(esr);
@@ -76,8 +76,7 @@ void do_el1h_sync(__unused struct trapframe *frame)
 
 	if(dfsc == ESR_ISS_FSC_ACCESS_FAULT_2)
 	  {
-	    get_block_entry(far, &entry);
-	    *entry |=  ATTR_AF | ATTR_DBM;
+	    pmap_data_abort_access_fault(far);
 	    return;
 	  }
 	break;

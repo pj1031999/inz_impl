@@ -5,8 +5,10 @@
 #include <aarch64/aarch64reg.h>
 #include <aarch64/pte.h>
 
-pt_lvl_t
-get_block_entry(vaddr_t va, pt_entry_t **res_entry)
+#define IS_VALID(a) ((a) >= 0)
+
+static  pt_lvl_t
+get_pte(vaddr_t va, pt_entry_t **res_entry)
 {
   uint64_t kernel = (uint64_t)&_kernel;
   
@@ -66,7 +68,7 @@ get_block_entry(vaddr_t va, pt_entry_t **res_entry)
 }
 
 
-static inline void invalidate_cache(vaddr_t va){
+static inline void table_invalidate_entry(vaddr_t va){
   __asm__ __volatile__
     (
      "LSR %[vaddr], %[vaddr], #12 \n"
@@ -79,8 +81,6 @@ static inline void invalidate_cache(vaddr_t va){
      );
 }
 
-#define IS_VALID(a) ((a) >= 0)
-static inline bool IS_VALID_F(pt_lvl_t lvl) { return lvl >= 0; }
 
 void pmap_kenter(vaddr_t va, paddr_t pa,
 		 flags_t __attribute__((unused)) flags){
@@ -88,12 +88,12 @@ void pmap_kenter(vaddr_t va, paddr_t pa,
   assert(pa % PAGESIZE == 0);
 
   pt_entry_t *entry = NULL;
-  if ( IS_VALID(get_block_entry(va, &entry)) )
+  if ( IS_VALID(get_pte(va, &entry)) )
     {
       *entry = (*entry & ~L3_PAGE_OA) | (pa & L3_PAGE_OA);
     }
   
-  invalidate_cache(va);
+  table_invalidate_entry(va);
 }
 
 void
@@ -104,12 +104,12 @@ pmap_kremove(vaddr_t va, size_t size)
   
   pt_entry_t *entry = NULL;
   while(pages--){
-    if( IS_VALID(get_block_entry(va, &entry)) )
+    if( IS_VALID(get_pte(va, &entry)) )
       *entry = 0x0;
+
+    table_invalidate_entry(va);
     va += PAGESIZE;
   }
-
-  invalidate_cache(va);
 }
 
 bool
@@ -134,11 +134,12 @@ pmap_kextract(vaddr_t va, paddr_t *pa_p)
   
   // if failed then simulate table walk
   pt_entry_t *entry = NULL;
-  pt_lvl_t lvl = get_block_entry(va, &entry);
+  pt_lvl_t lvl = get_pte(va, &entry);
   
   if( !IS_VALID(lvl) )
     return false;
 
+  return false;
   /* entry is valid */
   switch(lvl){
   case 1:
@@ -165,7 +166,7 @@ bool
 pmap_is_referenced(vaddr_t va)
 {
   pt_entry_t *entry = NULL;
-  if( IS_VALID(get_block_entry(va, &entry)) )
+  if( IS_VALID(get_pte(va, &entry)) )
     return *entry & ATTR_AF;
 
   return false;
@@ -175,7 +176,7 @@ bool
 pmap_is_modified(vaddr_t va)
 {
   pt_entry_t *entry = NULL;
-  if( get_block_entry(va, &entry) < 0 )
+  if( get_pte(va, &entry) < 0 )
     return *entry & ATTR_DBM;
 
   return false;
@@ -186,18 +187,26 @@ void
 pmap_clear_referenced(vaddr_t va)
 {
   pt_entry_t *entry = NULL;
-  if( IS_VALID(get_block_entry(va, &entry)) )
+  if( IS_VALID(get_pte(va, &entry)) )
     *entry &= ~ATTR_AF;
 
-  invalidate_cache(va);
+  table_invalidate_entry(va);
 }
 
 void
 pmap_clear_modified(vaddr_t va)
 {
   pt_entry_t *entry = NULL;
-  if( IS_VALID(get_block_entry(va, &entry)) )
+  if( IS_VALID(get_pte(va, &entry)) )
     *entry &= ~ATTR_DBM;
 
-  invalidate_cache(va);
+  table_invalidate_entry(va);
+}
+
+void pmap_data_abort_access_fault(vaddr_t va){
+  pt_entry_t *entry = NULL;
+  get_pte(va, &entry);
+  *entry |=  ATTR_AF | ATTR_DBM;
+  
+  table_invalidate_entry(va);
 }
