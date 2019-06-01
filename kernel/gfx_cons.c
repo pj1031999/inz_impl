@@ -25,8 +25,14 @@ static void scroll_up(cons_dev_t *dev) {
   unsigned fh = dev->font->height;
   window_t *win = &dev->window;
 
+  unsigned src_x = dev->window.x;
+  unsigned src_y = dev->window.y + fh;
+
+  unsigned dst_x = dev->window.x;
+  unsigned dst_y = dev->window.y;
+  
   dev->cursor.y--;
-  gfx_rect_move(win, w, h - fh, 0, fh, 0, 0);
+  gfx_rect_move(win, w, h - fh, src_x, src_y, dst_x, dst_y);
   gfx_rect_draw(win, 0, h - fh, w, fh, win->bg_col);
 }
 
