@@ -58,7 +58,17 @@ void unhandled_exception(struct trapframe *frame)
   printf(" esr:         %.8lx\n", esr);
 }
 
-void do_el1h_sync(__unused struct trapframe *frame)
+void svc(uint64_t id, struct trapframe *frame){
+  printf("SVC: %d\n", id);
+
+  if(id == 0x0){
+    printf("(exit)\n");
+    frame->tf_lr = frame->tf_elr = frame->tf_lr + 8;
+    frame->tf_spsr |= SPSR_M_EL1H;
+  }
+}
+
+void do_el1h_sync(struct trapframe *frame)
 {
     uint32_t exception;
     uint64_t esr, dfsc;
@@ -70,6 +80,11 @@ void do_el1h_sync(__unused struct trapframe *frame)
 
     switch(exception)
       {
+      case ESR_EC_SVC_A64:
+	dfsc = esr & ESR_ISS_HVC_IMM16;
+	svc(dfsc, frame);
+	return;
+	
       case ESR_EC_DATA_ABT_EL1:
 	far  = reg_far_el1_read();
 	dfsc = esr & ESR_ISS_DATAABORT_DFSC;
@@ -88,8 +103,26 @@ void do_el1h_sync(__unused struct trapframe *frame)
   panic(__func__);
 }
 
-void do_el0_sync(__unused struct trapframe *frame)
+void do_el0_sync(struct trapframe *frame)
 {
+  uint32_t exception;
+  uint64_t esr, dfsc;
+    
+  /* Read the esr register to get the exception details */
+  esr = reg_esr_el1_read(); //frame->tf_esr;
+  exception = ESR_ELx_EXCEPTION(esr);
+  
+  switch(exception)
+    {
+    case ESR_EC_SVC_A64:
+      dfsc = esr & ESR_ISS_HVC_IMM16;
+      svc(dfsc, frame);
+      return;
+      
+    default: break;
+    }
+  
+
   unhandled_exception(frame);
   panic(__func__);
 }

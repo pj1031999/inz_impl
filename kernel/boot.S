@@ -126,8 +126,8 @@ mmu_setup:
 	ISB	
 
 	LDR	x0, =( \
-		TCR_TxSZ(32) \
-		| TCR_TGx_(4K) \
+	TCR_TxSZ(32) \
+	| TCR_TGx_(4K) \
 	)
 	MRS	x1, id_aa64mmfr0_el1
 	BFI	x0, x1, #32, #3
@@ -169,7 +169,7 @@ change_el:
 	MSR	HCR_EL2, XZR   
 	MRS	X0, HCR_EL2
 	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	ORR	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
+	//ORR	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
 	MSR	HCR_EL2, X0
 		
 el2_entry:
@@ -179,7 +179,7 @@ el2_entry:
 	MSR	cnthctl_el2, x2
 	
 	// Determine the  EL1 Execution state
-	MOV	X1, #0x3c5	 	// DAIF=0000
+	MOV	X1, #0b0101	 	// DAIF=0000
 	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
 	
 	ADR	X1, el1_entry     	// el1_entry points to the first instruction of

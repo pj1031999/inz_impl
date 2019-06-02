@@ -82,16 +82,18 @@ static inline void table_invalidate_entry(vaddr_t va){
 }
 
 
-void pmap_kenter(vaddr_t va, paddr_t pa,
-		 flags_t __attribute__((unused)) flags){
+void pmap_kenter(vaddr_t va, paddr_t pa, flags_t flags){
 
   assert(pa % PAGESIZE == 0);
 
   pt_entry_t *entry = NULL;
-  if ( IS_VALID(get_pte(va, &entry)) )
-    {
-      *entry = (*entry & ~L3_PAGE_OA) | (pa & L3_PAGE_OA);
-    }
+  if ( IS_VALID(get_pte(va, &entry)) ){
+    *entry =
+      //clear entry access permission and execute never bits
+      (*entry & ~L3_PAGE_OA & ~ATTR_AP_MASK & ~ATTR_XN)
+      | (flags & ~L3_PAGE_OA)
+      | (pa & L3_PAGE_OA);
+  }
   
   table_invalidate_entry(va);
 }
@@ -115,31 +117,12 @@ pmap_kremove(vaddr_t va, size_t size)
 bool
 pmap_kextract(vaddr_t va, paddr_t *pa_p)
 {
-  /* try get physical address without table walk */
-  __asm__ __volatile__
-    (
-     "AT S1E1R, %[vaddr] \n"
-     "DSB sy \n"
-     "ISB \n"
-     :: [vaddr] "r"(va)
-     );
-  
-  /* D12.2.90 PAR_EL1, Physical Address Register */
-  uint64_t par = reg_par_el1_read();
-  
-  if (!(par & PAR_F)) { //if not fail 
-    *pa_p = (paddr_t)((par & PAR_PA) | (va & L3_OFFSET));
-    return true;
-  }
-  
-  // if failed then simulate table walk
   pt_entry_t *entry = NULL;
   pt_lvl_t lvl = get_pte(va, &entry);
   
   if( !IS_VALID(lvl) )
     return false;
 
-  return false;
   /* entry is valid */
   switch(lvl){
   case 1:
@@ -176,7 +159,7 @@ bool
 pmap_is_modified(vaddr_t va)
 {
   pt_entry_t *entry = NULL;
-  if( get_pte(va, &entry) < 0 )
+  if( IS_VALID(get_pte(va, &entry)) )
     return *entry & ATTR_DBM;
 
   return false;
@@ -203,10 +186,23 @@ pmap_clear_modified(vaddr_t va)
   table_invalidate_entry(va);
 }
 
-void pmap_data_abort_access_fault(vaddr_t va){
+void
+pmap_data_abort_access_fault(vaddr_t va){
   pt_entry_t *entry = NULL;
-  get_pte(va, &entry);
-  *entry |=  ATTR_AF | ATTR_DBM;
+  if(IS_VALID(get_pte(va, &entry)))
+    *entry |=  ATTR_AF | ATTR_DBM;
   
   table_invalidate_entry(va);
 }
+
+extern pte_t   *_level1_pagetable;
+extern vaddr_t *_brk_limit;
+
+void
+pmap_setup_kernel_space(){
+  kernel_space.pt_root = _level1_pagetable;
+  kernel_space.start = (vaddr_t)&_kernel;
+  kernel_space.end   = (vaddr_t)&_brk_limit;
+  kernel_space.asid  = 0;
+}
+

@@ -8,6 +8,7 @@
 #include <rpi/gpio.h>
 #include <rpi/vc_mbox.h>
 #include <pmman.h>
+#include <userspace_demo.h>
 
 extern void cons_bootstrap(unsigned);
 extern const void* _stack_size;
@@ -37,6 +38,7 @@ static inline void smp_intro(){
 static void smp_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                       uint32_t atags __unused) {
   smp_intro();
+  us_launch_program();
   for (;;);
 }
 

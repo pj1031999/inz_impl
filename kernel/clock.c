@@ -3,65 +3,14 @@
 #include <aarch64/cpu.h>
 #include <klibc.h>
 #include <rpi/irq.h>
-#include <pmap.h>
 #include <pmman.h>
+#include <pmap_test.h>
 
 #define CLK_FREQ 192000000
 
 static uint32_t ticks = 0;
 static uint64_t clk_freq = 0;
 
-#define TEST 2
-static void pmap_test(){
-#if TEST == 0 //kremove
-  paddr_t alloc_p = pm_alloc(PAGESIZE);
-  vaddr_t *alloc_v = (vaddr_t*)((uint64_t)&_kernel | (uint64_t)alloc_p);
-  *alloc_v = 0xcafebabe; 
-  printf("\t alloc_v = %p \t *alloc_v = %x \n", alloc_v, *alloc_v);
-  pmap_kremove((vaddr_t)alloc_v, PAGESIZE); // kernel panic
-  printf("\t alloc_v = %p \t *alloc_v = %x \t", alloc_v, *alloc_v);
-
-#elif TEST == 1 //kenter
-  paddr_t alloc1_p = pm_alloc(PAGESIZE);
-  vaddr_t *alloc1_v = (vaddr_t*)((uint64_t)&_kernel | (uint64_t)alloc1_p);
-  *alloc1_v = 0x1; 
-
-  paddr_t alloc2_p = pm_alloc(PAGESIZE);
-  vaddr_t *alloc2_v = (vaddr_t*)((uint64_t)&_kernel | (uint64_t)alloc2_p);
-  *alloc2_v = 0x2; 
-
-  paddr_t pa1 = 0, pa2 = 0;
-  pmap_kextract((vaddr_t)alloc1_v, &pa1);
-  pmap_kextract((vaddr_t)alloc2_v, &pa2);
-  printf("\t alloc1_v = %p \t *alloc1_v = %x \t phys = %p \n", alloc1_v, *alloc1_v, pa1);
-  printf("\t alloc2_v = %p \t *alloc2_v = %x \t phys = %p \n", alloc2_v, *alloc2_v, pa2);
-
-  pmap_kenter((vaddr_t)alloc1_v, alloc2_p, (flags_t)NULL);
-  //pmap_kenter((vaddr_t)alloc2_v, alloc1_p, (flags_t)NULL);
-  
-  pmap_kextract((vaddr_t)alloc1_v, &pa1);
-  pmap_kextract((vaddr_t)alloc2_v, &pa2);
-  printf("\t alloc1_v = %p \t *alloc1_v = %x \t phys = %p \n", alloc1_v, *alloc1_v, pa1);
-  printf("\t alloc2_v = %p \t *alloc2_v = %x \t phys = %p \n", alloc2_v, *alloc2_v, pa2);
-
-  
-#elif TEST == 2 // referenced / modified / kextract / access flag set
-  vaddr_t va = (ticks-1) * 0x000010000 + 0xffffFFFF00054321;
-  paddr_t pa = 0;
-
-  if(ticks % 2 == 0) // exception do_el1_sync -> set af
-    pa = *((uint64_t*)va);
-
-  if(ticks % 8 == 0){
-    pmap_clear_referenced(va);
-    pmap_clear_modified(va);
-  }
-
-  pmap_kextract(va, &pa);
-  printf("\t %.16p -> %.8p af=%d db=%d \t", va, pa, pmap_is_referenced(va), pmap_is_modified(va));
-
-#endif
-}
 
 static void clock_irq(unsigned irq __unused) {
   uint64_t val = reg_cntp_cval_el0_read();
@@ -71,7 +20,7 @@ static void clock_irq(unsigned irq __unused) {
   arm_isb();
   ticks++;
 
-  pmap_test();
+  pmap_test_kextract((ticks-1) * 0x000080000 + 0xffffFFFF00054321);
   printf("tick %d!\n", ticks);
 }
 

@@ -62,6 +62,10 @@ SECTIONS
     _level3_pagetable = .;
     . = . + _page_table_size;	/*first  GB, entry == 4KB, contain 512 entries (kernel space)*/
     . = ALIGN(4096);
+
+    _tmp_pagetable_map = .;
+    . = . + _page_table_size;
+    . = ALIGN(4096);
 }
 
   .stack : ALIGN(32768)
