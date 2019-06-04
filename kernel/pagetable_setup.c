@@ -27,7 +27,6 @@ page_table_fill_inner_nodes(void)
   entry_l2[0] = entry_l3_first2MB;
 }
 
-
 #define PTE_ATTR  L2_BLOCK | ATTR_SH(ATTR_SH_IS) | ATTR_NS | ATTR_AP(ATTR_AP_RW)
 #define ENTRY_2MB 0x00200000
 #define ENTRY_4KB 0x00001000
@@ -37,6 +36,7 @@ page_table_fill_leaves(void)
 {
   uint64_t entry = 0;
   uint64_t *_level2_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level2_pagetable);
+
   uint64_t *_level3_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level3_pagetable);
 
   // kernel page
@@ -44,6 +44,24 @@ page_table_fill_leaves(void)
   for(int i = 0; i < 512; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }
+  
+//8f000 - page_table
+#define A 143
+//A0000 - el1_stack
+#define C 160
+//86000 - us_program
+#define E 134
+
+  entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[A] = entry;
+
+  entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[C] = entry;
+  
+  entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[E] = entry;
+
+
  
   //first half (without first 2 MB) of first GB has write back cache 
   entry = ENTRY_2MB | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB);
