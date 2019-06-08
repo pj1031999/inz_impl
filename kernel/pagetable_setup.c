@@ -3,6 +3,7 @@
 
 #define UPPERADDR 0xffffFFFF00000000
 #define PHYSADDR(x) ((x) - (UPPERADDR))
+#define PAGESIZE 4096
 extern uint64_t _level1_pagetable[];
 extern uint64_t _level2_pagetable[];
 extern uint64_t _level3_pagetable[];
@@ -31,12 +32,13 @@ page_table_fill_inner_nodes(void)
 #define ENTRY_2MB 0x00200000
 #define ENTRY_4KB 0x00001000
 
+extern int  _mail_buffer[];
+extern int  _bss_end[];
 void __attribute__((section(".init")))
 page_table_fill_leaves(void)
 {
   uint64_t entry = 0;
   uint64_t *_level2_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level2_pagetable);
-
   uint64_t *_level3_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level3_pagetable);
 
   // kernel page
@@ -44,25 +46,31 @@ page_table_fill_leaves(void)
   for(int i = 0; i < 512; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }
-  
-//8f000 - page_table
-#define A 143
-//A0000 - el1_stack
-#define C 160
-//86000 - us_program
-#define E 134
+
+// page_table L2
+#define A PHYSADDR((vaddr_t)&_level2_pagetable) / PAGESIZE
+// mail_buffer idx
+#define C PHYSADDR((vaddr_t)&_mail_buffer) / PAGESIZE
+
+#define E 176
+#define F E
 
   entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
   _level3_pagetable_phys[A] = entry;
-
+        
   entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
   _level3_pagetable_phys[C] = entry;
   
   entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
   _level3_pagetable_phys[E] = entry;
 
+  entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  for(int i = E; i < F; entry += ENTRY_4KB)
+  {
+     _level3_pagetable_phys[i++] = entry;
+  }
 
- 
+  
   //first half (without first 2 MB) of first GB has write back cache 
   entry = ENTRY_2MB | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB);
   for(int i = 1; i < 256; entry += ENTRY_2MB){

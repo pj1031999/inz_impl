@@ -6,8 +6,8 @@
 
 typedef struct font font_t;
 typedef uint32_t color_t;
-static volatile unsigned int _mail_buffer[256] __attribute__((aligned (16)));
-
+//volatile unsigned int _mail_buffer[256] __attribute__((aligned (16)));
+extern int  _mail_buffer[256];
 
 #define color(r,g,b) \
   (color_t)((((r) & 255) << 16) | (((g) & 255) << 8) | ((b) & 255))

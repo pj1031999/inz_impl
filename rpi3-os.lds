@@ -45,7 +45,7 @@ SECTIONS
     *(.data .data.*)
     _data_end = .;
   } : data
-
+  
   .pagetable : ALIGN(4096)
   {
     _level1_pagetable = .;
@@ -66,12 +66,18 @@ SECTIONS
     _tmp_pagetable_map = .;
     . = . + _page_table_size;
     . = ALIGN(4096);
-}
+  }
 
-  .stack : ALIGN(32768)
+  .stack : ALIGN(_stack_size)
   {
     . = . + _stack_size;	/* stack increases by subtraction */
     _el1_stack = .;		/* core0 kernel space stack */
+  }
+
+  .mail_buffer : ALIGN(4096)
+  {
+    _mail_buffer = .;
+    . = . + 1024;    
   }
 
   .bss : ALIGN(32768)

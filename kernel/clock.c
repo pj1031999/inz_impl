@@ -28,9 +28,8 @@ void clock_init(void) {
 
   //reg_cntvct_el0_write(CLK_FREQ);
   clk_freq = reg_cntfrq_el0_read();
-  reg_cntp_cval_el0_write(clk_freq );
-  reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
-
+  reg_cntp_cval_el0_write(clk_freq);	// compare value
+  reg_cntp_ctl_el0_write(CNTCTL_ENABLE);// enable counter and interrupt generation
   arm_isb();
 
   /* Enable CP0 physical timer interrupt. */
