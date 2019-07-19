@@ -8,6 +8,7 @@ import shlex
 import subprocess
 from libtmux import Server, Session
 
+import traceback
 
 TMUX_CONF = './.tmux.conf'
 SOCKET = 'rpi3'
@@ -150,8 +151,10 @@ if __name__ == '__main__':
         session.kill_window(':0')
         session.select_window(dbg.name if dbg else sim.name)
         session.attach_session()
+                
     finally:
         try:
+            server.kill_session(SESSION)
             session.kill_session()
         except:
             pass
