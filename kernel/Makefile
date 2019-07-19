@@ -23,6 +23,7 @@ SOURCES_C := \
 
 SOURCES_ASM := \
 	boot.S \
+	ctx_switch.S \
 	evec.S 
 
 build: kernel.a
