@@ -41,45 +41,38 @@ page_table_fill_leaves(void)
   uint64_t *_level2_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level2_pagetable);
   uint64_t *_level3_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level3_pagetable);
 
-  // kernel page
+  // kernel page - first 2MB
   entry = PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WB);
   for(int i = 0; i < 512; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }
 
-// page_table L2
 #define A PHYSADDR((vaddr_t)&_level2_pagetable) / PAGESIZE
-// mail_buffer idx
 #define C PHYSADDR((vaddr_t)&_mail_buffer) / PAGESIZE
-
 #define E 176
-#define F E
 
-  entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[A] = entry;
+  /* entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
+  /* _level3_pagetable_phys[A] = entry; */
         
-  entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[C] = entry;
+  /* entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
+  /* _level3_pagetable_phys[C] = entry; */
   
-  entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[E] = entry;
-
-  entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  for(int i = E; i < F; entry += ENTRY_4KB)
-  {
-     _level3_pagetable_phys[i++] = entry;
-  }
+  /* entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
+  /* _level3_pagetable_phys[E] = entry; */
 
   
-  //first half (without first 2 MB) of first GB has write back cache 
-  entry = ENTRY_2MB | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB);
-  for(int i = 1; i < 256; entry += ENTRY_2MB){
-    _level2_pagetable_phys[i++] = entry;
+  // page_table L2
+  
+  /* //first half (without first 2 MB) of first GB has write back cache  */
+  int z = 480;
+  //entry = ENTRY_2MB | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_WB);
+  for(int i = 1; i < z; entry += ENTRY_2MB){
+    _level2_pagetable_phys[i++] = 0x0; //entry;
   }
 
-  //second half of first GB is non cacheable 
-  entry = (256*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  for(int i = 256; i < 512; entry += ENTRY_2MB){
+  //second half of first GB is non cacheable - last few needed MB
+  entry = (z*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  for(int i = z; i < 512; entry += ENTRY_2MB){
     _level2_pagetable_phys[i++] = entry;
   }
 
