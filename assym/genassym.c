@@ -26,11 +26,19 @@
  *
  */
 
-#include <genassym.h>
+#include "genassym.h"
 #include <aarch64/frame.h>
+#include <aarch64/ctx.h>
 
 ASSYM(TF_SIZE, sizeof(struct trapframe));
 ASSYM(TF_SP, offsetof(struct trapframe, tf_sp));
 ASSYM(TF_ELR, offsetof(struct trapframe, tf_elr));
 ASSYM(TF_SPSR, offsetof(struct trapframe, tf_spsr)); 
 ASSYM(TF_X, offsetof(struct trapframe, tf_x)); 
+
+ASSYM(SF_SIZE, sizeof(struct ctx_t));
+ASSYM(SF_SP,   offsetof(struct ctx_t, sf_sp));
+ASSYM(SF_SPSR, offsetof(struct ctx_t, sf_spsr)); 
+ASSYM(SF_REGS, offsetof(struct ctx_t, sf_regs)); 
+ASSYM(SF_LR,   offsetof(struct ctx_t, sf_lr)); 
+ASSYM(SF_PC,   offsetof(struct ctx_t, sf_pc)); 

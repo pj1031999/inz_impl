@@ -1,3 +1,9 @@
+#define	SF_LR	0xf0
+#define	SF_PC	0x100
+#define	SF_REGS	0
+#define	SF_SIZE	0x120
+#define	SF_SPSR	0x108
+#define	SF_SP	0xf8
 #define	TF_ELR	0x10
 #define	TF_SIZE	0x110
 #define	TF_SPSR	0x18
