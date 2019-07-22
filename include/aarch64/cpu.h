@@ -59,12 +59,10 @@ daif_disable(register_t psw)
 
 
 static inline void arm_irq_enable(void) {
-  //arm_set_cpsr_c(DAIF_I, 0);
   ENABLE_INTERRUPT();
 }
 
 static inline void arm_irq_disable(void) {
-  //arm_set_cpsr_c(DAIF_I, DAIF_I);
   DISABLE_INTERRUPT();
 }
 
