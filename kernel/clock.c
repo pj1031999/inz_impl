@@ -15,7 +15,6 @@ static uint64_t clk_freq = 0;
 static void clock_irq(unsigned irq __unused) {
   uint64_t val = reg_cntp_cval_el0_read();
   reg_cntp_cval_el0_write(val + clk_freq);
-  reg_cntp_ctl_el0_write(CNTCTL_ENABLE);
 
   arm_isb();
   ticks++;
@@ -31,10 +30,6 @@ void clock_init(void) {
   reg_cntp_cval_el0_write(clk_freq);	// compare value
   reg_cntp_ctl_el0_write(CNTCTL_ENABLE);// enable counter and interrupt generation
   arm_isb();
-
-  /* Enable CP0 physical timer interrupt. */
-  bcm2836_local_irq_register(BCM2836_INT_CNTPSIRQ, clock_irq);
-  bcm2836_local_irq_enable(BCM2836_INT_CNTPSIRQ);
 
   bcm2836_local_irq_register(BCM2836_INT_CNTPNSIRQ, clock_irq);
   bcm2836_local_irq_enable(BCM2836_INT_CNTPNSIRQ);

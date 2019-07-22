@@ -128,15 +128,16 @@ mmu_setup:
 	LDR	x0, =( \
 	TCR_TxSZ(32) \
 	| TCR_TGx_(4K) \
+	| TCR_IPS_32BIT \
 	)
 	MRS	x1, id_aa64mmfr0_el1
 	BFI	x0, x1, #32, #3
 	MSR	tcr_el1, x0
 
 	LDR	x1, =( \
-		SCTLR_M	\
-		| SCTLR_I \
-		| SCTLR_C \
+	SCTLR_M	\
+	| SCTLR_I \
+	| SCTLR_C \
 	)
 	ORR	x0, x0, x1
 

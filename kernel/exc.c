@@ -63,7 +63,7 @@ void svc(uint64_t id, struct trapframe *frame){
 
   if(id == 0x0){
     printf("(exit)\n");
-    frame->tf_lr = frame->tf_elr = frame->tf_lr + 8;
+    frame->tf_lr = frame->tf_elr = frame->tf_lr;
     frame->tf_spsr |= SPSR_M_EL1H;
   }
 }
