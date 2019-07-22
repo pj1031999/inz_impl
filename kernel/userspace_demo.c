@@ -4,20 +4,23 @@
 #include <aarch64/pte.h>
 #include <klibc.h>
 #include <aarch64/cpureg.h>
+#include <aarch64/ctx.h>
 
-vaddr_t ctx_save(vaddr_t* ctx);
-vaddr_t* ctx_push(vaddr_t x0, vaddr_t sp, vaddr_t pc, vaddr_t ret_addr);
-void ctx_switch_to(vaddr_t* ctx_old, vaddr_t* ctx_new);
-void ctx_load(vaddr_t ctx);
 
+static int fib(int a){
+  if (a <= 0) return 0;
+  if (a <= 2) return 1;
+  return fib(a-1) + fib(a-2);
+}
 
 static void __attribute__((aligned(4096)))
-us_program(vaddr_t ctx_old){
-  __asm__ __volatile__("mov X0, #123" :: );
+us_program(uint64_t arg){
+  int f = 20;
+  arg = fib(f);
+  printf("fib(%d) = %d\n", f, arg);
+  
   __asm__ __volatile__("svc #0x1" :: );
-  // __asm__ __volatile__("svc #0x0" :: );
-
-  ctx_load(ctx_old);
+  //__asm__ __volatile__("svc #0x0" :: );
 }
 
 static __attribute__((unused)) void us_switch(){
@@ -98,25 +101,16 @@ us_setup_pagetable(){
 
 void
 ctx_switch(){
+  /*prepare new thread context*/
   flags_t flags = FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH;
-  vaddr_t thread_stack = (vaddr_t)pages_alloc(1, flags);
+  vaddr_t thread_stack = (vaddr_t)(pages_alloc(1, flags));
   vaddr_t program_counter = (vaddr_t)&us_program;
   vaddr_t ret_addr = (vaddr_t)NULL;
   uint64_t arg_x0 = 0xcafebabe;
-
-
-  vaddr_t* ctx_new = ctx_push(arg_x0, thread_stack, program_counter, ret_addr);
-
-  bool flag_processed = false;
-  /*ctx_t*/vaddr_t ctx_old[40];
-  ctx_save(ctx_old); // return here when `ctx_load(ctx_old)` will be called
-
-  if(flag_processed){
-    return;
-  }else{
-    flag_processed = true;
-    ctx_switch_to(ctx_old, ctx_new);
-  }
+  ctx_t* ctx_new = ctx_push(arg_x0, thread_stack, program_counter, ret_addr);
+  
+  struct ctx_t ctx_old;
+  ctx_save_switch_restore(&ctx_old, ctx_new);
 }
 
 void
