@@ -49,18 +49,13 @@ page_table_fill_leaves(void)
 
 #define A PHYSADDR((vaddr_t)&_level2_pagetable) / PAGESIZE
 #define C PHYSADDR((vaddr_t)&_mail_buffer) / PAGESIZE
-#define E 176
 
-  /* entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
-  /* _level3_pagetable_phys[A] = entry; */
+  entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[A] = entry;
         
-  /* entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
-  /* _level3_pagetable_phys[C] = entry; */
-  
-  /* entry = E*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC); */
-  /* _level3_pagetable_phys[E] = entry; */
-
-  
+  entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[C] = entry;
+    
   // page_table L2
   
   /* //first half (without first 2 MB) of first GB has write back cache  */
