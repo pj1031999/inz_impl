@@ -11,7 +11,6 @@
 static uint32_t ticks = 0;
 static uint64_t clk_freq = 0;
 
-
 static void clock_irq(unsigned irq __unused) {
   uint64_t val = reg_cntp_cval_el0_read();
   reg_cntp_cval_el0_write(val + clk_freq);
@@ -19,7 +18,6 @@ static void clock_irq(unsigned irq __unused) {
   arm_isb();
   ticks++;
 
-  pmap_test_kextract((ticks-1) * 0x000080000 + 0xffffFFFF00054321);
   printf("tick %d!\n", ticks);
 }
 
