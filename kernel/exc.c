@@ -31,6 +31,7 @@
 #include <pmap.h>
 #include <aarch64/frame.h>
 #include <aarch64/pte.h>
+#include <pcpu.h>
 
 #define nitems(x)   (sizeof((x)) / sizeof((x)[0]))
 
@@ -94,6 +95,12 @@ void do_el1h_sync(struct trapframe *frame)
 	    pmap_data_abort_access_fault(far);
 	    return;
 	  }
+	if (pcpu()->on_fault){
+	  frame->tf_x[0] = false;
+	  frame->tf_elr = frame->tf_elr+8;
+	  return;
+	}
+
 	break;
 	
       default: break;

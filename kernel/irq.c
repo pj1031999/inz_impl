@@ -32,7 +32,7 @@ static irq_handler_t _handler_vec[BCM2835_NIRQ + BCM2836_NIRQ];
 void bcm2835_irq_init(void) {
 /* #define PERIPHERAL_BASE 0x3F000000 */
 /* #define INTERRUPTS_PENDING (INTERRUPTS_BASE + 0x200) */
-  
+
 /*   interrupt_regs->irq_basic_disable = -1; */
 /*   interrupt_regs->irq_gpu_disable1 = -1; */
 /*   interrupt_regs->irq_gpu_disable2 = -1; */
@@ -127,6 +127,8 @@ static void irq_dispatch(uint32_t reg, unsigned irq_base) {
 }
 
 void exc_irq(void) {
+  pcpu()->td_idnest++;
+
   unsigned cpu = arm_cpu_id();
   /* Firstly, dispatch local interrupts. */
   irq_dispatch(INTC_IRQPENDING_N(cpu), BCM2836_INT_BASECPUN(cpu));
@@ -139,6 +141,7 @@ void exc_irq(void) {
     irq_dispatch(BCM2835_ARMICU(BCM2835_INTC_IRQ2PENDING),
                  BCM2835_INT_GPU1BASE);
   }
+  //pcpu()->td_idnest--;
 }
 
 void exc_fast_irq(void) {

@@ -2,6 +2,7 @@
 #define ARMCPU_H
 
 #include <aarch64/cpureg.h>
+#include <pcpu.h>
 
 static inline unsigned arm_cpu_id(void) {
   return reg_mpidr_el1_read() & MPIDR_AFF0;
@@ -59,18 +60,23 @@ daif_disable(register_t psw)
 
 
 static inline void arm_irq_enable(void) {
-  ENABLE_INTERRUPT();
+  if(pcpu()->td_idnest == 0) for(;;);
+
+  pcpu()->td_idnest--;
+  if(pcpu()->td_idnest == 0)
+    ENABLE_INTERRUPT();
 }
 
 static inline void arm_irq_disable(void) {
+  pcpu()->td_idnest++;
   DISABLE_INTERRUPT();
 }
 
 /* Data Memory Barrier */
-static inline void arm_dmb(void) { __asm__ volatile("dmb" ::: "memory"); }
+static inline void arm_dmb(void) { __asm__ volatile("dmb sy" ::: "memory"); }
 
 /* Data Synchronization Barrier */
-static inline void arm_dsb(void) { __asm__ volatile("dsb" ::: "memory"); }
+static inline void arm_dsb(void) { __asm__ volatile("dsb sy" ::: "memory"); }
 
 /* Instruction Synchronization Barrier */
 static inline void arm_isb(void) { __asm__ volatile("isb" ::: "memory"); }
