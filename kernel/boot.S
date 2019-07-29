@@ -129,6 +129,8 @@ mmu_setup:
 	TCR_TxSZ(32) \
 	| TCR_TGx_(4K) \
 	| TCR_IPS_32BIT \
+	| (1<<39)/*TCR_HA*/ \
+	| (1<<40)/*TCR_HD*/ \
 	)
 	MRS	x1, id_aa64mmfr0_el1
 	BFI	x0, x1, #32, #3
