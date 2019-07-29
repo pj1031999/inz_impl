@@ -60,12 +60,36 @@ void unhandled_exception(struct trapframe *frame)
 }
 
 void svc(uint64_t id, struct trapframe *frame){
-  printf("SVC: %d\n", id);
 
-  if(id == 0x0){
+  switch (id){
+  case 0x0:
     printf("(exit)\n");
     frame->tf_lr = frame->tf_elr = frame->tf_lr;
     frame->tf_spsr |= SPSR_M_EL1H;
+    break;
+
+  case 0x1: // read  number
+    {
+      int8_t c = 0;
+
+      frame->tf_x[0] = 0;
+      while((c = getchar()) != '\n'){
+	int i = c - '0';
+	printf("%c", c);
+	if(i < 0 || i > 9){printf("\n"); break;}
+	frame->tf_x[0] = frame->tf_x[0]*10+i;
+      }
+    }
+
+    break;
+
+  case 0x2: // write number
+    printf("%d\n", frame->tf_x[0]);
+    break;
+
+  default:
+    printf("SVC: %d\n", id);
+    break;
   }
 }
 
