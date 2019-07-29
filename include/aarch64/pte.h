@@ -34,10 +34,12 @@
 #define	_MACHINE_PTE_H_
 
 #ifndef LOCORE
-//typedef	uint64_t	pd_entry_t;		/* page directory entry */
-//typedef	uint64_t	pt_entry_t;		/* page table entry */
+// typedef	uint64_t	pde_t;		/* page directory entry */
+// typedef	uint64_t	pte_t;		/* page table entry */
 #define pd_entry_t long long
 #define pt_entry_t long long
+#define pde_t long long
+#define pte_t long long
 #endif
 
 /* Block and Page attributes */
