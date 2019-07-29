@@ -2,6 +2,7 @@
 #include <pmap.h>
 #include <pmman.h>
 #include <klibc.h>
+#include <aarch64/mmu.h>
 
 void pmap_test_kremove(){
   paddr_t alloc_p = pm_alloc(PAGESIZE);

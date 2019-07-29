@@ -1,6 +1,6 @@
 #include <rpi/vc_mbox.h>
 #include <gfx.h>
-#include <mmu.h>
+#include <aarch64/mmu.h>
 #include <font.h>
 #include <klibc.h>
 

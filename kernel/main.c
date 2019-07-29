@@ -7,17 +7,17 @@
 #include <gfx.h>
 #include <gfx_cons.h>
 #include <clock.h>
-#include <arm/mmu.h>
 #include <rpi/irq.h>
-#include <mmu.h>
+#include <aarch64/mmu.h>
 #include <pmman.h>
 #include <pcpu.h>
 #include <smp.h>
-
+#include <userspace_demo.h>
 
 extern uint8_t _brk_limit;
 
 static window_t *screen;
+extern cons_t uart0_cons;
 
 void cons_bootstrap(unsigned cpu) {
   unsigned w2 = screen->width / 2;

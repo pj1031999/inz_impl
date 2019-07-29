@@ -4,13 +4,16 @@
 #include <aarch64/cpureg.h>
 #include <aarch64/aarch64reg.h>
 #include <aarch64/pte.h>
+#include <aarch64/mmu.h>
+#include <aarch64/cpu.h>
 
 #define IS_VALID(a) ((a) >= 0)
+#define IS_LAST_LVL(a) ((a) == 3 || (a) == -3)
 
 static  pt_lvl_t
 get_pte(vaddr_t va, pt_entry_t **res_entry)
 {
-  uint64_t kernel = (uint64_t)&_kernel;
+  uint64_t kernel = (uint64_t)_kernel;
   
   // virtual adresses for kernel starts witf 0xfff..
   bool kspace = !!(va  & kernel);
