@@ -209,3 +209,12 @@ pmap_setup_kernel_space(){
   kernel_space.asid  = 0;
 }
 
+bool load_word(vaddr_t addr, uint64_t *res){
+  *res = *(uint64_t*)addr;
+  return true;
+}
+
+bool store_word(vaddr_t addr, uint64_t val){
+  *(uint64_t*)addr = val;
+  return true;
+}

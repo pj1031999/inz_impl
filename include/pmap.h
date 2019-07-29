@@ -5,7 +5,7 @@
 #include <aarch64/pte.h>
 #include <queue.h>
 
-extern vaddr_t* _kernel;
+//extern vaddr_t* _kernel;
 
 typedef uint64_t flags_t;
 typedef int32_t pt_lvl_t;
@@ -21,7 +21,6 @@ typedef int32_t pt_lvl_t;
 #define FLAG_MEM_DEVICE 	ATTR_IDX(ATTR_DEVICE_MEM)
 
 typedef uint8_t asid_t;
-typedef uint64_t pte_t;
 
 typedef struct pmap { 
   pte_t *pt_root;   	/* root of page table (first level table) */
@@ -47,4 +46,6 @@ void pmap_clear_modified(vaddr_t);
 
 void pmap_data_abort_access_fault(vaddr_t);
 
+bool load_word(vaddr_t addr, uint64_t *res);
+bool store_word(vaddr_t addr, uint64_t val);
 #endif /* !_PMAP_H_ */
