@@ -68,7 +68,9 @@ static void gfx_cons_putc(cons_dev_t *dev, int c) {
 }
 
 static int gfx_cons_getc(cons_dev_t *dev __unused) {
-  return 0;
+  extern cons_t uart0_cons;
+  return uart0_cons.getc(dev);
+  //return 0;
 }
 
 static void gfx_cons_flush(cons_dev_t *dev) {
