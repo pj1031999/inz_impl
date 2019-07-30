@@ -30,8 +30,6 @@ void cons_bootstrap(unsigned cpu) {
   cons_init(make_gfx_cons(&win, NULL));
 }
 
-extern cons_t uart0_cons;
-
 void test_exc(){
   printf("\n*** TESTS START ***\n");
   
