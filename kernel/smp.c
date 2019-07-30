@@ -50,7 +50,6 @@ static void smp_demo_pmap(uint32_t r0 __unused, uint32_t r1 __unused,
 }
 
 static void __unused gpio_blink() {
-  for(;;);
 #define PIN40 21
   smp_intro();
 
@@ -81,10 +80,6 @@ void set_mail_buffer(volatile unsigned int *mailbuffer, int state){
 
 static void smp_demo_led(){
   smp_intro();
-  arm_irq_enable();
-  for(;;)
-    printf(".");
-  //kernel_exit();
   static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
   unsigned long physical_mb = (unsigned long)mailbuffer;
   unsigned int var;

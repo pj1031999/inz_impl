@@ -39,9 +39,9 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   cons_bootstrap(0);
   
-  bcm2835_irq_init();
-  bcm2836_local_irq_init();
-  arm_irq_enable();
+  /* bcm2835_irq_init(); */
+  /* bcm2836_local_irq_init(); */
+  /* arm_irq_enable(); */
 
   pm_init();
   pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
@@ -56,7 +56,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   //clock_init();
   //uart0_cons.init(NULL);
-  //demo_uart();
+  demo_uart();
   demo_clock_switch();
   
   puts("Type letter 'q' to halt machine!");

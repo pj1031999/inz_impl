@@ -98,7 +98,6 @@ void print_dirty_referenced(vaddr_t va){
 }
 
 void demo_pmap(){
-  kernel_exit();
   pcpu()->on_fault = true;
   printf("Demo pmap.\n");
   
@@ -279,7 +278,6 @@ ctx_us_switch(vaddr_t va_stack){
 
 
 void demo_uart(){
-  kernel_exit();
   printf("Demo UART.\n");
   
   extern cons_t uart0_cons;
