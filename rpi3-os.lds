@@ -5,6 +5,7 @@ ENTRY(_start)
 PHDRS
 {
   init   PT_LOAD FLAGS(5); /* read-only, executable */
+  us_text PT_LOAD FLAGS(5);/* read-only, executable */
   text   PT_LOAD FLAGS(5); /* read-only, executable */
   rodata PT_LOAD FLAGS(4); /* read-only */
   data   PT_LOAD FLAGS(6); /* read-write */
@@ -21,7 +22,15 @@ SECTIONS
     KEEP(*(.init .init.*))
   } : init
 
+  .us_text : ALIGN(4096)
+  {
+    _us_text_start = .;
+    *(.us_text .us_text.*)
+    _us_text_end = .;
+  } : us_text
+  
   _init_end = ALIGN(4096);
+
 
   .text _kernel + _init_end : AT(_init_end) ALIGN(4096)
   {

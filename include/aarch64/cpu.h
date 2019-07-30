@@ -3,6 +3,7 @@
 
 #include <aarch64/cpureg.h>
 #include <pcpu.h>
+#include <klibc.h>
 
 static inline unsigned arm_cpu_id(void) {
   return reg_mpidr_el1_read() & MPIDR_AFF0;
@@ -36,7 +37,7 @@ static inline uint32_t arm_set_cpsr_c(uint32_t clr, uint32_t eor) {
 #define DAIF_MASK		(DAIF_D|DAIF_A|DAIF_I|DAIF_F)
 
 typedef uint64_t register_t;
-static inline void __unused
+static void
 daif_enable(register_t psw)
 {
 	if (!__builtin_constant_p(psw)) {
@@ -46,7 +47,7 @@ daif_enable(register_t psw)
 	}
 }
 
-static inline register_t __unused
+static register_t
 daif_disable(register_t psw)
 {
 	register_t oldpsw = reg_daif_read();
@@ -58,20 +59,6 @@ daif_disable(register_t psw)
 	return oldpsw;
 }
 
-
-static inline void arm_irq_enable(void) {
-  if(pcpu()->td_idnest == 0) for(;;);
-
-  pcpu()->td_idnest--;
-  if(pcpu()->td_idnest == 0)
-    ENABLE_INTERRUPT();
-}
-
-static inline void arm_irq_disable(void) {
-  pcpu()->td_idnest++;
-  DISABLE_INTERRUPT();
-}
-
 /* Data Memory Barrier */
 static inline void arm_dmb(void) { __asm__ volatile("dmb sy" ::: "memory"); }
 
@@ -80,5 +67,35 @@ static inline void arm_dsb(void) { __asm__ volatile("dsb sy" ::: "memory"); }
 
 /* Instruction Synchronization Barrier */
 static inline void arm_isb(void) { __asm__ volatile("isb" ::: "memory"); }
+
+
+static inline void arm_irq_enable(void) {
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
+
+  assert(pcpu()->td_idnest > 0);
+
+  pcpu()->td_idnest--;
+  if(pcpu()->td_idnest == 0)
+    ENABLE_INTERRUPT();
+
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
+}
+
+static inline void arm_irq_disable(void) {
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
+
+  DISABLE_INTERRUPT();
+  pcpu()->td_idnest++;
+
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
+}
 
 #endif

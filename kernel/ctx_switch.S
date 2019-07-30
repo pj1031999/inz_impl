@@ -60,18 +60,48 @@ ENTRY(ctx_save_switch_restore)
 	LOAD_SPEC_REG(x8, NEW, SF_PC);
 	MSR elr_el1, x8
 	LOAD_CTX(NEW)
-	LDR LR, =restore
-	STR OLD, [sp, #-(8 * 2)]! //push
+	LDR LR, =1f //restore
+	ADD SP, SP, #4096
+	STR OLD, [sp, #-(8 * 2)]! //push - stack align 16B
 	LOAD_REG(x0, NEW, SF_REGS + 8*0);
 	ERET
 
-restore:
+1: //restore
 	LDR OLD, [sp], #(8 * 2) //pop
 	LOAD_CTX(OLD)
 	RET
 
 END(ctx_save_switch_restore)
 
+
+//void ctx_save_switch_restore(ctx_t* ctx_old, ctx_t* ctx_new);
+ENTRY(ctx_us_save_switch_restore)
+	OLD .req X0 // Alias
+	NEW .req X1 // Alias
+
+	CTX_SAVE(OLD);
+	LOAD_SPEC_REG(x8, NEW, SF_PC);
+	MSR elr_el1, x8
+	LOAD_CTX(NEW)
+
+	MRS X8, spsr_el1
+	AND X8, X8, ~0x1f // el0 - userspace
+	MSR spsr_el1, x8	
+
+	LDR LR, =1f // restore
+	ADD SP, SP, #4096
+	STR OLD, [sp, #-(8 * 2)]! //push - stack align 16B
+	LOAD_REG(x0, NEW, SF_REGS + 8*0);
+	ERET
+
+1: //restore
+	LDR OLD, [sp], #(8 * 2) //pop
+	LOAD_CTX(OLD)
+	RET
+
+END(ctx_us_save_switch_restore)
+
+	
 
 //void ctx_load(ctx_t* ctx);
 ENTRY(ctx_load)

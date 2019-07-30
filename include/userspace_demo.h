@@ -1,7 +1,8 @@
 #ifndef USERSPACE_DEMO_H
 #define USERSPACE_DEMO_H
 
-
-void us_launch_program();
+void demo_clock_switch();
+void demo_pmap();
+void demo_uart();
 
 #endif /*USERSPACE_DEMO_H*/

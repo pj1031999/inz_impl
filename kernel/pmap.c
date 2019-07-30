@@ -62,7 +62,8 @@ get_pte(vaddr_t va, pt_entry_t **res_entry)
   desc = *l3 & ATTR_DESCR_MASK;
   
   if (desc != L3_PAGE) {
-    *res_entry = NULL;
+    //*res_entry = NULL;
+    *res_entry = l3;
     return -3; // error at level 3
   }
 
@@ -90,7 +91,9 @@ void pmap_kenter(vaddr_t va, paddr_t pa, flags_t flags){
   assert(pa % PAGESIZE == 0);
 
   pt_entry_t *entry = NULL;
-  if ( IS_VALID(get_pte(va, &entry)) ){
+  pt_lvl_t res = get_pte(va, &entry);
+
+  if ( IS_VALID(res) || IS_LAST_LVL(res) ){
     *entry =
       //clear entry access permission and execute never bits
       (*entry & ~L3_PAGE_OA & ~ATTR_AP_MASK & ~ATTR_XN)
@@ -161,9 +164,14 @@ pmap_is_referenced(vaddr_t va)
 bool
 pmap_is_modified(vaddr_t va)
 {
+  table_invalidate_entry(va);
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
   pt_entry_t *entry = NULL;
   if( IS_VALID(get_pte(va, &entry)) )
     return *entry & ATTR_DBM;
+    //return *entry & ATTR_AP(2);
 
   return false;
 }
@@ -193,7 +201,7 @@ void
 pmap_data_abort_access_fault(vaddr_t va){
   pt_entry_t *entry = NULL;
   if(IS_VALID(get_pte(va, &entry)))
-    *entry |=  ATTR_AF | ATTR_DBM;
+    *entry = *entry | ATTR_AF | ATTR_DBM;
   
   table_invalidate_entry(va);
 }
@@ -204,7 +212,7 @@ extern vaddr_t *_brk_limit;
 void
 pmap_setup_kernel_space(){
   kernel_space.pt_root = _level1_pagetable;
-  kernel_space.start = (vaddr_t)&_kernel;
+  kernel_space.start = (vaddr_t)_kernel;
   kernel_space.end   = (vaddr_t)&_brk_limit;
   kernel_space.asid  = 0;
 }

@@ -30,30 +30,13 @@ void cons_bootstrap(unsigned cpu) {
   cons_init(make_gfx_cons(&win, NULL));
 }
 
-extern cons_t uart0_cons;
-
-void test_exc(){
-  printf("\n*** TESTS START ***\n");
-  
-  int *p = (int*)0xffff92380475fff;
-  printf("", p, *p);
-
-
-  __asm__ __volatile__("svc #0x0" :: );
-  __asm__ __volatile__("hvc #0x0" :: );
-  __asm__ __volatile__("smc #0x0" :: );
-
-
-  
-  printf("\n*** TESTS END ***\n");
-}
-
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
+  pcpu_init();
+
   screen = gfx_set_videomode(1280, 800);
 
-  pcpu_init();
   cons_bootstrap(0);
   
   bcm2835_irq_init();
@@ -71,17 +54,20 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
-  clock_init();
-  uart0_cons.init(NULL);
-
-  //test_exc();
-
+  //clock_init();
+  //uart0_cons.init(NULL);
+  //demo_uart();
+  demo_clock_switch();
+  
   puts("Type letter 'q' to halt machine!");
-  while (getchar() != 'q');
+  uint8_t c;
+  while ((c = getchar()) != 'q'){
+    printf("%c", c);
+  }
 
     
-  for(;;);
-  //kernel_exit();
+  //for(;;);
+  kernel_exit();
 }
 
 noreturn void kernel_exit() {

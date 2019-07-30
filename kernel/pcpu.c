@@ -15,5 +15,3 @@ void pcpu_init(void) {
   
   reg_tpidr_el1_write((uint64_t)pcpu);
 }
-
-

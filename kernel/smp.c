@@ -27,22 +27,30 @@ static inline void smp_intro(){
   unsigned cpu = arm_cpu_id();
   pcpu_init();
   cons_bootstrap(cpu);
-  bcm2836_local_irq_init();
-  arm_irq_enable();
 
   printf("CPU#%d started!\n", cpu);
   printf("Stack Pointer: %p\n", stack_addr_read());
   mbox_set(0, 3, __BIT(cpu));
 }
 
-static void smp_entry(uint32_t r0 __unused, uint32_t r1 __unused,
+static void smp_demo_clock(uint32_t r0 __unused, uint32_t r1 __unused,
                       uint32_t atags __unused) {
   smp_intro();
-  us_launch_program();
+  kernel_exit();
+  arm_irq_enable();
+  demo_clock_switch();
   for (;;);
 }
 
-static void gpio_blink(){
+static void smp_demo_pmap(uint32_t r0 __unused, uint32_t r1 __unused,
+                      uint32_t atags __unused) {
+  smp_intro();
+  demo_pmap();
+  for (;;);
+}
+
+static void __unused gpio_blink() {
+  for(;;);
 #define PIN40 21
   smp_intro();
 
@@ -71,12 +79,17 @@ void set_mail_buffer(volatile unsigned int *mailbuffer, int state){
   mailbuffer[0] = c*4;         // Buffer size
 }
 
-static void led_blink(){
+static void smp_demo_led(){
   smp_intro();
+  arm_irq_enable();
+  for(;;)
+    printf(".");
+  //kernel_exit();
   static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
   unsigned long physical_mb = (unsigned long)mailbuffer;
   unsigned int var;
 
+  printf("Demo LED.\n");
   for(;;){
     set_mail_buffer(mailbuffer, 1);
     vc_mbox_send(physical_mb, 8);
@@ -96,10 +109,10 @@ void smp_bootstrap() {
 #define L2I (uint32_t)(uint64_t)
 
   int cpu = 0;
-  mbox_send(cpu+1, 3, L2I smp_entry);
-  mbox_send(cpu+2, 3, L2I led_blink);
-  mbox_send(cpu+3, 3, L2I gpio_blink);  
-
+  mbox_send(cpu+1, 3, L2I smp_demo_clock);
+  mbox_send(cpu+2, 3, L2I smp_demo_led);
+  mbox_send(cpu+3, 3, L2I smp_demo_pmap);
+  
   paddr_t s1 = pm_alloc(L2I &_stack_size);
   paddr_t s2 = pm_alloc(L2I &_stack_size);
   paddr_t s3 = pm_alloc(L2I &_stack_size);
@@ -108,9 +121,6 @@ void smp_bootstrap() {
   mbox_send(cpu+2, 1,  s2);
   mbox_send(cpu+3, 1,  s3);
 
-  /* mbox_send(cpu+1, 1,  L2I ( L2I &_el1_stack - 1* L2I &_stack_size)); */
-  /* mbox_send(cpu+2, 1,  L2I ( L2I &_el1_stack - 2* L2I &_stack_size)); */
-  /* mbox_send(cpu+3, 1,  L2I ( L2I &_el1_stack - 3* L2I &_stack_size)); */
   do {
     __asm__ volatile("wfe");
   } while (mbox_recv(0, 3) != (__BIT(3) | __BIT(2) | __BIT(1)));

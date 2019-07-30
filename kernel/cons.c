@@ -1,5 +1,6 @@
 #include <cons.h>
 #include <pcpu.h>
+#include <aarch64/cpu.h>
 
 void cons_init(cons_t *cn) {
   pcpu()->cons = cn;
@@ -7,8 +8,12 @@ void cons_init(cons_t *cn) {
 }
 
 void cons_putc(int c) {
+  //arm_irq_disable();
+  
   cons_t *cn = pcpu()->cons;
   cn->putc(cn->dev, c);
+
+  //arm_irq_enable();
 }
 
 int cons_getc() {

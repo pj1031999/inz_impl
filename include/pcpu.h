@@ -10,7 +10,7 @@ typedef struct cons cons_t;
 typedef struct pcpu {
   cons_t *cons;
   pde_t *pdtab;
-  volatile unsigned td_idnest;
+  volatile int td_idnest;
   bool on_fault;
 } pcpu_t;
 

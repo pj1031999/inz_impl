@@ -26,6 +26,7 @@ ctx_t* ctx_push(uint64_t x0, vaddr_t sp, vaddr_t pc, vaddr_t ret_addr);
 void ctx_switch_to(ctx_t* ctx_old, ctx_t* ctx_new);
 void ctx_save_and_switch_to (ctx_t* ctx_old, ctx_t* ctx_new);
 void ctx_save_switch_restore(ctx_t* ctx_old, ctx_t* ctx_new);
+void ctx_us_save_switch_restore(ctx_t* ctx_old, ctx_t* ctx_new);
 void ctx_load(ctx_t* ctx);
 
 #endif

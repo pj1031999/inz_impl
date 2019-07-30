@@ -41,7 +41,8 @@
   SAVE_REGS( x24, x25, reg, SF_REGS + 8 * 24);	\
   SAVE_REGS( x26, x27, reg, SF_REGS + 8 * 26);	\
   SAVE_REGS( x28, x29, reg, SF_REGS + 8 * 28);	\
-  SAVE_REG(  x30, reg, SF_REGS + 8 * 30);
+  SAVE_REG(  x30, reg, SF_REGS + 8 * 30);	\
+  ENABLE_INTERRUPT_ASM;
 
 
 #define LOAD_CTX(reg)				\
