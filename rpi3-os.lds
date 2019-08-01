@@ -26,6 +26,7 @@ SECTIONS
   {
     _us_text_start = .;
     *(.us_text .us_text.*)
+    userspace_*.o
     _us_text_end = .;
   } : us_text
   

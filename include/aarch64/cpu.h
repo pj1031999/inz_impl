@@ -70,32 +70,26 @@ static inline void arm_isb(void) { __asm__ volatile("isb" ::: "memory"); }
 
 
 static inline void arm_irq_enable(void) {
-  arm_isb();
-  arm_dsb();
-  arm_dmb();
-
   assert(pcpu()->td_idnest > 0);
 
   pcpu()->td_idnest--;
-  if(pcpu()->td_idnest == 0)
+  if(pcpu()->td_idnest == 0){
     ENABLE_INTERRUPT();
 
-  arm_isb();
-  arm_dsb();
-  arm_dmb();
+    arm_isb();
+    arm_dsb();
+    arm_dmb();
+  }
 }
 
 static inline void arm_irq_disable(void) {
-  arm_isb();
-  arm_dsb();
-  arm_dmb();
-
   DISABLE_INTERRUPT();
-  pcpu()->td_idnest++;
 
   arm_isb();
   arm_dsb();
   arm_dmb();
+
+  pcpu()->td_idnest++;
 }
 
 #endif

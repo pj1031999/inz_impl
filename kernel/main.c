@@ -9,12 +9,9 @@
 #include <clock.h>
 #include <rpi/irq.h>
 #include <aarch64/mmu.h>
-#include <pmman.h>
-#include <pcpu.h>
 #include <smp.h>
-#include <userspace_demo.h>
+#include <demo/demo.h>
 
-extern uint8_t _brk_limit;
 
 static window_t *screen;
 extern cons_t uart0_cons;
@@ -33,6 +30,8 @@ void cons_bootstrap(unsigned cpu) {
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
                   uint32_t atags __unused)
 {
+  //extern vaddr_t _brk_limit;
+
   pcpu_init();
 
   screen = gfx_set_videomode(1280, 800);
@@ -41,7 +40,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   
   /* bcm2835_irq_init(); */
   /* bcm2836_local_irq_init(); */
-  /* arm_irq_enable(); */
+  //arm_irq_enable();
 
   pm_init();
   pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
@@ -57,7 +56,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   //clock_init();
   //uart0_cons.init(NULL);
   demo_uart();
-  demo_clock_switch();
+  //demo_clock_switch();
   
   puts("Type letter 'q' to halt machine!");
   uint8_t c;
@@ -66,7 +65,6 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   }
 
     
-  //for(;;);
   kernel_exit();
 }
 

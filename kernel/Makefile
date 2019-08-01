@@ -18,8 +18,11 @@ SOURCES_C := \
 	vc_mbox.c \
 	pmap.c \
 	pmap_test.c \
-	userspace_demo.c \
 	pagetable_setup.c \
+	demo.c \
+	demo_pmap.c \
+	demo_uart.c \
+	userspace_demo.c \
 
 SOURCES_ASM := \
 	boot.S \

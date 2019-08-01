@@ -93,6 +93,10 @@ void svc(uint64_t id, struct trapframe *frame){
   }
 }
 
+void kpanic(){
+  for(;;);
+}
+
 void do_el1h_sync(struct trapframe *frame)
 {
     uint32_t exception;
@@ -100,7 +104,7 @@ void do_el1h_sync(struct trapframe *frame)
     vaddr_t far;
     
     /* Read the esr register to get the exception details */
-    esr = reg_esr_el1_read(); //frame->tf_esr;
+    esr = frame->tf_esr; //reg_esr_el1_read(); 
     exception = ESR_ELx_EXCEPTION(esr);
 
     switch(exception)
@@ -130,8 +134,10 @@ void do_el1h_sync(struct trapframe *frame)
       default: break;
       }
     
-  unhandled_exception(frame);
-  panic(__func__);
+    //unhandled_exception(frame);
+    
+    kpanic();
+    panic(__func__);
 }
 
 void do_el0_sync(struct trapframe *frame)

@@ -127,8 +127,7 @@ static void irq_dispatch(uint32_t reg, unsigned irq_base) {
 }
 
 void exc_irq(void) {
-  //pcpu()->td_idnest++;
-  arm_irq_disable();
+  pcpu()->td_idnest++;
   
   unsigned cpu = arm_cpu_id();
   /* Firstly, dispatch local interrupts. */
@@ -143,7 +142,6 @@ void exc_irq(void) {
                  BCM2835_INT_GPU1BASE);
   }
   pcpu()->td_idnest--;
-  //arm_irq_enable();
 }
 
 void exc_fast_irq(void) {
