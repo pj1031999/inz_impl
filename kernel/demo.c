@@ -53,7 +53,8 @@ ctx_switch(vaddr_t program){
   vaddr_t ret_addr = (vaddr_t)NULL;
   uint64_t arg_x0 = 0xcafebabe;
   static vaddr_t thread_stack = 0;
-  if(!thread_stack){
+  //if(!thread_stack)
+  {
     thread_stack = (vaddr_t)pages_alloc(1, flags);
     printf("thread stack: %p\n", thread_stack);
   }
