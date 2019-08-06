@@ -53,11 +53,9 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
-  //clock_init();
-  //uart0_cons.init(NULL);
+
   demo_uart();
-  //demo_clock_switch();
-  
+      
   puts("Type letter 'q' to halt machine!");
   uint8_t c;
   while ((c = getchar()) != 'q'){

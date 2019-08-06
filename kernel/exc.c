@@ -71,13 +71,13 @@ void svc(uint64_t id, struct trapframe *frame){
   case 0x1: // read  number
     {
       int8_t c = 0;
-
-      frame->tf_x[0] = 0;
+      int64_t num = -1;
       while((c = getchar()) != '\n'){
 	int i = c - '0';
 	printf("%c", c);
-	if(i < 0 || i > 9){printf("\n"); break;}
-	frame->tf_x[0] = frame->tf_x[0]*10+i;
+	if(i < 0 || i > 9){printf("\n"); frame->tf_x[0] = num; break;}
+	if(num == -1) num = 0;
+	num = num*10+i;
       }
     }
 
@@ -133,10 +133,8 @@ void do_el1h_sync(struct trapframe *frame)
 	
       default: break;
       }
-    
-    //unhandled_exception(frame);
-    
-    kpanic();
+
+    unhandled_exception(frame);
     panic(__func__);
 }
 

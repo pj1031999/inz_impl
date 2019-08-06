@@ -4,6 +4,23 @@
 #include <aarch64/ctx.h>
 #include <aarch64/cpu.h>
 #include <clock.h>
+#include <stdatomic.h>
+
+vaddr_t vm_alloc(size_t size){
+  //static atomic_uint_fast64_t  next_addr = (vaddr_t)&_brk_limit;
+  //atomic_fetch_add_explicit(&next_addr, size, memory_order_relaxed);
+  static vaddr_t next_addr = (vaddr_t)&_brk_limit;
+  next_addr += size;
+  return next_addr;
+}
+
+vaddr_t pages_alloc(size_t pages, flags_t flags){
+  vaddr_t vaddr = vm_alloc(pages*PAGESIZE);
+  paddr_t paddr = pm_alloc(pages*PAGESIZE);
+  pmap_kenter(vaddr, paddr, flags);
+
+  return vaddr;
+}
 
 static int fib(int a){
   if (a <= 0) return 0;
@@ -22,24 +39,33 @@ static void __attribute__((unused, aligned(4096)))
 program2(){
   int i;
   for(i = 0; i < 100000000; i++);
-
+  printf("delay(%d)\n", i);
 }
 
 static void
 ctx_switch(vaddr_t program){
   /*prepare new thread context*/
-  flags_t flags = FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH;
-  vaddr_t thread_stack = (vaddr_t)(pages_alloc(1, flags));
+  flags_t flags = FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH
+    | ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE | ATTR_AF
+    | ATTR_IDX(ATTR_NORMAL_MEM_WB);
+
   vaddr_t program_counter = program;
   vaddr_t ret_addr = (vaddr_t)NULL;
   uint64_t arg_x0 = 0xcafebabe;
+  static vaddr_t thread_stack = 0;
+  if(!thread_stack){
+    thread_stack = (vaddr_t)pages_alloc(1, flags);
+    printf("thread stack: %p\n", thread_stack);
+  }
+
+
   ctx_t* ctx_new = ctx_push(arg_x0, thread_stack, program_counter, ret_addr);
   
   struct ctx_t ctx_old;
   ctx_save_switch_restore(&ctx_old, ctx_new);
 }
 
-static void __attribute__((unused))
+static void
 launch_thread(vaddr_t program){
   static int tid = 0;
   printf("Start thread  %d.\n", tid);
@@ -58,9 +84,7 @@ void demo_clock(){
     launch_thread((vaddr_t)&program1);
     launch_thread((vaddr_t)&program2);
   }
-  for(;;);
 }
-
 
 
 

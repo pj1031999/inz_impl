@@ -30,6 +30,8 @@ void smp_intro(){
   mbox_set(0, 3, __BIT(cpu));
 }
 
+void demo_none(){}
+
 #define smp_demo(foo, irq)			\
   void smp_demo_##foo() {			\
     smp_intro();				\
@@ -43,6 +45,7 @@ smp_demo(gpio, false);
 smp_demo(pmap, false);
 smp_demo(clock, true);
 smp_demo(uart, false);
+smp_demo(none, false);
 
 
 void smp_bootstrap() {
@@ -53,6 +56,7 @@ void smp_bootstrap() {
   mbox_send(cpu+2, 3, L2I smp_demo_led);
   mbox_send(cpu+3, 3, L2I smp_demo_pmap);
   
+  pm_alloc(L2I &_stack_size);
   paddr_t s1 = pm_alloc(L2I &_stack_size);
   paddr_t s2 = pm_alloc(L2I &_stack_size);
   paddr_t s3 = pm_alloc(L2I &_stack_size);
