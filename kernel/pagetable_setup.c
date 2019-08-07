@@ -71,7 +71,7 @@ page_table_fill_leaves(void)
   }
 
   //just one entry for arm mmio pheripherials
-  _level2_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level2_pagetable[512]);
+  //_level2_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level2_pagetable[512]);
   entry = (512*ENTRY_2MB) | ATTR_AF | PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM);
-  _level2_pagetable_phys[0] = entry;
+  _level2_pagetable_phys[512] = entry;
 }

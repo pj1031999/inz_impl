@@ -74,6 +74,26 @@ ENTRY(ctx_save_switch_restore)
 END(ctx_save_switch_restore)
 
 
+//ctx_t* ctx_push(uint64_t x0, vaddr_t sp, vaddr_t pc, vaddr_t ret_addr);
+ENTRY(ctx_us_push)
+// x0 - value to pass to new thread - arg
+// x1 - stack pointer - will contain pushed context
+// x2 - addrdess of instruction where new thread will start processing
+// x3 - value for link register
+
+	BASE .req X1 // Alias
+	SAVE_SPEC_REG(sp, BASE, SF_SP);
+	SAVE_REG(X2, BASE, SF_PC);
+	SAVE_REG(X3, BASE, SF_LR);
+	SAVE_SYS_REG(SPSR_EL1, BASE, SF_SPSR);
+	SAVE_REG(X0, BASE, SF_REGS + 8 * 0);
+	MOV X0, X1
+	RET
+
+END(ctx_us_push)
+
+
+
 //void ctx_save_switch_restore(ctx_t* ctx_old, ctx_t* ctx_new);
 ENTRY(ctx_us_save_switch_restore)
 	OLD .req X0 // Alias
@@ -89,7 +109,6 @@ ENTRY(ctx_us_save_switch_restore)
 	MSR spsr_el1, x8	
 
 	LDR LR, =1f // restore
-	ADD SP, SP, #4096
 	STR OLD, [sp, #-(8 * 2)]! //push - stack align 16B
 	LOAD_REG(x0, NEW, SF_REGS + 8*0);
 	ERET
@@ -101,7 +120,7 @@ ENTRY(ctx_us_save_switch_restore)
 
 END(ctx_us_save_switch_restore)
 
-	
+
 
 //void ctx_load(ctx_t* ctx);
 ENTRY(ctx_load)

@@ -6,6 +6,10 @@
 #include <clock.h>
 #include <stdatomic.h>
 
+#include <rpi/gpio.h>
+#include <rpi/vc_mbox.h>
+
+
 vaddr_t vm_alloc(size_t size){
   //static atomic_uint_fast64_t  next_addr = (vaddr_t)&_brk_limit;
   //atomic_fetch_add_explicit(&next_addr, size, memory_order_relaxed);
@@ -37,9 +41,8 @@ program1(uint64_t arg){
 
 static void __attribute__((unused, aligned(4096)))
 program2(){
-  int i;
-  for(i = 0; i < 100000000; i++);
-  printf("delay(%d)\n", i);
+  delay(0xffffff0);
+  printf("delay\n");
 }
 
 static void
@@ -87,10 +90,6 @@ void demo_clock(){
   }
 }
 
-
-
-#include <rpi/gpio.h>
-#include <rpi/vc_mbox.h>
 
 void demo_gpio() {
 #define PIN40 21

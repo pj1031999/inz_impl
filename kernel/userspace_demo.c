@@ -42,7 +42,11 @@ us_program(){
 
 void __attribute__((section(".us_text")))
 us_program_entry(){
+  //save link register on stack
+  __asm__ __volatile__("str lr, [sp, #-0x10]! \n");
   us_program();
-  __asm__ __volatile__("ldr lr, [sp], #16\n" //read saved link register, then exit to kernel
+
+  //read saved link register, then exit to kernel
+  __asm__ __volatile__("ldr lr, [sp], #0x10\n"
 		       "svc #0x0"); //exit
 }

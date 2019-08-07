@@ -108,7 +108,7 @@ void
 pmap_kremove(vaddr_t va, size_t size)
 {
   assert(size % PAGESIZE == 0);
-  size_t pages = size / PAGESIZE;
+  int pages = size / PAGESIZE;
   
   pt_entry_t *entry = NULL;
   while(pages--){

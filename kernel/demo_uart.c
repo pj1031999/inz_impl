@@ -3,10 +3,8 @@
 #include <demo/userspace_demo.h>
 #include <cons.h>
 
-const int us_prog_page = 129; // 0x81000
-
 static void
-us_setup(paddr_t pt_root){
+us_setup(paddr_t pt_root, vaddr_t stack){
   const uint64_t TTBR_ASID_OFFSET = 48;
 
   user_space.asid = 1;
@@ -20,12 +18,11 @@ us_setup(paddr_t pt_root){
      | (uint64_t)user_space.pt_root
      );
 
-  //stack address placed after us_program page - top bytes are reserved (OLD ctx)
-  reg_sp_el0_write((us_prog_page+2)*PAGESIZE - 0x200);
+  reg_sp_el0_write(stack + PAGESIZE);
 }
 
 static paddr_t
-us_setup_pagetable(vaddr_t stack){
+us_setup_pagetable(vaddr_t* stack, vaddr_t* usstack){
 
   const uint64_t PTE_ATTR =
     ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
@@ -36,11 +33,11 @@ us_setup_pagetable(vaddr_t stack){
     FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH |
     ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
     ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_NC) | ATTR_AP(ATTR_AP_USER);
-  
+
   vaddr_t* va_l1 = (vaddr_t*)pages_alloc(1, flags);
   vaddr_t* va_l2 = (vaddr_t*)pages_alloc(1, flags);
-  vaddr_t* va_l3 = (vaddr_t*)pages_alloc(1, flags);  
-  vaddr_t* va_stack = (vaddr_t*)stack;//(vaddr_t*)pages_alloc(1, flags);
+  vaddr_t* va_l3 = (vaddr_t*)pages_alloc(1, flags);
+  vaddr_t* va_stack = (vaddr_t*)pages_alloc(1, flags);
 
   paddr_t pa_l1;
   paddr_t pa_l2;
@@ -60,23 +57,26 @@ us_setup_pagetable(vaddr_t stack){
   pte_t entry_l3_stack = pa_stack | flags;
 
   
+  const int us_prog_page = 129; // 0x81000
   *va_l1 = entry_l1;
   *va_l2 = entry_l2;
   va_l3[us_prog_page] = entry_l3_prog;
-  va_l3[us_prog_page+1] = entry_l3_stack;
-  *va_stack = entry_l3_stack;
+  va_l3[us_prog_page-1] = entry_l3_stack;
   
+  *stack = (vaddr_t)va_stack;
+  *usstack = (pa_prog & ~0xfff) - PAGESIZE;
+
   return pa_l1;
 }
 
 static void
 ctx_us_switch(vaddr_t va_stack){
   /*prepare new thread context*/
-  //flags_t flags = FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH;
+
   vaddr_t thread_stack = va_stack;
   vaddr_t program_counter = (vaddr_t)&us_program_entry;
   vaddr_t ret_addr = (vaddr_t)NULL;
-  ctx_t* ctx_new = ctx_push(0x0, thread_stack, program_counter, ret_addr);
+  ctx_t* ctx_new = ctx_us_push(0x0, thread_stack, program_counter, ret_addr);
   
   struct ctx_t ctx_old;
   ctx_us_save_switch_restore(&ctx_old, ctx_new);
@@ -90,15 +90,11 @@ void demo_uart(){
 
   printf("Userspace program address: %p.\n", &us_program_entry);
 
-  flags_t flags =
-    FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH |
-    ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
-    ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_WB) | ATTR_AP(ATTR_AP_USER);
-  vaddr_t va_stack = (vaddr_t)pages_alloc(1, flags);
-  paddr_t pt_root = us_setup_pagetable(va_stack);
-  us_setup(pt_root);
-  
-  
+  vaddr_t va_stack;
+  vaddr_t va_usstack;
+  paddr_t pt_root = us_setup_pagetable(&va_stack, &va_usstack);
+  us_setup(pt_root, va_usstack);
+
   while(true)
   {
     printf("Userspace in.\n");

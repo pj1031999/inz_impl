@@ -134,6 +134,8 @@ void do_el1h_sync(struct trapframe *frame)
       default: break;
       }
 
+    //kpanic();
+
     unhandled_exception(frame);
     panic(__func__);
 }
@@ -157,6 +159,7 @@ void do_el0_sync(struct trapframe *frame)
     default: break;
     }
   
+  //kpanic();
 
   unhandled_exception(frame);
   panic(__func__);
