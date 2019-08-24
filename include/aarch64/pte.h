@@ -48,6 +48,7 @@
 #define	ATTR_MASK_L	UINT64_C(0x0000000000000fff)
 #define	ATTR_MASK	(ATTR_MASK_H | ATTR_MASK_L)
 /* Bits 58:55 are reserved for software */
+#define	ATTR_SW_RW	(1UL << 57)
 #define	ATTR_SW_MANAGED	(1UL << 56)
 #define	ATTR_SW_WIRED	(1UL << 55)
 #define	ATTR_UXN	(1UL << 54)

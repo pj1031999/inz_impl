@@ -45,6 +45,7 @@ void pmap_clear_referenced(vaddr_t);
 void pmap_clear_modified(vaddr_t);
 
 void pmap_data_abort_access_fault(vaddr_t);
+void pmap_data_abort_modify_fault(vaddr_t);
 
 bool load_word(vaddr_t addr, uint64_t *res);
 bool store_word(vaddr_t addr, uint64_t val);

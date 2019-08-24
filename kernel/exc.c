@@ -118,11 +118,18 @@ void do_el1h_sync(struct trapframe *frame)
 	far  = reg_far_el1_read();
 	dfsc = esr & ESR_ISS_DATAABORT_DFSC;
 
-	if(dfsc == ESR_ISS_FSC_ACCESS_FAULT_2)
+	if(dfsc == ESR_ISS_FSC_ACCESS_FAULT_3 || dfsc == ESR_ISS_FSC_ACCESS_FAULT_2)
 	  {
 	    pmap_data_abort_access_fault(far);
 	    return;
 	  }
+	if(dfsc == ESR_ISS_FSC_PERM_FAULT_3)
+	  {
+	    pmap_data_abort_modify_fault(far);
+	    //frame->tf_elr = frame->tf_elr-8;
+	    return;
+	  }
+
 	if (pcpu()->on_fault){
 	  frame->tf_x[0] = false;
 	  frame->tf_elr = frame->tf_elr+8;

@@ -164,14 +164,9 @@ pmap_is_referenced(vaddr_t va)
 bool
 pmap_is_modified(vaddr_t va)
 {
-  table_invalidate_entry(va);
-  arm_isb();
-  arm_dsb();
-  arm_dmb();
   pt_entry_t *entry = NULL;
   if( IS_VALID(get_pte(va, &entry)) )
     return *entry & ATTR_DBM;
-    //return *entry & ATTR_AP(2);
 
   return false;
 }
@@ -201,10 +196,24 @@ void
 pmap_data_abort_access_fault(vaddr_t va){
   pt_entry_t *entry = NULL;
   if(IS_VALID(get_pte(va, &entry)))
-    *entry = *entry | ATTR_AF | ATTR_DBM;
+    *entry = *entry | ATTR_AF;
   
   table_invalidate_entry(va);
 }
+
+void
+pmap_data_abort_modify_fault(vaddr_t va){
+  pt_entry_t *entry = NULL;
+  if(IS_VALID(get_pte(va, &entry))){
+    if(*entry & ATTR_SW_RW)
+      *entry = *entry & ~FLAG_MEM_RO;
+
+    *entry = *entry | ATTR_DBM;
+  }
+
+  table_invalidate_entry(va);
+}
+
 
 extern pte_t   *_level1_pagetable;
 extern vaddr_t *_brk_limit;
