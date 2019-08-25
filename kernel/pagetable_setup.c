@@ -47,7 +47,7 @@ page_table_fill_leaves(void)
   // kernel page - first 2MB
   int e = PHYSADDR((vaddr_t)&_bss_end) / PAGESIZE;
   entry = PTE_ATTR | ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_WB) | L3_PAGE;
-  for(int i = 0; i < e+46; entry += ENTRY_4KB){
+  for(int i = 0; i < e+36; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }
 

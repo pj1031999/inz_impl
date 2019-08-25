@@ -20,7 +20,7 @@ void demo_pmap(){
   pcpu()->on_fault = true;
   printf("Demo pmap.\n");
   
-  //vm_alloc(PAGESIZE*332);
+  //vm_alloc(PAGESIZE*4);
   vaddr_t va = vm_alloc(PAGESIZE);
   printf("new vaddr: %p\n", va);
   //pmap_kremove(va, PAGESIZE);
@@ -48,8 +48,8 @@ void demo_pmap(){
   printf("new paddr: %p\n", pa);
   const uint64_t PTE_ATTR =
       ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
-      /* ATTR_AF | */ ATTR_IDX(ATTR_NORMAL_MEM_WB) | ATTR_AP(ATTR_AP_USER) |
-      FLAG_MEM_RO | ATTR_SW_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH;
+    /* ATTR_AF | */ ATTR_IDX(ATTR_NORMAL_MEM_WB) |// ATTR_AP(ATTR_AP_USER) |
+      FLAG_MEM_RO | ATTR_SW_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_BACK;
 
   printf("Add mapping: %p --> %p \n", va, pa);
   pmap_kenter(va, pa, PTE_ATTR);

@@ -56,8 +56,8 @@ void smp_bootstrap() {
   mbox_send(cpu+2, 3, L2I smp_demo_led);
   mbox_send(cpu+3, 3, L2I smp_demo_pmap);
   
-  pm_alloc(L2I &_stack_size);
-  vm_alloc(4* L2I &_stack_size);
+  pm_alloc(1* L2I &_stack_size);
+  vm_alloc(1* L2I &_stack_size);
   paddr_t s1 = pm_alloc(L2I &_stack_size);
   paddr_t s2 = pm_alloc(L2I &_stack_size);
   paddr_t s3 = pm_alloc(L2I &_stack_size);

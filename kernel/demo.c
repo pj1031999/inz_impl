@@ -13,7 +13,7 @@
 vaddr_t vm_alloc(size_t size){
   //static atomic_uint_fast64_t  next_addr = (vaddr_t)&_brk_limit;
   //atomic_fetch_add_explicit(&next_addr, size, memory_order_relaxed);
-  static vaddr_t next_addr = (vaddr_t)&_brk_limit;
+  static vaddr_t next_addr = (vaddr_t)&_brk_limit + 0x1b000;
   next_addr += size;
   return next_addr;
 }
@@ -32,7 +32,7 @@ static int fib(int a){
   return fib(a-1) + fib(a-2);
 }
 
-static void __attribute__((aligned(4096)))
+static void __attribute__((unused, aligned(4096)))
 program1(uint64_t arg){
   static int f = 0;
   arg = fib(f);
@@ -48,9 +48,9 @@ program2(){
 static void
 ctx_switch(vaddr_t program){
   /*prepare new thread context*/
-  flags_t flags = FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH
-    | ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE | ATTR_AF
-    | ATTR_IDX(ATTR_NORMAL_MEM_WB);
+  flags_t flags =
+    L2_BLOCK | ATTR_SH(ATTR_SH_IS) | ATTR_NS | ATTR_AP(ATTR_AP_RW) |
+    ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WB);
 
   vaddr_t program_counter = program;
   vaddr_t ret_addr = (vaddr_t)NULL;
@@ -81,10 +81,6 @@ void demo_clock(){
   printf("Demo clock.\n");
   clock_init();
   for(;;) {
-    /* for(int i = 0; i < 50000; i++); */
-    /* printf("."); */
-    /* continue; */
-
     launch_thread((vaddr_t)&program1);
     launch_thread((vaddr_t)&program2);
   }

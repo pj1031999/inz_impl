@@ -76,7 +76,7 @@ static inline void table_invalidate_entry(vaddr_t va){
   __asm__ __volatile__
     (
      "LSR %[vaddr], %[vaddr], #12 \n"
-     //"TLBI vmalle1 \n"
+     "TLBI vmalle1 \n"
      "TLBI VAAE1, %[vaddr] \n"
      "ISB \n"
      :
@@ -89,6 +89,7 @@ static inline void table_invalidate_entry(vaddr_t va){
 void pmap_kenter(vaddr_t va, paddr_t pa, flags_t flags){
 
   assert(pa % PAGESIZE == 0);
+  assert(va % PAGESIZE == 0);
 
   pt_entry_t *entry = NULL;
   pt_lvl_t res = get_pte(va, &entry);
@@ -96,12 +97,12 @@ void pmap_kenter(vaddr_t va, paddr_t pa, flags_t flags){
   if ( IS_VALID(res) || IS_LAST_LVL(res) ){
     *entry =
       //clear entry access permission and execute never bits
-      (*entry & ~L3_PAGE_OA & ~ATTR_AP_MASK & ~ATTR_XN)
-      | (flags & ~L3_PAGE_OA)
+      //(*entry & ~L3_PAGE_OA & ~ATTR_AP_MASK & ~ATTR_XN)
+      (flags & ~L3_PAGE_OA)
       | (pa & L3_PAGE_OA);
   }
   
-  table_invalidate_entry(va);
+  table_invalidate_entry(va);  
 }
 
 void
