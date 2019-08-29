@@ -1,0 +1,28 @@
+#target remote localhost:9000
+#target extended-remote localhost:9000
+
+define targets    
+    continue
+    mon targets rpi3.cpu1; halt; resume 0x80000; 
+    mon targets rpi3.cpu2; halt; resume 0x80000; 
+    mon targets rpi3.cpu3; halt; resume 0x80000; 
+    mon targets rpi3.cpu0
+    continue
+end   
+#targets
+
+set scheduler-locking step
+set remotetimeout unlimited
+set tcp connect-timeout 30
+
+#file kernel8.elf
+#symbol-file kernel8.elf
+
+b el1_entry
+continue
+d br 1
+b kernel_entry
+continue
+targets
+
+
