@@ -1,7 +1,6 @@
 kernel8.img
 kernel8.elf
 kernel.map
-gdbinit
 TAGS
 .gdb_history
 .gdbinit

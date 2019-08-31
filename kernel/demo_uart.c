@@ -24,16 +24,11 @@ us_setup(paddr_t pt_root, vaddr_t stack){
 static paddr_t
 us_setup_pagetable(vaddr_t* stack, vaddr_t* usstack){
 
-  const uint64_t PTE_ATTR =
-    ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
-    ATTR_AF | ATTR_AP(ATTR_AP_RO) |
-    ATTR_IDX(ATTR_NORMAL_MEM_NC) | ATTR_AP(ATTR_AP_USER);
-
   flags_t flags =
-    FLAG_MEM_RW | FLAG_MEM_NOT_EX | FLAG_MEM_WRITE_THROUGH |
     ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE |
-    ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_NC) | ATTR_AP(ATTR_AP_USER);
-
+    FLAG_MEM_RW | FLAG_MEM_NOT_EX |
+    ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  
   vaddr_t* va_l1 = (vaddr_t*)pages_alloc(1, flags);
   vaddr_t* va_l2 = (vaddr_t*)pages_alloc(1, flags);
   vaddr_t* va_l3 = (vaddr_t*)pages_alloc(1, flags);
@@ -51,10 +46,14 @@ us_setup_pagetable(vaddr_t* stack, vaddr_t* usstack){
   pmap_kextract((vaddr_t)va_stack, &pa_stack);
   //pmap_kextract((vaddr_t)&us_program, &phys_prog);
 
+  const uint64_t PTE_ATTR =
+    ATTR_SH(ATTR_SH_IS) | ATTR_NS | L3_PAGE | ATTR_AF |
+    ATTR_IDX(ATTR_NORMAL_MEM_NC) | ATTR_AP(ATTR_AP_USER);
+
   pte_t entry_l1 = pa_l2 | L1_TABLE;
   pte_t entry_l2 = pa_l3 | L2_TABLE;
-  pte_t entry_l3_prog  = pa_prog  | PTE_ATTR;
-  pte_t entry_l3_stack = pa_stack | flags;
+  pte_t entry_l3_prog  = pa_prog  | PTE_ATTR;// | FLAG_MEM_RO;
+  pte_t entry_l3_stack = pa_stack | PTE_ATTR;// | FLAG_MEM_NOT_EX;
 
   
   const int us_prog_page = 129; // 0x81000
@@ -66,6 +65,17 @@ us_setup_pagetable(vaddr_t* stack, vaddr_t* usstack){
   *stack = (vaddr_t)va_stack;
   *usstack = (pa_prog & ~0xfff) - PAGESIZE;
 
+   
+  /* extern __unused uint64_t _level1_pagetable[]; */
+  /* va_l1[0] = _level1_pagetable[0]; */
+
+  printf("l1: %p <--> %p\n", va_l1, pa_l1);
+  printf("l2: %p <--> %p\n", va_l2, pa_l2);
+  printf("l3: %p <--> %p\n", va_l3, pa_l3);
+  
+  printf("PT vaddr: %p\n", va_l1);
+  printf("PT paddr: %p\n", pa_l1);
+  //return (paddr_t)(void*)PHYSADDR((uint64_t)va_l1);
   return pa_l1;
 }
 
@@ -87,7 +97,7 @@ void demo_uart(){
   
   extern cons_t uart0_cons;
   uart0_cons.init(NULL);
-
+    
   printf("Userspace program address: %p.\n", &us_program_entry);
 
   vaddr_t va_stack;

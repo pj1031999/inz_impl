@@ -91,14 +91,9 @@ setup_translation_table:
 	MSR	TTBR0_EL1, X0
 
 	//tmp stack setup
-	LDR	X1, =_el1_stack
+	MOV 	X1, X29
 	LDR	X2, =_kernel
 	SUBS	X1, X1, X2
-	MRS	X2, MPIDR_EL1
-	AND	X2, X2, #0xFF			// X2 == CPU number.
-	MOV	X3, #CPU_STACK_SIZE
-	MUL	X3, X2, X3			// Create separated stack spaces
-	SUB	X1, X1, X3			// for each processor
 	MOV	SP, X1
 
 	MOV	x27, LR				//LR contains target function (e.g. kernel_entry)

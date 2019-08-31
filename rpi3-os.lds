@@ -12,7 +12,7 @@ PHDRS
 }
 
 PROVIDE(_page_table_size = 4096);	/*512 entries 8 bytes each*/
-PROVIDE(_stack_size = 32768);
+PROVIDE(_stack_size = 4096);
 PROVIDE(_kernel = 0xffffFFFF00000000);
 
 SECTIONS
@@ -78,7 +78,10 @@ SECTIONS
   {
     . = . + _stack_size;	/* stack increases by subtraction */
     _el1_stack = .;		/* core0 kernel space stack */
-  }
+
+   . = . + _stack_size;		/* stack increases by subtraction */
+    /* _el0_stack = .; */		/* core0 user space stack */
+}
 
   .mail_buffer : ALIGN(4096)
   {
@@ -95,7 +98,7 @@ SECTIONS
   }
 
   . += 32768; /* for physical memory manager bitmap */
-
+  
   _brk_limit = ALIGN(4096);
 
   /DISCARD/ :

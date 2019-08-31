@@ -111,6 +111,16 @@ ENTRY(ctx_us_save_switch_restore)
 	LDR LR, =1f // restore
 	STR OLD, [sp, #-(8 * 2)]! //push - stack align 16B
 	LOAD_REG(x0, NEW, SF_REGS + 8*0);
+
+	Ldr X8, =0x81000
+	AT s1e1r, x8
+	MRs x8, PAR_EL1
+
+	Ldr X7, =0x81000
+	AT s1e0r, x7
+	MRs x7, PAR_EL1
+
+	
 	ERET
 
 1: //restore

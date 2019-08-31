@@ -45,34 +45,33 @@ page_table_fill_leaves(void)
   uint64_t *_level3_pagetable_phys = (void*)PHYSADDR((uint64_t)&_level3_pagetable);
 
   // kernel page - first 2MB
-  int e = PHYSADDR((vaddr_t)&_bss_end) / PAGESIZE;
+  int e = PHYSADDR((vaddr_t)&_brk_limit) / PAGESIZE;
   entry = PTE_ATTR | ATTR_AF | ATTR_IDX(ATTR_NORMAL_MEM_WB) | L3_PAGE;
-  for(int i = 0; i < e+36; entry += ENTRY_4KB){
+  for(int i = 0; i < e+6; entry += ENTRY_4KB){
     _level3_pagetable_phys[i++] = entry;
   }
 
   
-#define A PHYSADDR((vaddr_t)&_level1_pagetable) / PAGESIZE
-#define A2 PHYSADDR((vaddr_t)&_level2_pagetable) / PAGESIZE
-#define A3 PHYSADDR((vaddr_t)&_level3_pagetable) / PAGESIZE
-#define B PHYSADDR((vaddr_t)&_bss_end) / PAGESIZE
-#define C PHYSADDR((vaddr_t)&_mail_buffer) / PAGESIZE
+#define P1 PHYSADDR((vaddr_t)&_level1_pagetable) / PAGESIZE
+#define P2 PHYSADDR((vaddr_t)&_level2_pagetable) / PAGESIZE
+#define P3 PHYSADDR((vaddr_t)&_level3_pagetable) / PAGESIZE
+#define B PHYSADDR((vaddr_t)&_bss_end) / PAGESIZE //physical memory manager bitmap 
+#define M PHYSADDR((vaddr_t)&_mail_buffer) / PAGESIZE
 
-  entry = A*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[A] = entry;
-  entry = A2*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[A2] = entry;
-  entry = A3*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[A3] = entry;
+  entry = P1*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WT);
+  _level3_pagetable_phys[P1] = entry;
+  entry = P2*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WT);
+  _level3_pagetable_phys[P2] = entry;
+  entry = P3*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_WT);
+  _level3_pagetable_phys[P3] = entry;
 
   
   entry = B*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
   _level3_pagetable_phys[B] = entry;
 
-  entry = C*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
-  _level3_pagetable_phys[C] = entry;
+  entry = M*ENTRY_4KB | PTE_ATTR | ATTR_AF | L3_PAGE | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  _level3_pagetable_phys[M] = entry;
 
-  
   // page_table L2
 
   /* begin (without first 2 MB) of first GB has no mapping  */
@@ -82,7 +81,7 @@ page_table_fill_leaves(void)
   }
 
   //end of first GB is non cacheable - last few needed MB
-  entry = (z*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  entry = (z*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM);;//ATTR_IDX(ATTR_NORMAL_MEM_NC);
   for(int i = z; i < 512; entry += ENTRY_2MB){
     _level2_pagetable_phys[i++] = entry;
   }

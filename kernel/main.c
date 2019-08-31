@@ -35,7 +35,6 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   pcpu_init();
 
   screen = gfx_set_videomode(1280, 800);
-
   cons_bootstrap(0);
   
   /* bcm2835_irq_init(); */
@@ -53,9 +52,9 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
-
+  //uart0_cons.init(NULL);
   demo_uart();
-      
+
   puts("Type letter 'q' to halt machine!");
   uint8_t c;
   while ((c = getchar()) != 'q'){

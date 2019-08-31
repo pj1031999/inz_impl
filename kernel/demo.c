@@ -117,7 +117,7 @@ void set_mail_buffer(volatile unsigned int *mailbuffer, int state){
 
 void demo_led(){
   static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
-  unsigned long physical_mb = (unsigned long)mailbuffer;
+  unsigned long physical_mb = (unsigned long)mailbuffer; //will cut to 32 bit value at vc_mbox_send
   unsigned int var;
 
   printf("Demo LED.\n");

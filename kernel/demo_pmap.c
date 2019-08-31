@@ -23,7 +23,7 @@ void demo_pmap(){
   //vm_alloc(PAGESIZE*4);
   vaddr_t va = vm_alloc(PAGESIZE);
   printf("new vaddr: %p\n", va);
-  //pmap_kremove(va, PAGESIZE);
+  pmap_kremove(va, PAGESIZE);
     
   uint64_t val = 0;
   const uint64_t set_val = 5;

@@ -1,5 +1,3 @@
-#target remote localhost:9000
-#target extended-remote localhost:9000
 
 define targets    
     continue
@@ -9,14 +7,10 @@ define targets
     mon targets rpi3.cpu0
     continue
 end   
-#targets
 
 set scheduler-locking step
 set remotetimeout unlimited
 set tcp connect-timeout 30
-
-#file kernel8.elf
-#symbol-file kernel8.elf
 
 b el1_entry
 continue

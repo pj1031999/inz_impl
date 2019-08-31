@@ -13,7 +13,7 @@ if [ $# -eq 2 ]; then
 fi
 
 
-openocd-rpi3 -c "" -f ./toolchain/share/openocd-rpi3/scripts/interface/jlink.cfg -f ./external/openOCD/config/rpi3_64.cfg  &> /dev/null &
+openocd-rpi3 -c "" -f ./external/openOCD/config/jlink.cfg -f ./external/openOCD/config/rpi3_64.cfg  &> /dev/null &
 
 sleep 1
 aarch64-rpi3-elf-gdb \
