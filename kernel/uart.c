@@ -10,6 +10,7 @@
 #include <cons.h>
 #include <klibc.h>
 #include <rpi/vc_mbox.h>
+#include <rpi/vc_prop.h>
 
 enum {
   UART0_BASE = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE),
@@ -39,23 +40,23 @@ static void pl011_init(cons_dev_t *dev __unused) {
   /* Clear pending interrupts. */
   mmio_write(UART0_ICR, PL011_INT_ALLMASK);
 
+  extern unsigned int  _mail_buffer[256];
   /* static volatile unsigned int mailbuffer[256] __attribute__((aligned (16))); */
-  /* unsigned long physical_mb = (unsigned long)mailbuffer; //will cut to 32 bit value at vc_mbox_send */
-  /* unsigned int var; */
+  unsigned long physical_mb = (unsigned long)_mail_buffer; //will cut to 32 bit value at vc_mbox_send
+  unsigned int res;
 
-  /* //set up clock for consistent divisor values */
-  /* mailbuffer[0] = 9*4; */
-  /* mailbuffer[1] = 0;         // Request */
-  /* mailbuffer[2] = 0x38002; // set clock rate */
-  /* mailbuffer[3] = 12; */
-  /* mailbuffer[4] = 8; */
-  /* mailbuffer[5] = 2;           // UART clock */
-  /* mailbuffer[6] = 4000000;     // 4Mhz */
-  /* mailbuffer[7] = 0;           // clear turbo */
-  /* mailbuffer[8] = 0;         // Terminating tag */
+  //set up clock for consistent divisor values
+  _mail_buffer[0] = 8*4; 	// buffer size
+  _mail_buffer[1] = VCPROPTAG_REQUEST;
+  _mail_buffer[2] = VCPROPTAG_SET_CLOCKRATE;
+  _mail_buffer[3] = 12;
+  _mail_buffer[4] = 8;
+  _mail_buffer[5] = VCPROP_CLK_UART;
+  _mail_buffer[6] = 4000000;     // 4Mhz
+  _mail_buffer[7] = VCPROPTAG_END;
 
-  /* vc_mbox_send(physical_mb, 8); */
-  /* var = vc_mbox_recv(8); */
+  vc_mbox_send(physical_mb, 8);
+  res = vc_mbox_recv(8);
 
   
   /* enable UART0 on pins 14 & 15 */
@@ -70,8 +71,8 @@ static void pl011_init(cons_dev_t *dev __unused) {
    * Fraction part register = (Fractional part * 64) + 0.5
    * UART_CLOCK = 3000000; Baud = 115200.
    *
-   * Divider = 3000000/(16 * 115200) = 1.627 = ~1.
-   * Fractional part register = (.627 * 64) + 0.5 = 40.6 = ~40.
+   * Divider = 4000000/(16 * 115200) = 2.17 = ~2.
+   * Fractional part register = (.17 * 64) + 0.5 = 11.3 = ~11 = 0xb.
    */
   mmio_write(UART0_IBRD, 2);
   mmio_write(UART0_FBRD, 0xb);
@@ -84,13 +85,6 @@ static void pl011_init(cons_dev_t *dev __unused) {
 
   /* Enable UART0, receive & transfer part of UART. */
   mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
-
-
-  mmio_write(UART0_ICR, 0x7ff);
-  mmio_write(UART0_IBRD, 2);
-  mmio_write(UART0_FBRD, 0xb);
-  mmio_write(UART0_LCRH, 0b11<<5);
-  mmio_write(UART0_CR, 0x301);
   
   /* Enable receive interrupt. */
   mmio_write(UART0_IMSC, PL011_INT_RX);

@@ -101,7 +101,7 @@ ENTRY(ctx_us_save_switch_restore)
 
 	CTX_SAVE(OLD);
 	LOAD_SPEC_REG(x8, NEW, SF_PC);
-	MSR elr_el1, x8
+	MSR elr_el1, x8		//store us program address in elr_el1
 	LOAD_CTX(NEW)
 
 	MRS X8, spsr_el1

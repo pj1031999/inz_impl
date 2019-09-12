@@ -116,19 +116,19 @@ void set_mail_buffer(volatile unsigned int *mailbuffer, int state){
 }
 
 void demo_led(){
-  static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
-  unsigned long physical_mb = (unsigned long)mailbuffer; //will cut to 32 bit value at vc_mbox_send
+  extern unsigned int  _mail_buffer[256];
+  unsigned long physical_mb = (unsigned long)_mail_buffer; //will cut to 32 bit value at vc_mbox_send
   unsigned int var;
 
   printf("Demo LED.\n");
   for(;;){
-    set_mail_buffer(mailbuffer, 1);
+    set_mail_buffer(_mail_buffer, 1);
     vc_mbox_send(physical_mb, 8);
     var = vc_mbox_recv(8);
     printf("led on\n");
     delay(0xffffff0);
 
-    set_mail_buffer(mailbuffer, 0);
+    set_mail_buffer(_mail_buffer, 0);
     vc_mbox_send(physical_mb, 8);
     var = vc_mbox_recv(8);
     printf("led off\n");
