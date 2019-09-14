@@ -104,6 +104,7 @@
 .if \el == 0
 	add	sp, sp, #(TF_SIZE + 16)
 .else
+	ldp	x18,  lr, [sp, #(TF_SP)]
 	mov	sp, x18
 	mrs	x18, tpidr_el1
 .endif
@@ -122,6 +123,9 @@ END(handle_el1h_sync)
 ENTRY(handle_el1h_irq)
 	save_registers 1
 	bl	exc_irq
+	mov	x0, sp
+	bl 	next_ctx_stack
+	mov	sp, x0
 	restore_registers 1
 	eret
 END(handle_el1h_irq)

@@ -12,6 +12,7 @@ void pcpu_init(void) {
   pcpu->pdtab = _level1_pagetable;
   pcpu->td_idnest = 1;
   pcpu->on_fault = false;
+  pcpu->switch_to = -1;
   
   reg_tpidr_el1_write((uint64_t)pcpu);
 }

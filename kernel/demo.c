@@ -3,6 +3,7 @@
 #include <aarch64/cpureg.h>
 #include <aarch64/ctx.h>
 #include <aarch64/cpu.h>
+#include <aarch64/frame.h>
 #include <clock.h>
 #include <stdatomic.h>
 
@@ -35,18 +36,29 @@ static int fib(int a){
 static void __attribute__((unused, aligned(4096)))
 program1(uint64_t arg){
   static int f = 0;
+  f %= 40;
   arg = fib(f);
   printf("fib(%d) = %d\n", f++, arg);
 }
 
 static void __attribute__((unused, aligned(4096)))
 program2(){
-  delay(0xffffff0);
+  delay(0x1ffffff0);
   printf("delay\n");
 }
 
-static void
-ctx_switch(vaddr_t program){
+static void __attribute__((unused, aligned(4096)))
+program3(){
+  unsigned int i = 0;
+  for(;;){
+    delay(0xcffff0);
+    printf("%c", 'a'+((i++)%('z'-'a'+1)));
+  }
+}
+
+
+static struct trapframe*
+ctx_create(vaddr_t program){
   /*prepare new thread context*/
   flags_t flags =
     L2_BLOCK | ATTR_SH(ATTR_SH_IS) | ATTR_NS | ATTR_AP(ATTR_AP_RW) |
@@ -62,27 +74,30 @@ ctx_switch(vaddr_t program){
     printf("thread stack: %p\n", thread_stack);
   }
 
+  ctx_t* new = ctx_push(arg_x0, thread_stack, program_counter, ret_addr);
+  struct trapframe* frame = (struct trapframe*)pages_alloc(1, flags);
+  frame->tf_sp = new->sf_sp;
+  frame->tf_lr = new->sf_lr;
+  frame->tf_elr = new->sf_pc;
+  frame->tf_esr = new->sf_esr;
+  frame->tf_spsr = new->sf_spsr;
+  for(int i = 0; i < 30; i++)
+    frame->tf_x[i] = new->sf_regs[i];
 
-  ctx_t* ctx_new = ctx_push(arg_x0, thread_stack, program_counter, ret_addr);
-  
-  struct ctx_t ctx_old;
-  ctx_save_switch_restore(&ctx_old, ctx_new);
-}
-
-static void
-launch_thread(vaddr_t program){
-  static int tid = 0;
-  printf("Start thread  %d.\n", tid);
-  ctx_switch(program);
-  printf("Finish thread %d.\n\n", tid++);
+  return frame;
 }
 
 void demo_clock(){
   printf("Demo clock.\n");
+
+  //pcpu()->schedule[0] = this thread
+  pcpu()->schedule[1] = ctx_create((vaddr_t)program3);  
   clock_init();
-  for(;;) {
-    launch_thread((vaddr_t)&program1);
-    launch_thread((vaddr_t)&program2);
+
+  int i = 0;
+  for(;;){
+    delay(0x1fffff0);
+    printf("%d", (i++)%10);
   }
 }
 

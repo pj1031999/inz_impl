@@ -3,6 +3,7 @@
 #include <klibc.h>
 #include <rpi/irq.h>
 #include <mmio.h>
+#include <pcpu.h>
 
 static irq_handler_t _handler_vec[BCM2835_NIRQ + BCM2836_NIRQ];
 
@@ -147,3 +148,16 @@ void exc_irq(void) {
 void exc_fast_irq(void) {
   panic("System must not generate Fast Interrupts!");
 }
+
+vaddr_t next_ctx_stack(vaddr_t cur_sp) {
+  int idx = pcpu()->switch_to;
+  int cur = (idx+1)%2;
+  printf("\nthread id: %d\n", idx);
+
+  if(idx < 0)
+    return cur_sp;
+
+  pcpu()->schedule[cur] = (struct trapframe*)cur_sp;
+  return (vaddr_t)(pcpu()->schedule[idx]);
+}
+

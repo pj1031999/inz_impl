@@ -11,12 +11,13 @@ static uint64_t clk_freq = 0;
 
 static void clock_irq(unsigned irq __unused) {
   uint64_t val = reg_cntp_cval_el0_read();
-  reg_cntp_cval_el0_write(val + clk_freq);
+  reg_cntp_cval_el0_write(val + clk_freq*2);
 
   arm_isb();
   ticks++;
   
-  printf("tick %d!\n", ticks);
+  printf("\t tick %d!\n", ticks);
+  pcpu()->switch_to = ticks%2;
 }
 
 void clock_init(void) {

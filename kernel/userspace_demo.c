@@ -18,7 +18,7 @@ static int64_t __unused read_number(void){
 }
 
 static int double_it(int a){
-  if(a == 0){ // try access kernelspace address -> panic
+  if(a == 42){ // try access kernelspace address -> panic
     extern uint64_t _level1_pagetable[];
     uint64_t e = _level1_pagetable[0];
     write_number(e);

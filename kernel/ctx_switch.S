@@ -18,7 +18,8 @@ ENTRY(ctx_push)
 // x3 - value for link register
 
 	BASE .req X1 // Alias
-	SAVE_REG(X1, BASE, SF_SP);
+	ADD X4, X1, #0x1000
+	SAVE_REG(X4, BASE, SF_SP);
 	SAVE_REG(X2, BASE, SF_PC);
 	SAVE_REG(X3, BASE, SF_LR);
 	SAVE_SYS_REG(SPSR_EL1, BASE, SF_SPSR);
