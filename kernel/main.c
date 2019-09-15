@@ -37,10 +37,6 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   screen = gfx_set_videomode(1280, 800);
   cons_bootstrap(0);
   
-  /* bcm2835_irq_init(); */
-  /* bcm2836_local_irq_init(); */
-  //arm_irq_enable();
-
   pm_init();
   pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
   pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
@@ -54,6 +50,11 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   //uart0_cons.init(NULL);
   demo_uart();
+
+  /* bcm2835_irq_init(); */
+  /* bcm2836_local_irq_init(); */
+  /* arm_irq_enable(); */
+  /* demo_clock(); */
 
   puts("Type letter 'q' to halt machine!");
   uint8_t c;

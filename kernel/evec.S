@@ -122,10 +122,12 @@ END(handle_el1h_sync)
 
 ENTRY(handle_el1h_irq)
 	save_registers 1
+	bl	irq_free_zone_begin
 	bl	exc_irq
 	mov	x0, sp
 	bl 	next_ctx_stack
 	mov	sp, x0
+	bl	irq_free_zone_end
 	restore_registers 1
 	eret
 END(handle_el1h_irq)

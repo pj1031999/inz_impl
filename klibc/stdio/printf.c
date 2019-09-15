@@ -40,7 +40,6 @@
 
 #include <klibc.h>
 #include <cons.h>
-#include "aarch64/cpu.h"
 
 /*
  * kprintf: scaled down version of printf(3).
@@ -480,17 +479,9 @@ done:
 }
 
 void printf(const char *fmt, ...) {
-  static volatile bool flag = false;
   va_list ap;
-  arm_irq_disable();
-
-  //while(flag);
-  flag = true;
   
   va_start(ap, fmt);
   vprintf(fmt, ap);
   va_end(ap);
-
-  flag = false;
-  arm_irq_enable();
 }

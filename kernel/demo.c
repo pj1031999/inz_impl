@@ -90,8 +90,9 @@ ctx_create(vaddr_t program){
 void demo_clock(){
   printf("Demo clock.\n");
 
-  //pcpu()->schedule[0] = this thread
-  pcpu()->schedule[1] = ctx_create((vaddr_t)program3);  
+  //schedule[0] or schedule[1] will be overwritten
+  //witch current context in next_ctx_stack
+  pcpu()->schedule[0] =  pcpu()->schedule[1] = ctx_create((vaddr_t)program3);
   clock_init();
 
   int i = 0;

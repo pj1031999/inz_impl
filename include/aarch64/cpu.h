@@ -75,11 +75,10 @@ static inline void arm_irq_enable(void) {
   pcpu()->td_idnest--;
   if(pcpu()->td_idnest == 0){
     ENABLE_INTERRUPT();
-
-    arm_isb();
-    arm_dsb();
-    arm_dmb();
   }
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
 }
 
 static inline void arm_irq_disable(void) {
@@ -90,6 +89,11 @@ static inline void arm_irq_disable(void) {
   arm_dmb();
 
   pcpu()->td_idnest++;
+
+  arm_isb();
+  arm_dsb();
+  arm_dmb();
+
 }
 
 #endif

@@ -8,12 +8,12 @@ void cons_init(cons_t *cn) {
 }
 
 void cons_putc(int c) {
-  //arm_irq_disable();
+  arm_irq_disable();
   
   cons_t *cn = pcpu()->cons;
   cn->putc(cn->dev, c);
 
-  //arm_irq_enable();
+  arm_irq_enable();
 }
 
 int cons_getc() {

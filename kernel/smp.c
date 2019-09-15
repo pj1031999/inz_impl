@@ -35,7 +35,11 @@ void demo_none(){}
 #define smp_demo(foo, irq)			\
   void smp_demo_##foo() {			\
     smp_intro();				\
-    if(irq) arm_irq_enable();			\
+    if(irq){					\
+    bcm2835_irq_init();				\
+    bcm2836_local_irq_init();			\
+    arm_irq_enable();				\
+    }						\
     demo_##foo();				\
     kernel_exit();				\
 }

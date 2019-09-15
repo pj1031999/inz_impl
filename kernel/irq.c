@@ -127,9 +127,15 @@ static void irq_dispatch(uint32_t reg, unsigned irq_base) {
   }
 }
 
-void exc_irq(void) {
+void irq_free_zone_begin(){
   pcpu()->td_idnest++;
-  
+}
+
+void irq_free_zone_end(){
+  pcpu()->td_idnest--;
+}
+
+void exc_irq(void) {
   unsigned cpu = arm_cpu_id();
   /* Firstly, dispatch local interrupts. */
   irq_dispatch(INTC_IRQPENDING_N(cpu), BCM2836_INT_BASECPUN(cpu));
@@ -142,7 +148,6 @@ void exc_irq(void) {
     irq_dispatch(BCM2835_ARMICU(BCM2835_INTC_IRQ2PENDING),
                  BCM2835_INT_GPU1BASE);
   }
-  pcpu()->td_idnest--;
 }
 
 void exc_fast_irq(void) {
