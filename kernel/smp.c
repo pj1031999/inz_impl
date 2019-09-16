@@ -49,6 +49,7 @@ smp_demo(gpio, false);
 smp_demo(pmap, false);
 smp_demo(clock, true);
 smp_demo(uart, false);
+smp_demo(sd, false);
 smp_demo(none, false);
 
 
@@ -57,8 +58,9 @@ void smp_bootstrap() {
 
   int cpu = 0;
   mbox_send(cpu+1, 3, L2I smp_demo_clock);
-  mbox_send(cpu+2, 3, L2I smp_demo_led);
+  mbox_send(cpu+2, 3, L2I smp_demo_sd);
   mbox_send(cpu+3, 3, L2I smp_demo_pmap);
+
   
   pm_alloc(1* L2I &_stack_size);
   vm_alloc(1* L2I &_stack_size);

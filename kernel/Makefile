@@ -23,6 +23,8 @@ SOURCES_C := \
 	demo_pmap.c \
 	demo_uart.c \
 	userspace_demo.c \
+	sd.c \
+	delays.c \
 
 SOURCES_ASM := \
 	boot.S \

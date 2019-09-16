@@ -11,6 +11,7 @@ void demo_pmap();
 void demo_uart();
 void demo_led();
 void demo_gpio();
+void demo_sd();
 
 extern vaddr_t _brk_limit;
 

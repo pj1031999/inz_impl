@@ -131,7 +131,9 @@ void set_mail_buffer(volatile unsigned int *mailbuffer, int state){
   mailbuffer[0] = c*4;         // Buffer size
 }
 
+
 void demo_led(){
+
   extern unsigned int  _mail_buffer[256];
   unsigned long physical_mb = (unsigned long)_mail_buffer; //will cut to 32 bit value at vc_mbox_send
   unsigned int var;
@@ -150,4 +152,46 @@ void demo_led(){
     printf("led off\n");
     delay(0xffffff0);
   }
+}
+
+
+#include <sd.h>
+#include <klibc.h>
+#include <filelib.h>
+
+int fat_init()
+{
+  sd_init();
+  fl_init();
+  printf("Not frozen\n");
+
+  if(fl_attach_media(sd_readblock, sd_writeblock) != FAT_INIT_OK)
+  {
+    printf("[ERROR] Media attach failed!\n[CRITTICAL] FAT Systems failed to start!\n");
+    return 1;
+  }
+  return 0;
+}
+
+int fileio_test()
+{
+  //fl_list_directory("/");
+  FILE *licence = fopen("/issue.txt", "r");
+  if(licence == NULL)
+    {
+      printf("Failed to open file!\n");
+      return 0;
+    }
+  char buf[190];
+  char *str = buf;
+  fread(str, 189, 1, licence);
+  printf("[INFO] Attempting read from file: %s", str);
+  return 0;
+}
+
+void demo_sd(void){
+  fat_init();
+  fileio_test();  
+
+  kernel_exit();
 }

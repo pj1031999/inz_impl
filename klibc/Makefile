@@ -10,7 +10,11 @@ SOURCES_C := \
 	string/bzero.c \
 	string/memchr.c \
 	string/memmove.c \
-	string/strlen.c
+	string/strlen.c \
+	string/strncmp.c \
+	string/strncpy.c \
+	string/memcpy.c \
+	string/memset.c 
 
 build: klibc.a
 

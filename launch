@@ -48,6 +48,7 @@ class QEMU(Launchable):
             '-kernel', kernel,
             '-gdb', 'tcp::{},server,wait'.format(gdb_port()),
             #'-serial', 'stdio',
+            '-drive', 'file=raspi.iso,if=sd,format=raw',
             '-serial', 'none',
             '-serial', 'tcp:127.0.0.1:{},server,wait'.format(uart_port(0)),
             '-d', 'int,mmu,page']

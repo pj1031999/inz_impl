@@ -11,7 +11,7 @@ KERELF = kernel8.elf
 KERMAP = kernel8.map
 
 # Files required to link kernel image
-KRT = kernel/kernel.a klibc/klibc.a font/font.a
+KRT = kernel/kernel.a fat_driver/fat_driver.a klibc/klibc.a font/font.a 
 
 build: build-kernel build-klibc build-font $(KERIMG)
 

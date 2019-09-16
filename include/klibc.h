@@ -36,6 +36,9 @@ void bzero(void *b, size_t length);
 void *memmove(void *s1, const void *s2, size_t n);
 void *memchr(const void *s, int c, size_t n);
 size_t strlen(const char *s);
+char * strncpy(char * __restrict dst, const char * __restrict src, size_t n);
+int strncmp(const char *s1, const char *s2, size_t n);
 void *sbrk(size_t size);
-
+void *memset(void *s, int c, size_t n);
+void *memcpy(void *s1, const void *s2, size_t n);
 #endif // #ifndef KLIBC_H
