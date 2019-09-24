@@ -155,37 +155,46 @@ void demo_led(){
 }
 
 
-#include <sd.h>
 #include <klibc.h>
-#include <filelib.h>
+#include <fat/diskio.h>
 
 int fat_init()
 {
-  sd_init();
-  fl_init();
+  disk_initialize();
   printf("Not frozen\n");
-
-  if(fl_attach_media(sd_readblock, sd_writeblock) != FAT_INIT_OK)
-  {
-    printf("[ERROR] Media attach failed!\n[CRITTICAL] FAT Systems failed to start!\n");
-    return 1;
-  }
   return 0;
 }
 
 int fileio_test()
 {
-  //fl_list_directory("/");
-  FILE *licence = fopen("/issue.txt", "r");
-  if(licence == NULL)
-    {
+  {
+    FATFS fs;
+    FRESULT res = pf_mount(&fs);
+    printf("mount result: %d\n", res);
+  }
+
+  {
+    FRESULT res = pf_open("/issue.txt");
+    printf("open file result: %d\n", res);
+    if(res != FR_OK){
       printf("Failed to open file!\n");
-      return 0;
+      kernel_exit();
     }
-  char buf[190];
-  char *str = buf;
-  fread(str, 189, 1, licence);
-  printf("[INFO] Attempting read from file: %s", str);
+  }
+  {
+    char buf[256];
+    char *str = buf;
+    uint32_t n;
+    
+    FRESULT res = pf_read(str, 255, &n);
+    printf("read file result: %d\n", res);
+    if(res != FR_OK){
+      printf("Failed to read file!\n");
+      kernel_exit();
+    }
+    printf("[INFO] Attempting read from file: %s", str);
+  }
+
   return 0;
 }
 

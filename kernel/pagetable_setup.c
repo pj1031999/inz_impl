@@ -75,7 +75,7 @@ page_table_fill_leaves(void)
   // page_table L2
 
   /* begin (without first 2 MB) of first GB has no mapping  */
-  int z = 480;
+  int z = 180;
   for(int i = 1; i < z; entry += ENTRY_2MB){
     _level2_pagetable_phys[i++] = 0x0;
   }

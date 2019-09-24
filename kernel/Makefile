@@ -25,6 +25,8 @@ SOURCES_C := \
 	userspace_demo.c \
 	sd.c \
 	delays.c \
+	diskio.c \
+	pff.c \
 
 SOURCES_ASM := \
 	boot.S \
