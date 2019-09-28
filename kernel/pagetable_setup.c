@@ -81,7 +81,7 @@ page_table_fill_leaves(void)
   }
 
   //end of first GB is non cacheable - last few needed MB
-  entry = (z*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM);;//ATTR_IDX(ATTR_NORMAL_MEM_NC);
+  entry = (z*ENTRY_2MB) | PTE_ATTR | ATTR_IDX(ATTR_DEVICE_MEM);//ATTR_IDX(ATTR_NORMAL_MEM_NC);
   for(int i = z; i < 512; entry += ENTRY_2MB){
     _level2_pagetable_phys[i++] = entry;
   }

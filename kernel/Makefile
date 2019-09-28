@@ -17,7 +17,6 @@ SOURCES_C := \
 	uart.c \
 	vc_mbox.c \
 	pmap.c \
-	pmap_test.c \
 	pagetable_setup.c \
 	demo.c \
 	demo_pmap.c \

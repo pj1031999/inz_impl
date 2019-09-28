@@ -192,7 +192,7 @@ int fileio_test()
       printf("Failed to read file!\n");
       kernel_exit();
     }
-    printf("[INFO] Attempting read from file: %s", str);
+    printf("\n[INFO] Attempting read from file:\n%s", str);
   }
 
   return 0;
