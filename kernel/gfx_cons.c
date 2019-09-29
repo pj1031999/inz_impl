@@ -83,12 +83,17 @@ static void gfx_cons_flush(cons_dev_t *dev) {
 }
 
 extern font_t Terminus16;
+/* #include <aarch64/cpu.h> */
+/* static cons_dev_t devs[4]; */
+/* static cons_t conss[4]; */
 
 cons_t *make_gfx_cons(window_t *win, font_t *font) {
+  //cons_dev_t *dev = (void*)&devs[arm_cpu_id()];
   cons_dev_t *dev = sbrk(sizeof(cons_dev_t));
   dev->window = *win;
   dev->font = font ? font : &Terminus16;
 
+  //cons_t *cons = (void*)&conss[arm_cpu_id()];
   cons_t *cons = sbrk(sizeof(cons_t));
   cons->dev = dev;
   cons->init = gfx_cons_init;

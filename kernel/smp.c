@@ -10,7 +10,6 @@
 
 extern void cons_bootstrap(unsigned);
 extern const void* _stack_size;
-extern const void* _el1_stack;
 
 static inline uint64_t stack_addr_read() {
   uint64_t data;

@@ -70,13 +70,13 @@ cpu_mailbox_wait:
 clear_bss:
 	// [CPU#0] Clear BSS section.
 
-	LDR	W4, =_start
+	LDR	X4, =_start
 	MOV	X5, #240
-	STR 	W4,[X5]
+	STR 	X4,[X5]
 	MOV	X5, #232
-	STR 	W4,[X5]
+	STR 	X4,[X5]
 	MOV	X5, #224
-	STR 	W4,[X5]
+	STR 	X4,[X5]
 	DSB	SY
 	ISB
 	

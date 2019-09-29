@@ -1,4 +1,5 @@
 #include <klibc.h>
+#include <stdatomic.h>
 
 /* The end of the kernel's .bss section. Provided by the linker. */
 extern uint8_t _bss_end[];
@@ -6,8 +7,8 @@ extern uint8_t _bss_end[];
 extern uint8_t _brk_limit[];
 
 static struct {
-  uint8_t *ptr;
-  uint8_t *end;
+  uint8_t * _Atomic ptr;
+  uint8_t * _Atomic end;
 } state = {_bss_end, _brk_limit};
 
 void *sbrk(size_t size) {

@@ -5,7 +5,6 @@
 #include <aarch64/cpu.h>
 #include <aarch64/frame.h>
 #include <clock.h>
-#include <stdatomic.h>
 
 #include <rpi/gpio.h>
 #include <rpi/vc_mbox.h>

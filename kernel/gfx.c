@@ -4,7 +4,7 @@
 #include <font.h>
 #include <klibc.h>
 
-window_t screen;
+static window_t screen;
 
 window_t *gfx_set_videomode(unsigned w, unsigned h) {
 

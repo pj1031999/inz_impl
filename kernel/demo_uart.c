@@ -65,17 +65,6 @@ us_setup_pagetable(vaddr_t* stack, vaddr_t* usstack){
   *stack = (vaddr_t)va_stack;
   *usstack = (pa_prog & ~0xfff) - PAGESIZE;
 
-   
-  /* extern __unused uint64_t _level1_pagetable[]; */
-  /* va_l1[0] = _level1_pagetable[0]; */
-
-  printf("l1: %p <--> %p\n", va_l1, pa_l1);
-  printf("l2: %p <--> %p\n", va_l2, pa_l2);
-  printf("l3: %p <--> %p\n", va_l3, pa_l3);
-  
-  printf("PT vaddr: %p\n", va_l1);
-  printf("PT paddr: %p\n", pa_l1);
-  //return (paddr_t)(void*)PHYSADDR((uint64_t)va_l1);
   return pa_l1;
 }
 
