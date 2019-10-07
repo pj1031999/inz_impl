@@ -172,9 +172,10 @@ int fileio_test()
     printf("mount result: %d\n", res);
   }
 
+  const char * file_path = "/issue.txt";
   {
-    FRESULT res = pf_open("/issue.txt");
-    printf("open file result: %d\n", res);
+    FRESULT res = pf_open(file_path);
+    printf("open file: \"%s\", result: %d\n", file_path, res);
     if(res != FR_OK){
       printf("Failed to open file!\n");
       kernel_exit();
