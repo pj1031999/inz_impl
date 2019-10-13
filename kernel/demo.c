@@ -166,8 +166,8 @@ int fat_init()
 
 int fileio_test()
 {
+  FATFS fs;
   {
-    FATFS fs;
     FRESULT res = pf_mount(&fs);
     printf("mount result: %d\n", res);
   }
@@ -180,6 +180,19 @@ int fileio_test()
       printf("Failed to open file!\n");
       kernel_exit();
     }
+  }
+  {
+    char buf[256] = "ala ma kota";
+    char *str = buf;
+    uint32_t n;
+    
+    FRESULT res = pf_write(str, 255, &n);
+    printf("write file result: %d\n", res);
+    if(res != FR_OK){
+      printf("Failed to write file!\n");
+      kernel_exit();
+    }
+    printf("\n[INFO] Attempting write from file:\n%s", str);
   }
   {
     char buf[256];

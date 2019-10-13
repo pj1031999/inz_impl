@@ -273,57 +273,56 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
  * Write a block to the sd card
  * returns 0 on error
  */
-int sd_writeblock(uint32_t __unused lba, uint8_t __unused *buffer,
-                  uint32_t __unused num) {
-  // if(((uint64_t)buffer & (uint64_t)0x3) == 0) return 0; //Buffer not 32 bit
-  // aligned
-  // uint32_t *buf = (uint32_t *)buffer;
-  // int32_t c = 0;
-  // int32_t d, r;
-  // if(num < 1) return 0;
-  // if(sd_status(SR_DAT_INHIBIT))
-  //{
-  // sd_err = SD_TIMEOUT;
-  // return 0;
-  //}
-  // if(sd_scr[0] & SCR_SUPP_CCS)
-  //{
-  // if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT))
-  //{
-  // sd_cmd(CMD_SET_BLOCKCNT, num);
-  // if(sd_err) return 0;
-  //}
-  //*EMMC_BLKSIZECNT = (num << 16) | 512;
-  // sd_cmd(num == 1 ? CMD_WRITE_SINGLE : CMD_WRITE_MULTI, lba);
-  // if(sd_err) return 0;
-  //}
-  // else
-  //{
-  //*EMMC_BLKSIZECNT = (1 << 16) | 512;
-  //}
-  // while(c < num)
-  //{
-  // if(!(sd_scr[0] & SCR_SUPP_CCS))
-  //{
-  // sd_cmd(CMD_WRITE_SINGLE, (lba + c) * 512);
-  // if((r = sd_int(INT_READ_RDY)))
-  //{
-  // uart_puts("\rERROR: Timeout waiting for ready to read\n");
-  // sd_err = r;
-  // return 0;
-  //}
-  // for(d = 0; d < 128; d++)
-  //*EMMC_DATA = buf[d];
-  // if(sd_err) return 0;
-  //}
-  // c++;
-  // buf += 128;
-  //}
+int sd_writeblock(uint32_t lba, const int8_t *buffer,
+                  uint32_t  num) {
+  if(((uint64_t)buffer & (uint64_t)0x3) == 0) return 0; //Buffer not 32 bit aligned
+  uint32_t *buf = (uint32_t *)buffer;
+  int32_t c = 0;
+  int32_t d, r;
+  if(num < 1) return 0;
+  if(sd_status(SR_DAT_INHIBIT))
+    {
+      sd_err = SD_TIMEOUT;
+      return 0;
+    }
+  if(sd_scr[0] & SCR_SUPP_CCS)
+    {
+      if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT))
+	{
+	  sd_cmd(CMD_SET_BLOCKCNT, num);
+	  if(sd_err) return 0;
+	}
+      *EMMC_BLKSIZECNT = (num << 16) | 512;
+      sd_cmd(num == 1 ? CMD_WRITE_SINGLE : CMD_WRITE_MULTI, lba);
+      if(sd_err) return 0;
+    }
+  else
+    {
+      *EMMC_BLKSIZECNT = (1 << 16) | 512;
+    }
+  while(c < num)
+    {
+      if(!(sd_scr[0] & SCR_SUPP_CCS))
+	{
+	  sd_cmd(CMD_WRITE_SINGLE, (lba + c) * 512);
+	  if((r = sd_int(INT_READ_RDY)))
+	    {
+	      //uart_puts("\rERROR: Timeout waiting for ready to read\n");
+	      sd_err = r;
+	      return 0;
+	    }
+	  for(d = 0; d < 128; d++)
+	    *EMMC_DATA = buf[d];
+	  if(sd_err) return 0;
+	}
+      c++;
+      buf += 128;
+    }
 
-  // if(sd_int(INT_DATA_DONE))
-  // return 1;
-  // else
-  return 0; // Make gcc happy
+  /* if(sd_int(INT_DATA_DONE)) */
+  /*   return 1; */
+  /* else */
+    return 0; // Make gcc happy
 }
 
 /**

@@ -49,7 +49,8 @@ disk_writep(const BYTE *buff, /* Pointer to the data to be written,
             DWORD sc /* Sector number (LBA) or Number of bytes to send */
             ) {
   DRESULT res = RES_OK;
-
+  res = sd_writeblock(sc, (int8_t*)buff, 1);
+  
   if (!buff) {
     if (sc) {
 
