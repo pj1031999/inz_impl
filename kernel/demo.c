@@ -181,6 +181,7 @@ int fileio_test()
       kernel_exit();
     }
   }
+
   {
     char buf[256] = "ala ma kota";
     char *str = buf;
@@ -194,6 +195,7 @@ int fileio_test()
     }
     printf("\n[INFO] Attempting write from file:\n%s", str);
   }
+
   {
     char buf[256];
     char *str = buf;

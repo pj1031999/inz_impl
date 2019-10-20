@@ -221,7 +221,7 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * read a block from sd card and return the number of bytes read
  * returns 0 on error.
  */
-int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
+int sd_readblock(uint32_t lba, uint8_t *buffer, uint32_t num) {
   static int last_lba = 0;
   int32_t r, c = 0, d;
   if (num < 1)
@@ -273,7 +273,7 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
  * Write a block to the sd card
  * returns 0 on error
  */
-int sd_writeblock(uint32_t lba, const int8_t *buffer,
+int sd_writeblock(uint32_t lba, const uint8_t *buffer,
                   uint32_t  num) {
   if(((uint64_t)buffer & (uint64_t)0x3) == 0) return 0; //Buffer not 32 bit aligned
   uint32_t *buf = (uint32_t *)buffer;
@@ -322,7 +322,7 @@ int sd_writeblock(uint32_t lba, const int8_t *buffer,
   /* if(sd_int(INT_DATA_DONE)) */
   /*   return 1; */
   /* else */
-    return 0; // Make gcc happy
+    return 0;
 }
 
 /**
