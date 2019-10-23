@@ -31,7 +31,7 @@
  */
 
 #ifndef _MACHINE_FRAME_H_
-#define	_MACHINE_FRAME_H_
+#define _MACHINE_FRAME_H_
 
 #include <aarch64/aarch64reg.h>
 #include <klibc.h>
@@ -40,12 +40,12 @@
  * NOTE: keep this structure in sync with struct reg and struct mcontext.
  */
 struct trapframe {
-	uint64_t tf_sp;
-	uint64_t tf_lr;
-	uint64_t tf_elr;
-	uint32_t tf_spsr;
-	uint32_t tf_esr;
-	uint64_t tf_x[31];
+  uint64_t tf_sp;
+  uint64_t tf_lr;
+  uint64_t tf_elr;
+  uint32_t tf_spsr;
+  uint32_t tf_esr;
+  uint64_t tf_x[31];
 };
 
 #endif /* !_MACHINE_FRAME_H_ */

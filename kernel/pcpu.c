@@ -3,7 +3,7 @@
 #include <aarch64/cpu.h>
 
 static pcpu_t _pcpu_data[BCM2836_NCPUS];
-//extern int _stack_size;
+// extern int _stack_size;
 extern pde_t _level1_pagetable[];
 
 void pcpu_init(void) {
@@ -13,6 +13,6 @@ void pcpu_init(void) {
   pcpu->td_idnest = 1;
   pcpu->on_fault = false;
   pcpu->switch_to = -1;
-  
+
   reg_tpidr_el1_write((uint64_t)pcpu);
 }

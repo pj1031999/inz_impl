@@ -12,7 +12,6 @@
 #include <smp.h>
 #include <demo/demo.h>
 
-
 static window_t *screen;
 extern cons_t uart0_cons;
 
@@ -22,21 +21,21 @@ void cons_bootstrap(unsigned cpu) {
 
   window_t win;
   gfx_window(screen, &win, (cpu & 1) ? w2 : 0, (cpu & 2) ? h2 : 0, w2, h2);
-  gfx_set_bg_col(&win, (cpu ^ (cpu >> 1)) & 1 ? color(16,16,16) : color(32,32,32));
+  gfx_set_bg_col(&win, (cpu ^ (cpu >> 1)) & 1 ? color(16, 16, 16)
+                                              : color(32, 32, 32));
   gfx_rect_draw(&win, 0, 0, w2, h2, win.bg_col);
   cons_init(make_gfx_cons(&win, NULL));
 }
 
 void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
-                  uint32_t atags __unused)
-{
-  //extern vaddr_t _brk_limit;
+                  uint32_t atags __unused) {
+  // extern vaddr_t _brk_limit;
 
   pcpu_init();
 
   screen = gfx_set_videomode(1280, 800);
   cons_bootstrap(0);
-  
+
   pm_init();
   pm_add_segment(0, BCM2835_PERIPHERALS_BASE);
   pm_reserve(0, mmu_translate((vaddr_t)&_brk_limit));
@@ -48,7 +47,7 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
   printf("Config Register: %08x\n", reg_sctlr_el1_read());
   printf("Framebuffer address: %p\n", screen->pixels);
 
-  //uart0_cons.init(NULL);
+  // uart0_cons.init(NULL);
   demo_uart();
 
   /* bcm2835_irq_init(); */
@@ -58,16 +57,16 @@ void kernel_entry(uint32_t r0 __unused, uint32_t r1 __unused,
 
   puts("Type letter 'q' to halt machine!");
   uint8_t c;
-  while ((c = getchar()) != 'q'){
+  while ((c = getchar()) != 'q') {
     printf("%c", c);
   }
 
-    
   kernel_exit();
 }
 
 noreturn void kernel_exit() {
   arm_irq_disable();
   printf("\n*** CPU#%d halted! ***", arm_cpu_id());
-  for (;;);
+  for (;;)
+    ;
 }
