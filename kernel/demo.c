@@ -159,7 +159,7 @@ void demo_led(){
 
 int fat_init()
 {
-  disk_initialize();
+  disk_initialize(0);
   printf("Not frozen\n");
   return 0;
 }
@@ -168,13 +168,14 @@ int fileio_test()
 {
   FATFS fs;
   {
-    FRESULT res = pf_mount(&fs);
+    FRESULT res = f_mount(&fs, "/", 0);
     printf("mount result: %d\n", res);
   }
 
   const char * file_path = "/issue.txt";
+  FIL file;
   {
-    FRESULT res = pf_open(file_path);
+    FRESULT res = f_open(&file, file_path, FA_READ | FA_WRITE);
     printf("open file: \"%s\", result: %d\n", file_path, res);
     if(res != FR_OK){
       printf("Failed to open file!\n");
@@ -183,31 +184,18 @@ int fileio_test()
   }
 
   {
-    char buf[256] = "ala ma kota";
+    char buf[4096];
     char *str = buf;
     uint32_t n;
     
-    FRESULT res = pf_write(str, 255, &n);
-    printf("write file result: %d\n", res);
-    if(res != FR_OK){
-      printf("Failed to write file!\n");
-      kernel_exit();
-    }
-    printf("\n[INFO] Attempting write from file:\n%s", str);
-  }
-
-  {
-    char buf[256];
-    char *str = buf;
-    uint32_t n;
-    
-    FRESULT res = pf_read(str, 255, &n);
+    FRESULT res = f_read(&file, str, 4096, &n);
     printf("read file result: %d\n", res);
     if(res != FR_OK){
       printf("Failed to read file!\n");
       kernel_exit();
     }
-    printf("\n[INFO] Attempting read from file:\n%s", str);
+    printf("\n[INFO] Read [%lu] bytes\n", n);
+    printf("\n[INFO] Attempting read from file:\n%s\n", str);
   }
 
   return 0;

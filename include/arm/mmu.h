@@ -31,13 +31,13 @@ typedef struct {
 } pde_section_t;
 
 typedef struct {
-    uint32_t type : 2;
-    uint32_t pxn : 1;
-    uint32_t ns : 1;
-    uint32_t sbz : 1;
-    uint32_t domain : 4;
-    uint32_t impl : 1;
-    uint32_t base_address : 20;
+  uint32_t type : 2;
+  uint32_t pxn : 1;
+  uint32_t ns : 1;
+  uint32_t sbz : 1;
+  uint32_t domain : 4;
+  uint32_t impl : 1;
+  uint32_t base_address : 20;
 } pde_table_t;
 
 typedef union {

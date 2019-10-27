@@ -18,5 +18,4 @@ extern vaddr_t _brk_limit;
 vaddr_t vm_alloc(size_t size);
 vaddr_t pages_alloc(size_t pages, flags_t flags);
 
-
 #endif /*DEMO_H*/

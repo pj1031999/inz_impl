@@ -20,11 +20,11 @@ noreturn void kernel_exit();
   })
 
 /* Macros for counting and rounding. */
-#define howmany(x, y)   (((x)+((y)-1))/(y))
-#define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
-#define rounddown(x, y)  (((x)/(y))*(y))
-#define roundup2(x, y)   (((x) + ((y) - 1)) & ~((y) - 1))
-#define rounddown2(x, y)  ((x) & ~((y) - 1))
+#define howmany(x, y) (((x) + ((y)-1)) / (y))
+#define roundup(x, y) ((((x) + ((y)-1)) / (y)) * (y))
+#define rounddown(x, y) (((x) / (y)) * (y))
+#define roundup2(x, y) (((x) + ((y)-1)) & ~((y)-1))
+#define rounddown2(x, y) ((x) & ~((y)-1))
 
 typedef long ssize_t;
 
@@ -36,7 +36,7 @@ void bzero(void *b, size_t length);
 void *memmove(void *s1, const void *s2, size_t n);
 void *memchr(const void *s, int c, size_t n);
 size_t strlen(const char *s);
-char * strncpy(char * __restrict dst, const char * __restrict src, size_t n);
+char *strncpy(char *__restrict dst, const char *__restrict src, size_t n);
 int strncmp(const char *s1, const char *s2, size_t n);
 void *sbrk(size_t size);
 void *memset(void *s, int c, size_t n);
