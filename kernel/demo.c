@@ -177,6 +177,7 @@ int fileio_test() {
   }
   {
     char buf[256];
+    memset(buf, 0, 256);
     char *str = buf;
     uint32_t n;
 
@@ -186,11 +187,125 @@ int fileio_test() {
       printf("Failed to read file!\n");
       kernel_exit();
     }
-    if (n != 145) {
-      printf("Number of bytes read: %d expected: %d\n", n, 145);
+    if (n != 150) {
+      printf("Number of bytes read: %d expected: %d\n", n, 150);
       kernel_exit();
     }
-    printf("\n[INFO] Attempting read from file:\n%s", str);
+    printf("\n[INFO] Attempting read from file:\n%s\n", str);
+    res = f_close(&file);
+    if (res != FR_OK) {
+      printf("Failed to close file!\n");
+      kernel_exit();
+    }
+  }
+  {
+    FRESULT res = f_open(&file, file_path, FA_READ | FA_WRITE);
+    printf("open file: \"%s\", result: %d\n", file_path, res);
+    if (res != FR_OK) {
+      printf("Failed to open file!\n");
+      kernel_exit();
+    }
+  }
+  {
+    char buf[256];
+    char *str = buf;
+    uint32_t n;
+
+    memset(buf, 'a', 255);
+    FRESULT res = f_write(&file, buf, 150, &n);
+    printf("write file result: %d\n", res);
+    if (res != FR_OK) {
+      printf("Failed to write to file!\n");
+      kernel_exit();
+    }
+    printf("\n[INFO] Attempting write to file:\n%s\n", str);
+    res = f_close(&file);
+    if (res != FR_OK) {
+      printf("Failed to close file!\n");
+      kernel_exit();
+    }
+  }
+  {
+    FRESULT res = f_open(&file, file_path, FA_READ | FA_WRITE);
+    printf("open file: \"%s\", result: %d\n", file_path, res);
+    if (res != FR_OK) {
+      printf("Failed to open file!\n");
+      kernel_exit();
+    }
+  }
+  {
+    char buf[256];
+    memset(buf, 0, 256);
+    char *str = buf;
+    uint32_t n;
+
+    FRESULT res = f_read(&file, str, 255, &n);
+    printf("read file result: %d\n", res);
+    if (res != FR_OK) {
+      printf("Failed to read file!\n");
+      kernel_exit();
+    }
+    printf("\n[INFO] Attempting read from file:\n%s\n", str);
+    res = f_close(&file);
+    if (res != FR_OK) {
+      printf("Failed to close file!\n");
+      kernel_exit();
+    }
+  }
+  const char *nfile_path = "new.txt";
+  {
+    char buf[256];
+    memset(buf, 'b', 255);
+    buf[255] = 0;
+    uint32_t n;
+    char *str = buf;
+
+    FIL nfile;
+
+    FRESULT res =
+      f_open(&nfile, nfile_path, FA_READ | FA_WRITE | FA_CREATE_ALWAYS);
+    printf("open file: \"%s\", result: %d\n", nfile_path, res);
+    if (res != FR_OK) {
+      printf("Failed to create file!");
+      kernel_exit();
+    }
+
+    res = f_write(&nfile, buf, 150, &n);
+    printf("write file result: %d\n", res);
+    if (res != FR_OK) {
+      printf("Failed to write to file!\n");
+      kernel_exit();
+    }
+    printf("\n[INFO] Attempting write to file:\n%s\n", str);
+
+    f_close(&nfile);
+  }
+  {
+    FRESULT res = f_open(&file, nfile_path, FA_READ | FA_WRITE);
+    printf("open file: \"%s\", result: %d\n", nfile_path, res);
+    if (res != FR_OK) {
+      printf("Failed to open file!\n");
+      kernel_exit();
+    }
+  }
+  {
+    char buf[256];
+    memset(buf, 0, 256);
+    char *str = buf;
+    uint32_t n;
+
+    FRESULT res = f_read(&file, str, 255, &n);
+    printf("read file result: %d\n", res);
+    if (res != FR_OK) {
+      printf("Failed to read file!\n");
+      kernel_exit();
+    }
+    printf("\n[INFO] Attempting read from file:\n%s\n", str);
+    res = f_close(&file);
+    if (res != FR_OK) {
+      printf("Failed to close file!\n");
+      kernel_exit();
+    }
   }
 
   return 0;

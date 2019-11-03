@@ -35,16 +35,22 @@
 #define MAX_DIR 0x200000      /* Max size of FAT directory */
 #define MAX_DIR_EX 0x10000000 /* Max size of exFAT directory */
 #define MAX_FAT12                                                              \
-  0xFF5 /* Max FAT12 clusters (differs from specs, but right for real \                                                                             \
-           DOS/Windows behavior) */
+  0xFF5 /* Max FAT12 clusters (differs from specs, but right for real \ \ \ \  \
+           \ \ \ DOS/Windows behavior) */
 #define MAX_FAT16                                                              \
-  0xFFF5 /* Max FAT16 clusters (differs from specs, but right for real \                                                                             \
-            DOS/Windows behavior) */
+  0xFFF5 /* Max FAT16 clusters (differs from specs, but right for real \ \ \ \ \
+            \ \ \ DOS/Windows behavior) */
 #define MAX_FAT32                                                              \
   0x0FFFFFF5 /* Max FAT32 clusters (not specified, practical limit) */
 #define MAX_EXFAT                                                              \
   0x7FFFFFFD /* Max exFAT clusters (differs from specs, implementation limit)  \
               * \                                                              \
+              * \ \                                                                             \
+              * \ \ \                                                                             \
+              * \ \ \ \                                                                             \
+              * \ \ \ \ \                                                                             \
+              * \ \ \ \ \ \                                                                             \
+              * \ \ \ \ \ \ \                                                                             \
               */
 
 /* Character code support macros */
@@ -260,7 +266,7 @@ platforms */
 #else
 #define LD2PD(vol)                                                             \
   (BYTE)(vol) /* Each logical drive is associated with the same physical drive \
-                 \ number */
+                 \ \ \ \ \ \ \ number */
 #define LD2PT(vol) 0 /* Find first valid partition or in SFD */
 #endif
 
@@ -633,8 +639,8 @@ static const BYTE LfnOfs[] = {
                               entry */
 #define MAXDIRB(nc)                                                            \
   ((nc + 44U) / 15 *                                                           \
-   SZDIRE) /* exFAT: Size of directory entry block scratchpad buffer needed \                                                                             \
-              for the name length */
+   SZDIRE) /* exFAT: Size of directory entry block scratchpad buffer needed \  \
+              \ \ \ \ \ \ for the name length */
 
 #if FF_USE_LFN == 1 /* LFN enabled with static working buffer */
 #if FF_FS_EXFAT
@@ -648,13 +654,13 @@ static WCHAR LfnBuf[FF_MAX_LFN + 1]; /* LFN working buffer */
 #define LEAVE_MKFS(res) return res
 
 #elif FF_USE_LFN ==                                                            \
-  2 /* LFN enabled with dynamic working buffer on the stack  \                 \
+  2 /* LFN enabled with dynamic working buffer on the stack  \ \ \ \ \ \ \                                                                             \
      */
 #if FF_FS_EXFAT
 #define DEF_NAMBUF                                                             \
   WCHAR lbuf[FF_MAX_LFN + 1];                                                  \
-  BYTE dbuf[MAXDIRB(FF_MAX_LFN)]; /* LFN working buffer and directory entry \                                                                             \
-                                     block scratchpad buffer */
+  BYTE dbuf[MAXDIRB(FF_MAX_LFN)]; /* LFN working buffer and directory entry \  \
+                                     \ \ \ \ \ \ block scratchpad buffer */
 #define INIT_NAMBUF(fs)                                                        \
   {                                                                            \
     (fs)->lfnbuf = lbuf;                                                       \
@@ -669,12 +675,13 @@ static WCHAR LfnBuf[FF_MAX_LFN + 1]; /* LFN working buffer */
 #endif
 #define LEAVE_MKFS(res) return res
 
-#elif FF_USE_LFN == 3 /* LFN enabled with dynamic working buffer on the heap \                                                                             \
-                       */
+#elif FF_USE_LFN ==                                                            \
+  3 /* LFN enabled with dynamic working buffer on the heap \ \ \ \ \ \ \                                                                             \
+     */
 #if FF_FS_EXFAT
 #define DEF_NAMBUF                                                             \
-  WCHAR *lfn; /* Pointer to LFN working buffer and directory entry block \                                                                             \
-                 scratchpad buffer */
+  WCHAR *lfn; /* Pointer to LFN working buffer and directory entry block \ \ \ \
+                 \ \ \ \ scratchpad buffer */
 #define INIT_NAMBUF(fs)                                                        \
   {                                                                            \
     lfn = ff_memalloc((FF_MAX_LFN + 1) * 2 + MAXDIRB(FF_MAX_LFN));             \
@@ -3900,7 +3907,7 @@ mount_volume(/* FR_OK(0): successful, !=0: an error occurred */
     return FR_WRITE_PROTECTED;
   }
 #if FF_MAX_SS !=                                                               \
-  FF_MIN_SS /* Get sector size (multiple sector size cfg only)  \              \
+  FF_MIN_SS /* Get sector size (multiple sector size cfg only)  \ \ \ \ \ \ \                                                                             \
              */
   if (disk_ioctl(fs->pdrv, GET_SECTOR_SIZE, &SS(fs)) != RES_OK)
     return FR_DISK_ERR;
@@ -4484,8 +4491,8 @@ FRESULT f_read(FIL *fp,    /* Pointer to the file object */
         if (disk_read(fs->pdrv, rbuff, sect, cc) != RES_OK)
           ABORT(fs, FR_DISK_ERR);
 #if !FF_FS_READONLY &&                                                         \
-  FF_FS_MINIMIZE <= 2 /* Replace one of the read sectors with cached data if \                                                                             \
-                         it contains a dirty sector */
+  FF_FS_MINIMIZE <= 2 /* Replace one of the read sectors with cached data if \ \
+                         \ \ \ \ \ \ it contains a dirty sector */
 #if FF_FS_TINY
         if (fs->wflag && fs->winsect - sect < cc) {
           mem_cpy(rbuff + ((fs->winsect - sect) * SS(fs)), fs->win, SS(fs));
@@ -6386,8 +6393,9 @@ FRESULT f_forward(FIL *fp, /* Pointer to the file object */
 
 #define N_SEC_TRACK 63 /* Sectors per track for determination of drive CHS */
 #define GPT_ALIGN                                                              \
-  0x100000            /* Alignment of partitions in GPT [byte] (>=128KB)  \    \
-                       */
+  0x100000 /* Alignment of partitions in GPT [byte] (>=128KB)  \    \ \ \ \ \  \
+            * \                                                                \
+            */
 #define GPT_ITEMS 128 /* Number of GPT table size (>=128, sector aligned) */
 
 /* Create partitions on the physical drive */

@@ -59,11 +59,12 @@ disk_read(BYTE pdrv __unused, /* Physical drive nmuber to identify the drive */
 
 DRESULT
 disk_write(BYTE pdrv __unused, /* Physical drive nmuber to identify the drive */
-           const BYTE *buff __unused, /* Data to be written */
-           LBA_t sector __unused,     /* Start sector in LBA */
-           UINT count __unused        /* Number of sectors to write */
+           const BYTE *buff,   /* Data to be written */
+           LBA_t sector,       /* Start sector in LBA */
+           UINT count          /* Number of sectors to write */
 ) {
-  return RES_PARERR;
+  int res = sd_writeblock(sector, buff, count);
+  return res != 0 ? RES_OK : RES_ERROR;
 }
 
 #endif
@@ -76,5 +77,5 @@ DRESULT disk_ioctl(BYTE pdrv __unused, /* Physical drive nmuber (0..) */
                    BYTE cmd __unused,  /* Control code */
                    void *buff __unused /* Buffer to send/receive control data */
 ) {
-  return RES_PARERR;
+  return RES_OK;
 }
