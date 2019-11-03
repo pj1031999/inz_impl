@@ -34,11 +34,9 @@
 /*
  * bzero -- vax movc5 instruction
  */
-void
-bzero(void *b, size_t length)
-{
-	char *p;
+void bzero(void *b, size_t length) {
+  char *p;
 
-	for (p = b; length--;)
-		*p++ = '\0';
+  for (p = b; length--;)
+    *p++ = '\0';
 }

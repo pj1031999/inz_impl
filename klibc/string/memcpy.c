@@ -34,12 +34,11 @@
 /*
  * This is designed to be small, not fast.
  */
-void* memcpy(void *s1, const void *s2, size_t n)
-{
-	register const char *f = s2;
-	register char *t = s1;
+void *memcpy(void *s1, const void *s2, size_t n) {
+  register const char *f = s2;
+  register char *t = s1;
 
-	while (n-- > 0)
-		*t++ = *f++;
-	return s1;
+  while (n-- > 0)
+    *t++ = *f++;
+  return s1;
 }

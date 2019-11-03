@@ -40,25 +40,26 @@ static void pl011_init(cons_dev_t *dev __unused) {
   /* Clear pending interrupts. */
   mmio_write(UART0_ICR, PL011_INT_ALLMASK);
 
-  extern unsigned int  _mail_buffer[256];
-  /* static volatile unsigned int mailbuffer[256] __attribute__((aligned (16))); */
-  unsigned long physical_mb = (unsigned long)_mail_buffer; //will cut to 32 bit value at vc_mbox_send
+  extern unsigned int _mail_buffer[256];
+  /* static volatile unsigned int mailbuffer[256] __attribute__((aligned (16)));
+   */
+  unsigned long physical_mb =
+    (unsigned long)_mail_buffer; // will cut to 32 bit value at vc_mbox_send
   unsigned int res;
 
-  //set up clock for consistent divisor values
-  _mail_buffer[0] = 8*4; 	// buffer size
+  // set up clock for consistent divisor values
+  _mail_buffer[0] = 8 * 4; // buffer size
   _mail_buffer[1] = VCPROPTAG_REQUEST;
   _mail_buffer[2] = VCPROPTAG_SET_CLOCKRATE;
   _mail_buffer[3] = 12;
   _mail_buffer[4] = 8;
   _mail_buffer[5] = VCPROP_CLK_UART;
-  _mail_buffer[6] = 4000000;     // 4Mhz
+  _mail_buffer[6] = 4000000; // 4Mhz
   _mail_buffer[7] = VCPROPTAG_END;
 
   vc_mbox_send(physical_mb, 8);
   res = vc_mbox_recv(8);
 
-  
   /* enable UART0 on pins 14 & 15 */
   gpio_function_select(14, GPIO_ALT0);
   gpio_function_select(15, GPIO_ALT0);
@@ -85,12 +86,11 @@ static void pl011_init(cons_dev_t *dev __unused) {
 
   /* Enable UART0, receive & transfer part of UART. */
   mmio_write(UART0_CR, PL01X_CR_UARTEN | PL011_CR_TXE | PL011_CR_RXE);
-  
+
   /* Enable receive interrupt. */
   mmio_write(UART0_IMSC, PL011_INT_RX);
   bcm2835_irq_register(BCM2835_INT_UART0, pl011_irq);
   bcm2835_irq_enable(BCM2835_INT_UART0);
-
 }
 
 static void pl011_putc(cons_dev_t *dev __unused, int c) {
@@ -105,9 +105,8 @@ static int pl011_getc(cons_dev_t *dev __unused) {
   while (mmio_read(UART0_FR) & PL01X_FR_RXFE)
     ;
   int c = mmio_read(UART0_DR);
-  //pl011_putc(NULL, c);
+  // pl011_putc(NULL, c);
   return c;
-
 }
 
 static void pl011_flush(cons_dev_t *dev __unused) {

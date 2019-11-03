@@ -136,7 +136,7 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
   static int last_code = 0;
   static int last_code_cnt = 0;
 
-  if(last_code == code)
+  if (last_code == code)
     last_code_cnt++;
   else
     last_code_cnt = 0;
@@ -159,7 +159,7 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
     sd_err = SD_TIMEOUT;
     return 0;
   }
-  //printf("EMMC: Sending command %p, arg %p\n", code, arg);
+  // printf("EMMC: Sending command %p, arg %p\n", code, arg);
   *EMMC_INTERRUPT = *EMMC_INTERRUPT;
   *EMMC_ARG1 = arg;
   *EMMC_CMDTM = code;
@@ -167,40 +167,45 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
     wait_usec(1000);
   else if (code == CMD_SEND_IF_COND || code == CMD_APP_CMD)
     wait_usec(100);
-  
+
   if ((r = sd_int(INT_CMD_DONE))) {
     printf("ERROR: failed to send EMMC command\n");
     sd_err = r;
     return 0;
   }
-  
+
   r = *EMMC_RESP0;
-  if (code == CMD_GO_IDLE || code == CMD_APP_CMD){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "GO IDLE", arg);
+  if (code == CMD_GO_IDLE || code == CMD_APP_CMD) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "GO IDLE", arg);
     return 0;
   }
-  
-  else if (code == (CMD_APP_CMD | CMD_RSPNS_48)){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "APP", arg);
+
+  else if (code == (CMD_APP_CMD | CMD_RSPNS_48)) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "APP", arg);
     return r & SR_APP_CMD;
   }
-  
-  else if (code == CMD_SEND_OP_COND){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "OP COND", arg);
+
+  else if (code == CMD_SEND_OP_COND) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "OP COND", arg);
     return r;
   }
-  
-  else if (code == CMD_SEND_IF_COND){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "IF COND", arg);
+
+  else if (code == CMD_SEND_IF_COND) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "IF COND", arg);
     return r == arg ? SD_OK : SD_ERROR;
   }
-  
+
   else if (code == CMD_ALL_SEND_CID) {
     r |= *EMMC_RESP3;
     r |= *EMMC_RESP2;
     r |= *EMMC_RESP1;
-    
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "SEND CID", arg);
+
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "SEND CID", arg);
     return r;
   }
 
@@ -209,7 +214,8 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
               ((r & 0x8000) << 8)) &
              CMD_ERRORS_MASK;
 
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "ADDRESS", arg);
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "ADDRESS", arg);
     return r & CMD_RCA_MASK;
   }
   return r & CMD_ERRORS_MASK;
@@ -226,9 +232,10 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
   int32_t r, c = 0, d;
   if (num < 1)
     num = 1;
-  if(lba != last_lba) printf("sd_readblock lba %p, num %p\n", lba, num);
+  if (lba != last_lba)
+    printf("sd_readblock lba %p, num %p\n", lba, num);
   last_lba = lba;
-  
+
   if (sd_status(SR_DAT_INHIBIT)) {
     sd_err = SD_TIMEOUT;
     return 0;

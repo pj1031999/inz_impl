@@ -33,8 +33,8 @@
  *	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
  */
 
-#ifndef	_SYS_CDEFS_H_
-#define	_SYS_CDEFS_H_
+#ifndef _SYS_CDEFS_H_
+#define _SYS_CDEFS_H_
 
 /*
  * Macro to test if we're using a GNU C compiler of a specific vintage
@@ -48,26 +48,25 @@
  *	#endif
  */
 #ifdef __GNUC__
-#define	__GNUC_PREREQ__(x, y)						\
-	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
-	 (__GNUC__ > (x)))
+#define __GNUC_PREREQ__(x, y)                                                  \
+  ((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) || (__GNUC__ > (x)))
 #else
-#define	__GNUC_PREREQ__(x, y)	0
+#define __GNUC_PREREQ__(x, y) 0
 #endif
 
 #ifdef __GNUC__
-#define	__strict_weak_alias(alias,sym)					\
-	__unused static __typeof__(alias) *__weak_alias_##alias = &sym;	\
-	__weak_alias(alias,sym)
+#define __strict_weak_alias(alias, sym)                                        \
+  __unused static __typeof__(alias) *__weak_alias_##alias = &sym;              \
+  __weak_alias(alias, sym)
 #else
-#define	__strict_weak_alias(alias,sym) __weak_alias(alias,sym)
+#define __strict_weak_alias(alias, sym) __weak_alias(alias, sym)
 #endif
 
 /*
  * Optional marker for size-optimised MD calling convention.
  */
 #ifndef __compactcall
-#define	__compactcall
+#define __compactcall
 #endif
 
 /*
@@ -78,36 +77,36 @@
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
 
-#define	___STRING(x)	__STRING(x)
-#define	___CONCAT(x,y)	__CONCAT(x,y)
+#define ___STRING(x) __STRING(x)
+#define ___CONCAT(x, y) __CONCAT(x, y)
 
 #if __STDC__ || defined(__cplusplus)
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#define	__CONCAT(x,y)	x ## y
-#define	__STRING(x)	#x
+#define __P(protos) protos /* full-blown ANSI C */
+#define __CONCAT(x, y) x##y
+#define __STRING(x) #x
 
-#define	__const		const		/* define reserved names to standard */
-#define	__signed	signed
-#define	__volatile	volatile
+#define __const const /* define reserved names to standard */
+#define __signed signed
+#define __volatile volatile
 #if defined(__cplusplus) || defined(__PCC__)
-#define	__inline	inline		/* convert to C++/C99 keyword */
+#define __inline inline /* convert to C++/C99 keyword */
 #else
 #if !defined(__GNUC__) && !defined(__lint__)
-#define	__inline			/* delete GCC keyword */
-#endif /* !__GNUC__  && !__lint__ */
-#endif /* !__cplusplus */
+#define __inline /* delete GCC keyword */
+#endif           /* !__GNUC__  && !__lint__ */
+#endif           /* !__cplusplus */
 
-#else	/* !(__STDC__ || __cplusplus) */
-#define	__P(protos)	()		/* traditional C preprocessor */
-#define	__CONCAT(x,y)	x/**/y
-#define	__STRING(x)	"x"
+#else                  /* !(__STDC__ || __cplusplus) */
+#define __P(protos) () /* traditional C preprocessor */
+#define __CONCAT(x, y) x /**/ y
+#define __STRING(x) "x"
 
 #ifndef __GNUC__
-#define	__const				/* delete pseudo-ANSI C keywords */
-#define	__inline
-#define	__signed
-#define	__volatile
-#endif	/* !__GNUC__ */
+#define __const /* delete pseudo-ANSI C keywords */
+#define __inline
+#define __signed
+#define __volatile
+#endif /* !__GNUC__ */
 
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
@@ -115,35 +114,36 @@
  * Programs using the ANSI C keywords const, inline etc. as normal
  * identifiers should define -DNO_ANSI_KEYWORDS.
  */
-#ifndef	NO_ANSI_KEYWORDS
-#define	const		__const		/* convert ANSI C keywords */
-#define	inline		__inline
-#define	signed		__signed
-#define	volatile	__volatile
+#ifndef NO_ANSI_KEYWORDS
+#define const __const /* convert ANSI C keywords */
+#define inline __inline
+#define signed __signed
+#define volatile __volatile
 #endif /* !NO_ANSI_KEYWORDS */
-#endif	/* !(__STDC__ || __cplusplus) */
+#endif /* !(__STDC__ || __cplusplus) */
 
 /*
  * Used for internal auditing of the NetBSD source tree.
  */
 #ifdef __AUDIT__
-#define	__aconst	__const
+#define __aconst __const
 #else
-#define	__aconst
+#define __aconst
 #endif
 
 /*
  * Compile Time Assertion.
  */
 #ifdef __COUNTER__
-#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __COUNTER__)
+#define __CTASSERT(x) __CTASSERT0(x, __ctassert, __COUNTER__)
 #else
-#define	__CTASSERT(x)		__CTASSERT99(x, __INCLUDE_LEVEL__, __LINE__)
-#define	__CTASSERT99(x, a, b)	__CTASSERT0(x, __CONCAT(__ctassert,a), \
-					       __CONCAT(_,b))
+#define __CTASSERT(x) __CTASSERT99(x, __INCLUDE_LEVEL__, __LINE__)
+#define __CTASSERT99(x, a, b)                                                  \
+  __CTASSERT0(x, __CONCAT(__ctassert, a), __CONCAT(_, b))
 #endif
-#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
+#define __CTASSERT0(x, y, z) __CTASSERT1(x, y, z)
+#define __CTASSERT1(x, y, z)                                                   \
+  typedef char y##z[/*CONSTCOND*/ (x) ? 1 : -1] __unused
 
 /*
  * The following macro is used to remove const cast-away warnings
@@ -154,7 +154,7 @@
  * explicit about unsigned long so that we don't have additional
  * dependencies.
  */
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+#define __UNCONST(a) ((void *)(unsigned long)(const void *)(a))
 
 /*
  * The following macro is used to remove the volatile cast-away warnings
@@ -163,14 +163,14 @@
  * making it possible to pass a volatile pointer to memset().
  * For the same reasons as above, we use unsigned long and not intptr_t.
  */
-#define __UNVOLATILE(a)	((void *)(unsigned long)(volatile void *)(a))
+#define __UNVOLATILE(a) ((void *)(unsigned long)(volatile void *)(a))
 
 /*
  * GCC2 provides __extension__ to suppress warnings for various GNU C
  * language extensions under "-ansi -pedantic".
  */
 #if !__GNUC_PREREQ__(2, 0)
-#define	__extension__		/* delete __extension__ if non-gcc or gcc1 */
+#define __extension__ /* delete __extension__ if non-gcc or gcc1 */
 #endif
 
 /*
@@ -199,78 +199,78 @@
 #endif
 
 #if __GNUC_PREREQ__(2, 5)
-#define	__dead		__attribute__((__noreturn__))
+#define __dead __attribute__((__noreturn__))
 #elif defined(__GNUC__)
-#define	__dead		__volatile
+#define __dead __volatile
 #else
-#define	__dead
+#define __dead
 #endif
 
 #if __GNUC_PREREQ__(2, 96)
-#define	__pure		__attribute__((__pure__))
+#define __pure __attribute__((__pure__))
 #elif defined(__GNUC__)
-#define	__pure		__const
+#define __pure __const
 #else
-#define	__pure
+#define __pure
 #endif
 
 #if __GNUC_PREREQ__(2, 5)
-#define	__constfunc	__attribute__((__const__))
+#define __constfunc __attribute__((__const__))
 #else
-#define	__constfunc
+#define __constfunc
 #endif
 
 #if __GNUC_PREREQ__(3, 0)
-#define	__noinline	__attribute__((__noinline__))
+#define __noinline __attribute__((__noinline__))
 #else
-#define	__noinline	/* nothing */
+#define __noinline /* nothing */
 #endif
 
 #if __GNUC_PREREQ__(3, 0)
-#define	__always_inline	__attribute__((__always_inline__))
+#define __always_inline __attribute__((__always_inline__))
 #else
-#define	__always_inline	/* nothing */
+#define __always_inline /* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 1)
-#define	__returns_twice	__attribute__((__returns_twice__))
+#define __returns_twice __attribute__((__returns_twice__))
 #else
-#define	__returns_twice	/* nothing */
+#define __returns_twice /* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 5)
-#define	__noclone	__attribute__((__noclone__))
+#define __noclone __attribute__((__noclone__))
 #else
-#define	__noclone	/* nothing */
+#define __noclone /* nothing */
 #endif
 
 /*
  * __unused: Note that item or function might be unused.
  */
 #if __GNUC_PREREQ__(2, 7) || defined(__lint__)
-#define	__unused	__attribute__((__unused__))
+#define __unused __attribute__((__unused__))
 #else
-#define	__unused	/* delete */
+#define __unused /* delete */
 #endif
 
 /*
  * __used: Note that item is needed, even if it appears to be unused.
  */
 #if __GNUC_PREREQ__(3, 1)
-#define	__used		__attribute__((__used__))
+#define __used __attribute__((__used__))
 #else
-#define	__used		__unused
+#define __used __unused
 #endif
 
 /*
  * __diagused: Note that item is used in diagnostic code, but may be
  * unused in non-diagnostic code.
  */
-#if (defined(_KERNEL) && defined(DIAGNOSTIC)) \
- || (!defined(_KERNEL) && !defined(NDEBUG))
-#define	__diagused	/* empty */
+#if (defined(_KERNEL) && defined(DIAGNOSTIC)) ||                               \
+  (!defined(_KERNEL) && !defined(NDEBUG))
+#define __diagused /* empty */
 #else
-#define	__diagused	__unused
+#define __diagused __unused
 #endif
 
 /*
@@ -278,21 +278,23 @@
  * unused in non-debug code.
  */
 #if defined(DEBUG)
-#define	__debugused	/* empty */
+#define __debugused /* empty */
 #else
-#define	__debugused	__unused
+#define __debugused __unused
 #endif
 
 #if __GNUC_PREREQ__(3, 1)
-#define	__noprofile	__attribute__((__no_instrument_function__))
+#define __noprofile __attribute__((__no_instrument_function__))
 #else
-#define	__noprofile	/* nothing */
+#define __noprofile /* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__)
-#define	__unreachable()	__builtin_unreachable()
+#define __unreachable() __builtin_unreachable()
 #else
-#define	__unreachable()	do {} while (/*CONSTCOND*/0)
+#define __unreachable()                                                        \
+  do {                                                                         \
+  } while (/*CONSTCOND*/ 0)
 #endif
 
 /*
@@ -307,43 +309,43 @@
  * We use ((void)0) instead of do {} while (0) so that it
  * works on , expressions.
  */
-#define __nothing	((void)0)
+#define __nothing ((void)0)
 
 #if defined(__cplusplus)
-#define	__BEGIN_EXTERN_C	extern "C" {
-#define	__END_EXTERN_C		}
-#define	__static_cast(x,y)	static_cast<x>(y)
+#define __BEGIN_EXTERN_C extern "C" {
+#define __END_EXTERN_C }
+#define __static_cast(x, y) static_cast<x>(y)
 #else
-#define	__BEGIN_EXTERN_C
-#define	__END_EXTERN_C
-#define	__static_cast(x,y)	(x)y
+#define __BEGIN_EXTERN_C
+#define __END_EXTERN_C
+#define __static_cast(x, y) (x) y
 #endif
 
 #if __GNUC_PREREQ__(4, 0)
-#  define __dso_public	__attribute__((__visibility__("default")))
-#  define __dso_hidden	__attribute__((__visibility__("hidden")))
-#  define __BEGIN_PUBLIC_DECLS	\
-	_Pragma("GCC visibility push(default)") __BEGIN_EXTERN_C
-#  define __END_PUBLIC_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
-#  define __BEGIN_HIDDEN_DECLS	\
-	_Pragma("GCC visibility push(hidden)") __BEGIN_EXTERN_C
-#  define __END_HIDDEN_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
+#define __dso_public __attribute__((__visibility__("default")))
+#define __dso_hidden __attribute__((__visibility__("hidden")))
+#define __BEGIN_PUBLIC_DECLS                                                   \
+  _Pragma("GCC visibility push(default)") __BEGIN_EXTERN_C
+#define __END_PUBLIC_DECLS __END_EXTERN_C _Pragma("GCC visibility pop")
+#define __BEGIN_HIDDEN_DECLS                                                   \
+  _Pragma("GCC visibility push(hidden)") __BEGIN_EXTERN_C
+#define __END_HIDDEN_DECLS __END_EXTERN_C _Pragma("GCC visibility pop")
 #else
-#  define __dso_public
-#  define __dso_hidden
-#  define __BEGIN_PUBLIC_DECLS	__BEGIN_EXTERN_C
-#  define __END_PUBLIC_DECLS	__END_EXTERN_C
-#  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
-#  define __END_HIDDEN_DECLS	__END_EXTERN_C
+#define __dso_public
+#define __dso_hidden
+#define __BEGIN_PUBLIC_DECLS __BEGIN_EXTERN_C
+#define __END_PUBLIC_DECLS __END_EXTERN_C
+#define __BEGIN_HIDDEN_DECLS __BEGIN_EXTERN_C
+#define __END_HIDDEN_DECLS __END_EXTERN_C
 #endif
 #if __GNUC_PREREQ__(4, 2)
-#  define __dso_protected	__attribute__((__visibility__("protected")))
+#define __dso_protected __attribute__((__visibility__("protected")))
 #else
-#  define __dso_protected
+#define __dso_protected
 #endif
 
-#define	__BEGIN_DECLS		__BEGIN_PUBLIC_DECLS
-#define	__END_DECLS		__END_PUBLIC_DECLS
+#define __BEGIN_DECLS __BEGIN_PUBLIC_DECLS
+#define __END_DECLS __END_PUBLIC_DECLS
 
 /*
  * Non-static C99 inline functions are optional bodies.  They don't
@@ -355,28 +357,31 @@
  * For C99 compilers other than GCC, the C99 behavior is expected.
  */
 #if defined(__GNUC__) && defined(__GNUC_STDC_INLINE__)
-#define	__c99inline	extern __attribute__((__gnu_inline__)) __inline
+#define __c99inline extern __attribute__((__gnu_inline__)) __inline
 #elif defined(__GNUC__)
-#define	__c99inline	extern __inline
+#define __c99inline extern __inline
 #elif defined(__STDC_VERSION__)
-#define	__c99inline	__inline
+#define __c99inline __inline
 #endif
 
 #if defined(__lint__)
-#define __thread	/* delete */
-#define	__packed	__packed
-#define	__aligned(x)	/* delete */
-#define	__section(x)	/* delete */
+#define __thread /* delete */
+#define __packed __packed
+#define __aligned(x) /* delete */
+#define __section(x) /* delete */
 #elif __GNUC_PREREQ__(2, 7) || defined(__PCC__)
-#define	__packed	__attribute__((__packed__))
-#define	__aligned(x)	__attribute__((__aligned__(x)))
-#define	__section(x)	__attribute__((__section__(x)))
+#define __packed __attribute__((__packed__))
+#define __aligned(x) __attribute__((__aligned__(x)))
+#define __section(x) __attribute__((__section__(x)))
 #elif defined(_MSC_VER)
-#define	__packed	/* ignore */
+#define __packed /* ignore */
 #else
-#define	__packed	error: no __packed for this compiler
-#define	__aligned(x)	error: no __aligned for this compiler
-#define	__section(x)	error: no __section for this compiler
+#define __packed                                                               \
+  error: no __packed for this compiler
+#define __aligned(x)                                                           \
+  error: no __aligned for this compiler
+#define __section(x)                                                           \
+  error: no __section for this compiler
 #endif
 
 /*
@@ -384,13 +389,13 @@
  * in GCC 2.92.
  */
 #if defined(__lint__)
-#define	__restrict	/* delete __restrict when not supported */
+#define __restrict /* delete __restrict when not supported */
 #elif __STDC_VERSION__ >= 199901L
-#define	__restrict	restrict
+#define __restrict restrict
 #elif __GNUC_PREREQ__(2, 92)
-#define	__restrict	__restrict__
+#define __restrict __restrict__
 #else
-#define	__restrict	/* delete __restrict when not supported */
+#define __restrict /* delete __restrict when not supported */
 #endif
 
 /*
@@ -399,31 +404,31 @@
  */
 #if !(__STDC_VERSION__ >= 199901L)
 #if __GNUC_PREREQ__(2, 6)
-#define	__func__	__PRETTY_FUNCTION__
+#define __func__ __PRETTY_FUNCTION__
 #elif __GNUC_PREREQ__(2, 4)
-#define	__func__	__FUNCTION__
+#define __func__ __FUNCTION__
 #else
-#define	__func__	""
+#define __func__ ""
 #endif
 #endif /* !(__STDC_VERSION__ >= 199901L) */
 
 #if defined(_KERNEL)
 #if defined(NO_KERNEL_RCSIDS)
 #undef __KERNEL_RCSID
-#define	__KERNEL_RCSID(_n, _s)		/* nothing */
-#endif /* NO_KERNEL_RCSIDS */
-#endif /* _KERNEL */
+#define __KERNEL_RCSID(_n, _s) /* nothing */
+#endif                         /* NO_KERNEL_RCSIDS */
+#endif                         /* _KERNEL */
 
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
-#define	__RENAME(x)	___RENAME(x)
+#define __RENAME(x) ___RENAME(x)
 #elif defined(__lint__)
-#define	__RENAME(x)	__symbolrename(x)
+#define __RENAME(x) __symbolrename(x)
 #else
 #error "No function renaming possible"
 #endif /* __GNUC__ */
-#else /* _STANDALONE || _KERNEL */
-#define	__RENAME(x)	no renaming in kernel/standalone environment
+#else  /* _STANDALONE || _KERNEL */
+#define __RENAME(x) no renaming in kernel / standalone environment
 #endif
 
 /*
@@ -432,9 +437,9 @@
  * arbitrary, might work with older compilers.
  */
 #if __GNUC_PREREQ__(2, 95)
-#define	__insn_barrier()	__asm __volatile("":::"memory")
+#define __insn_barrier() __asm __volatile("" ::: "memory")
 #else
-#define	__insn_barrier()	/* */
+#define __insn_barrier() /* */
 #endif
 
 /*
@@ -466,11 +471,11 @@
  *	  larger code.
  */
 #if __GNUC_PREREQ__(2, 96)
-#define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
-#define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
+#define __predict_true(exp) __builtin_expect((exp) != 0, 1)
+#define __predict_false(exp) __builtin_expect((exp) != 0, 0)
 #else
-#define	__predict_true(exp)	(exp)
-#define	__predict_false(exp)	(exp)
+#define __predict_true(exp) (exp)
+#define __predict_false(exp) (exp)
 #endif
 
 /*
@@ -480,28 +485,29 @@
  * didn't permit keeping the keywords out of the application namespace).
  */
 #if __GNUC_PREREQ__(2, 7)
-#define __printflike(fmtarg, firstvararg)	\
-	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+#define __printflike(fmtarg, firstvararg)                                      \
+  __attribute__((__format__(__printf__, fmtarg, firstvararg)))
 #ifndef __syslog_attribute__
 #define __syslog__ __printf__
 #endif
-#define __sysloglike(fmtarg, firstvararg)	\
-	    __attribute__((__format__ (__syslog__, fmtarg, firstvararg)))
-#define __scanflike(fmtarg, firstvararg)	\
-	    __attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
-#define __format_arg(fmtarg)    __attribute__((__format_arg__ (fmtarg)))
+#define __sysloglike(fmtarg, firstvararg)                                      \
+  __attribute__((__format__(__syslog__, fmtarg, firstvararg)))
+#define __scanflike(fmtarg, firstvararg)                                       \
+  __attribute__((__format__(__scanf__, fmtarg, firstvararg)))
+#define __format_arg(fmtarg) __attribute__((__format_arg__(fmtarg)))
 #else
-#define __printflike(fmtarg, firstvararg)	/* nothing */
-#define __scanflike(fmtarg, firstvararg)	/* nothing */
-#define __sysloglike(fmtarg, firstvararg)	/* nothing */
-#define __format_arg(fmtarg)			/* nothing */
+#define __printflike(fmtarg, firstvararg) /* nothing */
+#define __scanflike(fmtarg, firstvararg)  /* nothing */
+#define __sysloglike(fmtarg, firstvararg) /* nothing */
+#define __format_arg(fmtarg)              /* nothing */
 #endif
 
 /* GCC 3.0 adds attribute to declare interrupt entry point. */
 #if __GNUC_PREREQ__(3, 0)
-#define __interrupt(x) __attribute__ ((interrupt(x))) 
+#define __interrupt(x) __attribute__((interrupt(x)))
 #else
-#define __interrupt(x) error: no __interrupt for this compiler
+#define __interrupt(x)                                                         \
+  error: no __interrupt for this compiler
 #endif
 
 /*
@@ -548,77 +554,84 @@
  *	__link_set_entry(set, idx)
  *		Access the link set entry at index `idx' from set `set'.
  */
-#define	__link_set_foreach(pvar, set)					\
-	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
+#define __link_set_foreach(pvar, set)                                          \
+  for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
-#define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
+#define __link_set_entry(set, idx) (__link_set_start(set)[idx])
 
 /*
  * Return the natural alignment in bytes for the given type
  */
 #if __GNUC_PREREQ__(4, 1)
-#define	__alignof(__t)  __alignof__(__t)
+#define __alignof(__t) __alignof__(__t)
 #else
-#define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
+#define __alignof(__t)(sizeof(struct {char __x; __t __y;}) - sizeof(__t))
 #endif
 
 /*
  * Return the number of elements in a statically-allocated array,
  * __x.
  */
-#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#define __arraycount(__x) (sizeof(__x) / sizeof(__x[0]))
 
 /* Macros for min/max. */
-#define MIN(a,b)    ((/*CONSTCOND*/(a)<(b))?(a):(b))
-#define MAX(a,b)    ((/*CONSTCOND*/(a)>(b))?(a):(b))
+#define MIN(a, b) ((/*CONSTCOND*/ (a) < (b)) ? (a) : (b))
+#define MAX(a, b) ((/*CONSTCOND*/ (a) > (b)) ? (a) : (b))
 
 #ifndef __ASSEMBLER__
 #define NBBY 8
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define	__BIT(__n)	\
-    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
-    ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
+#define __BIT(__n)                                                             \
+  (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t))                              \
+     ? 0                                                                       \
+     : ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* __BITS(m, n): bits m through n, m < n. */
-#define	__BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+#define __BITS(__m, __n)                                                       \
+  ((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
 #endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */
-#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+#define __LOWEST_SET_BIT(__mask) ((((__mask)-1) & (__mask)) ^ (__mask))
 
-#define	__PRIuBIT	PRIuMAX
-#define	__PRIuBITS	__PRIuBIT
+#define __PRIuBIT PRIuMAX
+#define __PRIuBITS __PRIuBIT
 
-#define	__PRIxBIT	PRIxMAX
-#define	__PRIxBITS	__PRIxBIT
+#define __PRIxBIT PRIxMAX
+#define __PRIxBITS __PRIxBIT
 
-#define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
-#define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
-#define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
+#define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define __SHIFTIN(__x, __mask) ((__x)*__LOWEST_SET_BIT(__mask))
+#define __SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
 
 /*
  * Only to be used in other headers that are included from both c or c++
  * NOT to be used in code.
  */
 #ifdef __cplusplus
-#define __CAST(__dt, __st)	static_cast<__dt>(__st)
+#define __CAST(__dt, __st) static_cast<__dt>(__st)
 #else
-#define __CAST(__dt, __st)	((__dt)(__st))
+#define __CAST(__dt, __st) ((__dt)(__st))
 #endif
 
-#define __CASTV(__dt, __st)	__CAST(__dt, __CAST(void *, __st))
-#define __CASTCV(__dt, __st)	__CAST(__dt, __CAST(const void *, __st))
+#define __CASTV(__dt, __st) __CAST(__dt, __CAST(void *, __st))
+#define __CASTCV(__dt, __st) __CAST(__dt, __CAST(const void *, __st))
 
 #define __USE(a) ((void)(a))
 
-#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
-    (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
+#define __type_mask(t)                                                         \
+  (/*LINTED*/ sizeof(t) < sizeof(intmax_t)                                     \
+     ? (~((1ULL << (sizeof(t) * NBBY)) - 1))                                   \
+     : 0ULL)
 
 #ifndef __ASSEMBLER__
-static __inline long long __zeroll(void) { return 0; }
-static __inline unsigned long long __zeroull(void) { return 0; }
+static __inline long long __zeroll(void) {
+  return 0;
+}
+static __inline unsigned long long __zeroull(void) {
+  return 0;
+}
 #else
 #define __zeroll() (0LL)
 #define __zeroull() (0ULL)
@@ -627,26 +640,27 @@ static __inline unsigned long long __zeroull(void) { return 0; }
 #define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
 #define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
-#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_max_s(t) ((t) ~((1ULL << (sizeof(t) * NBBY - 1))))
 #define __type_min_u(t) ((t)0ULL)
 #define __type_max_u(t) ((t)~0ULL)
-#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#define __type_is_signed(t) (/*LINTED*/ __type_min_s(t) + (t)1 < (t)1)
 #define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
 #define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
+#define __type_fit_u(t, a)                                                     \
+  (/*LINTED*/ !__negative_p(a) &&                                              \
+   (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
 
-#define __type_fit_u(t, a) (/*LINTED*/!__negative_p(a) && \
-    (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
-
-#define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
-    ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
-    ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 && \
-     (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+#define __type_fit_s(t, a)                                                     \
+  (/*LINTED*/ __negative_p(a)                                                  \
+     ? ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t))             \
+     : ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 &&                         \
+        (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
 
 /*
  * return true if value 'a' fits in type 't'
  */
-#define __type_fit(t, a) (__type_is_signed(t) ? \
-    __type_fit_s(t, a) : __type_fit_u(t, a))
+#define __type_fit(t, a)                                                       \
+  (__type_is_signed(t) ? __type_fit_s(t, a) : __type_fit_u(t, a))
 
 #endif /* !_SYS_CDEFS_H_ */

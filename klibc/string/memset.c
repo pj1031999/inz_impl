@@ -27,11 +27,10 @@
 
 #include <klibc.h>
 
-void* memset(void *b, int c, size_t len)
-{
-	char *bb;
+void *memset(void *b, int c, size_t len) {
+  char *bb;
 
-	for (bb = (char *)b; len--; )
-		*bb++ = c;
-	return (b);
+  for (bb = (char *)b; len--;)
+    *bb++ = c;
+  return (b);
 }

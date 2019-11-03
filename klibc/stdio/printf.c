@@ -82,33 +82,31 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
  */
 #define SARG()                                                                 \
   (flags & MAXINT                                                              \
-       ? va_arg(ap, intmax_t)                                                  \
-       : flags & PTRINT ? va_arg(ap, intptr_t)                                 \
-                        : flags & SIZEINT                                      \
-                              ? va_arg(ap, ssize_t)                            \
-                              : flags & QUADINT                                \
-                                    ? va_arg(ap, int64_t)                      \
-                                    : flags & LONGINT                          \
-                                          ? va_arg(ap, long)                   \
-                                          : flags & SHORTINT                   \
-                                                ? (long)(short)va_arg(ap, int) \
-                                                : (long)va_arg(ap, int))
+     ? va_arg(ap, intmax_t)                                                    \
+     : flags & PTRINT                                                          \
+         ? va_arg(ap, intptr_t)                                                \
+         : flags & SIZEINT                                                     \
+             ? va_arg(ap, ssize_t)                                             \
+             : flags & QUADINT                                                 \
+                 ? va_arg(ap, int64_t)                                         \
+                 : flags & LONGINT                                             \
+                     ? va_arg(ap, long)                                        \
+                     : flags & SHORTINT ? (long)(short)va_arg(ap, int)         \
+                                        : (long)va_arg(ap, int))
 #define UARG()                                                                 \
   (flags & MAXINT                                                              \
-       ? va_arg(ap, uintmax_t)                                                 \
-       : flags & PTRINT                                                        \
-             ? va_arg(ap, uintptr_t)                                           \
-             : flags & SIZEINT                                                 \
-                   ? va_arg(ap, size_t)                                        \
-                   : flags & QUADINT                                           \
-                         ? va_arg(ap, uint64_t)                                \
-                         : flags & LONGINT                                     \
-                               ? va_arg(ap, unsigned long)                     \
-                               : flags & SHORTINT                              \
-                                     ? (unsigned long)(unsigned short)va_arg(  \
-                                           ap, int)                            \
-                                     : (unsigned long)va_arg(ap,               \
-                                                             unsigned int))
+     ? va_arg(ap, uintmax_t)                                                   \
+     : flags & PTRINT                                                          \
+         ? va_arg(ap, uintptr_t)                                               \
+         : flags & SIZEINT                                                     \
+             ? va_arg(ap, size_t)                                              \
+             : flags & QUADINT                                                 \
+                 ? va_arg(ap, uint64_t)                                        \
+                 : flags & LONGINT                                             \
+                     ? va_arg(ap, unsigned long)                               \
+                     : flags & SHORTINT                                        \
+                         ? (unsigned long)(unsigned short)va_arg(ap, int)      \
+                         : (unsigned long)va_arg(ap, unsigned int))
 
 /*
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
@@ -154,261 +152,261 @@ int vprintf(const char *fmt, va_list ap) {
     ch = *fmt++;
   reswitch:
     switch (ch) {
-    case ' ':
-      /*
-       * ``If the space and + flags both appear, the space
-       * flag will be ignored.''
-       *	-- ANSI X3J11
-       */
-      if (!sign)
-        sign = ' ';
-      goto rflag;
-    case '#':
-      flags |= ALT;
-      goto rflag;
-    case '*':
-      /*
-       * ``A negative field width argument is taken as a
-       * - flag followed by a positive field width.''
-       *	-- ANSI X3J11
-       * They don't exclude field widths read from args.
-       */
-      if ((width = va_arg(ap, int)) >= 0)
-        goto rflag;
-      width = -width;
-    /* FALLTHROUGH */
-    case '-':
-      flags |= LADJUST;
-      goto rflag;
-    case '+':
-      sign = '+';
-      goto rflag;
-    case '.':
-      if ((ch = *fmt++) == '*') {
-        n = va_arg(ap, int);
-        prec = n < 0 ? -1 : n;
-        goto rflag;
-      }
-      n = 0;
-      while (is_digit(ch)) {
-        n = 10 * n + to_digit(ch);
-        ch = *fmt++;
-      }
-      prec = n < 0 ? -1 : n;
-      goto reswitch;
-    case '0':
-      /*
-       * ``Note that 0 is taken as a flag, not as the
-       * beginning of a field width.''
-       *	-- ANSI X3J11
-       */
-      flags |= ZEROPAD;
-      goto rflag;
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-      n = 0;
-      do {
-        n = 10 * n + to_digit(ch);
-        ch = *fmt++;
-      } while (is_digit(ch));
-      width = n;
-      goto reswitch;
-    case 'h':
-      flags |= SHORTINT;
-      goto rflag;
-    case 'j':
-      flags |= MAXINT;
-      goto rflag;
-    case 'l':
-      if (*fmt == 'l') {
-        fmt++;
-        flags |= QUADINT;
-      } else {
-        flags |= LONGINT;
-      }
-      goto rflag;
-    case 'q':
-      flags |= QUADINT;
-      goto rflag;
-    case 't':
-      flags |= PTRINT;
-      goto rflag;
-    case 'z':
-      flags |= SIZEINT;
-      goto rflag;
-    case 'c':
-      *(cp = bf) = va_arg(ap, int);
-      size = 1;
-      sign = '\0';
-      break;
-    case 'D':
-      flags |= LONGINT;
-    /*FALLTHROUGH*/
-    case 'd':
-    case 'i':
-      _uquad = SARG();
-      if ((int64_t)_uquad < 0) {
-        _uquad = -_uquad;
-        sign = '-';
-      }
-      base = DEC;
-      goto number;
-    case 'n':
-      if (flags & MAXINT)
-        *va_arg(ap, intmax_t *) = ret;
-      else if (flags & PTRINT)
-        *va_arg(ap, intptr_t *) = ret;
-      else if (flags & SIZEINT)
-        *va_arg(ap, ssize_t *) = ret;
-      else if (flags & QUADINT)
-        *va_arg(ap, int64_t *) = ret;
-      else if (flags & LONGINT)
-        *va_arg(ap, long *) = ret;
-      else if (flags & SHORTINT)
-        *va_arg(ap, short *) = ret;
-      else
-        *va_arg(ap, int *) = ret;
-      continue; /* no output */
-    case 'O':
-      flags |= LONGINT;
-    /*FALLTHROUGH*/
-    case 'o':
-      _uquad = UARG();
-      base = OCT;
-      goto nosign;
-    case 'p':
-      /*
-       * ``The argument shall be a pointer to void.  The
-       * value of the pointer is converted to a sequence
-       * of printable characters, in an implementation-
-       * defined manner.''
-       *	-- ANSI X3J11
-       */
-      /* NOSTRICT */
-      _uquad = (unsigned long)va_arg(ap, void *);
-      base = HEX;
-      xdigs = hexdigits;
-      flags |= HEXPREFIX;
-      ch = 'x';
-      goto nosign;
-    case 's':
-      if ((cp = va_arg(ap, char *)) == NULL)
-        /*XXXUNCONST*/
-        cp = __UNCONST("(null)");
-      if (prec >= 0) {
+      case ' ':
         /*
-         * can't use strlen; can only look for the
-         * NUL in the first `prec' characters, and
-         * strlen() will go further.
+         * ``If the space and + flags both appear, the space
+         * flag will be ignored.''
+         *	-- ANSI X3J11
          */
-        char *p = memchr(cp, 0, prec);
+        if (!sign)
+          sign = ' ';
+        goto rflag;
+      case '#':
+        flags |= ALT;
+        goto rflag;
+      case '*':
+        /*
+         * ``A negative field width argument is taken as a
+         * - flag followed by a positive field width.''
+         *	-- ANSI X3J11
+         * They don't exclude field widths read from args.
+         */
+        if ((width = va_arg(ap, int)) >= 0)
+          goto rflag;
+        width = -width;
+      /* FALLTHROUGH */
+      case '-':
+        flags |= LADJUST;
+        goto rflag;
+      case '+':
+        sign = '+';
+        goto rflag;
+      case '.':
+        if ((ch = *fmt++) == '*') {
+          n = va_arg(ap, int);
+          prec = n < 0 ? -1 : n;
+          goto rflag;
+        }
+        n = 0;
+        while (is_digit(ch)) {
+          n = 10 * n + to_digit(ch);
+          ch = *fmt++;
+        }
+        prec = n < 0 ? -1 : n;
+        goto reswitch;
+      case '0':
+        /*
+         * ``Note that 0 is taken as a flag, not as the
+         * beginning of a field width.''
+         *	-- ANSI X3J11
+         */
+        flags |= ZEROPAD;
+        goto rflag;
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        n = 0;
+        do {
+          n = 10 * n + to_digit(ch);
+          ch = *fmt++;
+        } while (is_digit(ch));
+        width = n;
+        goto reswitch;
+      case 'h':
+        flags |= SHORTINT;
+        goto rflag;
+      case 'j':
+        flags |= MAXINT;
+        goto rflag;
+      case 'l':
+        if (*fmt == 'l') {
+          fmt++;
+          flags |= QUADINT;
+        } else {
+          flags |= LONGINT;
+        }
+        goto rflag;
+      case 'q':
+        flags |= QUADINT;
+        goto rflag;
+      case 't':
+        flags |= PTRINT;
+        goto rflag;
+      case 'z':
+        flags |= SIZEINT;
+        goto rflag;
+      case 'c':
+        *(cp = bf) = va_arg(ap, int);
+        size = 1;
+        sign = '\0';
+        break;
+      case 'D':
+        flags |= LONGINT;
+      /*FALLTHROUGH*/
+      case 'd':
+      case 'i':
+        _uquad = SARG();
+        if ((int64_t)_uquad < 0) {
+          _uquad = -_uquad;
+          sign = '-';
+        }
+        base = DEC;
+        goto number;
+      case 'n':
+        if (flags & MAXINT)
+          *va_arg(ap, intmax_t *) = ret;
+        else if (flags & PTRINT)
+          *va_arg(ap, intptr_t *) = ret;
+        else if (flags & SIZEINT)
+          *va_arg(ap, ssize_t *) = ret;
+        else if (flags & QUADINT)
+          *va_arg(ap, int64_t *) = ret;
+        else if (flags & LONGINT)
+          *va_arg(ap, long *) = ret;
+        else if (flags & SHORTINT)
+          *va_arg(ap, short *) = ret;
+        else
+          *va_arg(ap, int *) = ret;
+        continue; /* no output */
+      case 'O':
+        flags |= LONGINT;
+      /*FALLTHROUGH*/
+      case 'o':
+        _uquad = UARG();
+        base = OCT;
+        goto nosign;
+      case 'p':
+        /*
+         * ``The argument shall be a pointer to void.  The
+         * value of the pointer is converted to a sequence
+         * of printable characters, in an implementation-
+         * defined manner.''
+         *	-- ANSI X3J11
+         */
+        /* NOSTRICT */
+        _uquad = (unsigned long)va_arg(ap, void *);
+        base = HEX;
+        xdigs = hexdigits;
+        flags |= HEXPREFIX;
+        ch = 'x';
+        goto nosign;
+      case 's':
+        if ((cp = va_arg(ap, char *)) == NULL)
+          /*XXXUNCONST*/
+          cp = __UNCONST("(null)");
+        if (prec >= 0) {
+          /*
+           * can't use strlen; can only look for the
+           * NUL in the first `prec' characters, and
+           * strlen() will go further.
+           */
+          char *p = memchr(cp, 0, prec);
 
-        if (p != NULL) {
-          size = p - cp;
-          if (size > prec)
+          if (p != NULL) {
+            size = p - cp;
+            if (size > prec)
+              size = prec;
+          } else
             size = prec;
         } else
-          size = prec;
-      } else
-        size = strlen(cp);
-      sign = '\0';
-      break;
-    case 'U':
-      flags |= LONGINT;
-    /*FALLTHROUGH*/
-    case 'u':
-      _uquad = UARG();
-      base = DEC;
-      goto nosign;
-    case 'X':
-      xdigs = HEXDIGITS;
-      goto hex;
-    case 'x':
-      xdigs = hexdigits;
-    hex:
-      _uquad = UARG();
-      base = HEX;
-      /* leading 0x/X only if non-zero */
-      if (flags & ALT && _uquad != 0)
-        flags |= HEXPREFIX;
+          size = strlen(cp);
+        sign = '\0';
+        break;
+      case 'U':
+        flags |= LONGINT;
+      /*FALLTHROUGH*/
+      case 'u':
+        _uquad = UARG();
+        base = DEC;
+        goto nosign;
+      case 'X':
+        xdigs = HEXDIGITS;
+        goto hex;
+      case 'x':
+        xdigs = hexdigits;
+      hex:
+        _uquad = UARG();
+        base = HEX;
+        /* leading 0x/X only if non-zero */
+        if (flags & ALT && _uquad != 0)
+          flags |= HEXPREFIX;
 
-    /* unsigned conversions */
-    nosign:
-      sign = '\0';
-    /*
-     * ``... diouXx conversions ... if a precision is
-     * specified, the 0 flag will be ignored.''
-     *	-- ANSI X3J11
-     */
-    number:
-      if ((dprec = prec) >= 0)
-        flags &= ~ZEROPAD;
-
+      /* unsigned conversions */
+      nosign:
+        sign = '\0';
       /*
-       * ``The result of converting a zero value with an
-       * explicit precision of zero is no characters.''
+       * ``... diouXx conversions ... if a precision is
+       * specified, the 0 flag will be ignored.''
        *	-- ANSI X3J11
        */
-      cp = bf + KPRINTF_BUFSIZE;
-      if (_uquad != 0 || prec != 0) {
+      number:
+        if ((dprec = prec) >= 0)
+          flags &= ~ZEROPAD;
+
         /*
-         * Unsigned mod is hard, and unsigned mod
-         * by a constant is easier than that by
-         * a variable; hence this switch.
+         * ``The result of converting a zero value with an
+         * explicit precision of zero is no characters.''
+         *	-- ANSI X3J11
          */
-        switch (base) {
-        case OCT:
-          do {
-            *--cp = to_char(_uquad & 7);
-            _uquad >>= 3;
-          } while (_uquad);
-          /* handle octal leading 0 */
-          if (flags & ALT && *cp != '0')
-            *--cp = '0';
-          break;
+        cp = bf + KPRINTF_BUFSIZE;
+        if (_uquad != 0 || prec != 0) {
+          /*
+           * Unsigned mod is hard, and unsigned mod
+           * by a constant is easier than that by
+           * a variable; hence this switch.
+           */
+          switch (base) {
+            case OCT:
+              do {
+                *--cp = to_char(_uquad & 7);
+                _uquad >>= 3;
+              } while (_uquad);
+              /* handle octal leading 0 */
+              if (flags & ALT && *cp != '0')
+                *--cp = '0';
+              break;
 
-        case DEC:
-          /* many numbers are 1 digit */
-          while (_uquad >= 10) {
-            *--cp = to_char(_uquad % 10);
-            _uquad /= 10;
+            case DEC:
+              /* many numbers are 1 digit */
+              while (_uquad >= 10) {
+                *--cp = to_char(_uquad % 10);
+                _uquad /= 10;
+              }
+              *--cp = to_char(_uquad);
+              break;
+
+            case HEX:
+              do {
+                *--cp = xdigs[_uquad & 15];
+                _uquad >>= 4;
+              } while (_uquad);
+              break;
+
+            default:
+              /*XXXUNCONST*/
+              cp = __UNCONST("bug in kprintf: bad base");
+              size = strlen(cp);
+              goto skipsize;
           }
-          *--cp = to_char(_uquad);
-          break;
-
-        case HEX:
-          do {
-            *--cp = xdigs[_uquad & 15];
-            _uquad >>= 4;
-          } while (_uquad);
-          break;
-
-        default:
-          /*XXXUNCONST*/
-          cp = __UNCONST("bug in kprintf: bad base");
-          size = strlen(cp);
-          goto skipsize;
         }
-      }
-      size = bf + KPRINTF_BUFSIZE - cp;
-    skipsize:
-      break;
-    default: /* "%?" prints ?, unless ? is NUL */
-      if (ch == '\0')
-        goto done;
-      /* pretend it was %c with argument ch */
-      cp = bf;
-      *cp = ch;
-      size = 1;
-      sign = '\0';
-      break;
+        size = bf + KPRINTF_BUFSIZE - cp;
+      skipsize:
+        break;
+      default: /* "%?" prints ?, unless ? is NUL */
+        if (ch == '\0')
+          goto done;
+        /* pretend it was %c with argument ch */
+        cp = bf;
+        *cp = ch;
+        size = 1;
+        sign = '\0';
+        break;
     }
 
     /*
@@ -480,7 +478,7 @@ done:
 
 void printf(const char *fmt, ...) {
   va_list ap;
-  
+
   va_start(ap, fmt);
   vprintf(fmt, ap);
   va_end(ap);

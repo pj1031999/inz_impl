@@ -32,7 +32,7 @@ extern "C" {
 #if defined(_WIN32) /* Main development platform */
 #include <windows.h>
 #elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) ||            \
-    defined(__cplusplus) /* C99 or later */
+  defined(__cplusplus) /* C99 or later */
 #include <stdint.h>
 typedef unsigned int UINT;  /* int must be 16-bit or 32-bit */
 typedef unsigned char BYTE; /* char must be 8-bit */
