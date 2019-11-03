@@ -349,8 +349,8 @@ AARCH64REG_READ_INLINE(revidr_el1)
 AARCH64REG_READ_INLINE(cpacr_el1) // Coprocessor Access Control Regiser
 AARCH64REG_WRITE_INLINE(cpacr_el1)
 
-// #define	CPACR_TTA		__BIT(28)	 // System Register Access
-// Traps #define	CPACR_FPEN		__BITS(21,20) #define
+// #define	CPACR_TTA		__BIT(28)	 // System Register
+// Access Traps #define	CPACR_FPEN		__BITS(21,20) #define
 // CPACR_FPEN_NONE	 __SHIFTIN(0, CPACR_FPEN) #define	 CPACR_FPEN_EL1
 // __SHIFTIN(1, CPACR_FPEN) #define	 CPACR_FPEN_NONE_2	 __SHIFTIN(2,
 // CPACR_FPEN) #define	 CPACR_FPEN_ALL		 __SHIFTIN(3, CPACR_FPEN)
@@ -532,10 +532,11 @@ AARCH64REG_WRITE_INLINE(rvbar_el1)
 AARCH64REG_READ_INLINE(sctlr_el1) // System Control Register
 AARCH64REG_WRITE_INLINE(sctlr_el1)
 
-// #define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0, write
+// #define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0,
+// write
 // 0
-// #define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0, write
-// 1 #define	SCTLR_M			__BIT(0) #define	SCTLR_A
+// #define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0,
+// write 1 #define	SCTLR_M			__BIT(0) #define	SCTLR_A
 // __BIT(1) #define	SCTLR_C			__BIT(2) #define	SCTLR_SA
 // __BIT(3) #define	SCTLR_SA0		__BIT(4) #define
 // SCTLR_CP15BEN		__BIT(5) #define	SCTLR_THEE

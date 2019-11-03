@@ -276,12 +276,15 @@
 #define CPU_ID_MV88SV584X_V6 0x561f5840 /* Marvell Sheeva 88SV584x v6 Core */
 #define CPU_ID_MV88SV584X_V7 0x562f5840 /* Marvell Sheeva 88SV584x v7 Core */
 /* Marvell's CPUIDs with ARM ID in implementor field */
-#define CPU_ID_ARM_88SV581X_V6 0x410fb760 /* Marvell Sheeva 88SV581x v6 Core   \
-                                           */
-#define CPU_ID_ARM_88SV581X_V7 0x413fc080 /* Marvell Sheeva 88SV581x v7 Core   \
-                                           */
-#define CPU_ID_ARM_88SV584X_V6 0x410fb020 /* Marvell Sheeva 88SV584x v6 Core   \
-                                           */
+#define CPU_ID_ARM_88SV581X_V6                                                 \
+  0x410fb760 /* Marvell Sheeva 88SV581x v6 Core                                \
+              */
+#define CPU_ID_ARM_88SV581X_V7                                                 \
+  0x413fc080 /* Marvell Sheeva 88SV581x v7 Core                                \
+              */
+#define CPU_ID_ARM_88SV584X_V6                                                 \
+  0x410fb020 /* Marvell Sheeva 88SV584x v6 Core                                \
+              */
 
 /* CPUID registers */
 #define ARM_ISA3_SYNCHPRIM_MASK 0x0000f000
@@ -380,7 +383,8 @@
 #define CPU_CONTROL_V4COMPAT 0x00008000    /* L4: ARMv4 compat LDR R15 etc */
 #define CPU_CONTROL_HA_ENABLE 0x00020000   /* HA: Hardware Access flag enable */
 #define CPU_CONTROL_WXN_ENABLE 0x00080000  /* WXN: Write Execute Never */
-#define CPU_CONTROL_UWXN_ENABLE 0x00100000 /* UWXN: User Write eXecute Never   \
+#define CPU_CONTROL_UWXN_ENABLE                                                \
+  0x00100000                               /* UWXN: User Write eXecute Never   \
                                             */
 #define CPU_CONTROL_FI_ENABLE 0x00200000   /* FI: Low interrupt latency */
 #define CPU_CONTROL_UNAL_ENABLE 0x00400000 /* U: unaligned data access */
@@ -434,12 +438,13 @@
 #define ARM1176_AUXCTL_FIO 0x80000000 /* low intr latency override */
 
 /* XScale Auxiliary Control Register (CP15 register 1, opcode2 1) */
-#define XSCALE_AUXCTL_K 0x00000001         /* dis. write buffer coalescing */
-#define XSCALE_AUXCTL_P 0x00000002         /* ECC protect page table access */
-#define XSCALE_AUXCTL_MD_WB_RA 0x00000000  /* mini-D$ wb, read-allocate */
-#define XSCALE_AUXCTL_MD_WB_RWA 0x00000010 /* mini-D$ wb, read/write-allocate  \
-                                            */
-#define XSCALE_AUXCTL_MD_WT 0x00000020     /* mini-D$ wt, read-allocate */
+#define XSCALE_AUXCTL_K 0x00000001        /* dis. write buffer coalescing */
+#define XSCALE_AUXCTL_P 0x00000002        /* ECC protect page table access */
+#define XSCALE_AUXCTL_MD_WB_RA 0x00000000 /* mini-D$ wb, read-allocate */
+#define XSCALE_AUXCTL_MD_WB_RWA                                                \
+  0x00000010                           /* mini-D$ wb, read/write-allocate      \
+                                        */
+#define XSCALE_AUXCTL_MD_WT 0x00000020 /* mini-D$ wt, read-allocate */
 #define XSCALE_AUXCTL_MD_MASK 0x00000030
 
 /* ARM11 MPCore Auxiliary Control Register (CP15 register 1, opcode2 1) */
@@ -463,21 +468,23 @@
 #define PJ4B_AUXFMC0_FW __BIT(8)       /* alias of PJ4B_AUXCTL_FW*/
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
-#define CORTEXA9_AUXCTL_FW 0x00000001      /* Cache and TLB updates broadcast */
-#define CORTEXA9_AUXCTL_L2PE 0x00000002    /* Prefetch hint enable */
-#define CORTEXA9_AUXCTL_L1PE 0x00000004    /* Data prefetch hint enable */
-#define CORTEXA9_AUXCTL_WR_ZERO 0x00000008 /* Ena. write full line of 0s mode  \
-                                            */
-#define CORTEXA9_AUXCTL_SMP 0x00000040     /* Coherency is active */
-#define CORTEXA9_AUXCTL_EXCL 0x00000080    /* Exclusive cache bit */
-#define CORTEXA9_AUXCTL_ONEWAY 0x00000100  /* Allocate in on cache way only */
-#define CORTEXA9_AUXCTL_PARITY 0x00000200  /* Support parity checking */
+#define CORTEXA9_AUXCTL_FW 0x00000001   /* Cache and TLB updates broadcast */
+#define CORTEXA9_AUXCTL_L2PE 0x00000002 /* Prefetch hint enable */
+#define CORTEXA9_AUXCTL_L1PE 0x00000004 /* Data prefetch hint enable */
+#define CORTEXA9_AUXCTL_WR_ZERO                                                \
+  0x00000008                              /* Ena. write full line of 0s mode   \
+                                           */
+#define CORTEXA9_AUXCTL_SMP 0x00000040    /* Coherency is active */
+#define CORTEXA9_AUXCTL_EXCL 0x00000080   /* Exclusive cache bit */
+#define CORTEXA9_AUXCTL_ONEWAY 0x00000100 /* Allocate in on cache way only */
+#define CORTEXA9_AUXCTL_PARITY 0x00000200 /* Support parity checking */
 
 /* Cortex-A15 Auxiliary Control Register (CP15 register 1, opcode 1) */
-#define CORTEXA15_ACTLR_BTB __BIT(0)    /* Cache and TLB updates broadcast */
-#define CORTEXA15_ACTLR_SMP __BIT(6)    /* SMP */
-#define CORTEXA15_ACTLR_IOBEU __BIT(15) /* In order issue in Branch Exec Unit  \
-                                         */
+#define CORTEXA15_ACTLR_BTB __BIT(0) /* Cache and TLB updates broadcast */
+#define CORTEXA15_ACTLR_SMP __BIT(6) /* SMP */
+#define CORTEXA15_ACTLR_IOBEU                                                  \
+  __BIT(15) /* In order issue in Branch Exec Unit                              \
+             */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK 0x80000000 /* Replace DCache Lock */

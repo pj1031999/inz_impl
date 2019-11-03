@@ -117,19 +117,23 @@
 /* Interrupt controller */
 #define BCM2835_INTC_IRQBPENDING                                               \
   (BCM2835_INTC_BASE + 0x00) /* IRQ Basic pending */
-#define BCM2835_INTC_IRQ1PENDING (BCM2835_INTC_BASE + 0x04) /* IRQ pending 1   \
-                                                             */
-#define BCM2835_INTC_IRQ2PENDING (BCM2835_INTC_BASE + 0x08) /* IRQ pending 2   \
-                                                             */
-#define BCM2835_INTC_FIQCTL (BCM2835_INTC_BASE + 0x0c)      /* FIQ control */
-#define BCM2835_INTC_IRQ1ENABLE (BCM2835_INTC_BASE + 0x10)  /* Enable IRQs 1 */
-#define BCM2835_INTC_IRQ2ENABLE (BCM2835_INTC_BASE + 0x14)  /* Enable IRQs 2 */
+#define BCM2835_INTC_IRQ1PENDING                                               \
+  (BCM2835_INTC_BASE + 0x04) /* IRQ pending 1                                  \
+                              */
+#define BCM2835_INTC_IRQ2PENDING                                               \
+  (BCM2835_INTC_BASE + 0x08)                               /* IRQ pending 2    \
+                                                            */
+#define BCM2835_INTC_FIQCTL (BCM2835_INTC_BASE + 0x0c)     /* FIQ control */
+#define BCM2835_INTC_IRQ1ENABLE (BCM2835_INTC_BASE + 0x10) /* Enable IRQs 1 */
+#define BCM2835_INTC_IRQ2ENABLE (BCM2835_INTC_BASE + 0x14) /* Enable IRQs 2 */
 #define BCM2835_INTC_IRQBENABLE                                                \
   (BCM2835_INTC_BASE + 0x18) /* Enable Basic IRQs */
-#define BCM2835_INTC_IRQ1DISABLE (BCM2835_INTC_BASE + 0x1c) /* Disable IRQ 1   \
-                                                             */
-#define BCM2835_INTC_IRQ2DISABLE (BCM2835_INTC_BASE + 0x20) /* Disable IRQ 2   \
-                                                             */
+#define BCM2835_INTC_IRQ1DISABLE                                               \
+  (BCM2835_INTC_BASE + 0x1c) /* Disable IRQ 1                                  \
+                              */
+#define BCM2835_INTC_IRQ2DISABLE                                               \
+  (BCM2835_INTC_BASE + 0x20) /* Disable IRQ 2                                  \
+                              */
 #define BCM2835_INTC_IRQBDISABLE                                               \
   (BCM2835_INTC_BASE + 0x24) /* Disable Basic IRQs */
 

@@ -219,11 +219,14 @@
 #define CPU_ID_MV88SV584X_V6 0x561f5840 /* Marvell Sheeva 88SV584x v6 Core */
 #define CPU_ID_MV88SV584X_V7 0x562f5840 /* Marvell Sheeva 88SV584x v7 Core */
 /* Marvell's CPUIDs with ARM ID in implementor field */
-#define CPU_ID_ARM_88SV581X_V6 0x410fb760 /* Marvell Sheeva 88SV581x v6 Core   \
-                                           */
-#define CPU_ID_ARM_88SV581X_V7 0x413fc080 /* Marvell Sheeva 88SV581x v7 Core   \
-                                           */
-#define CPU_ID_ARM_88SV584X_V6 0x410fb020 /* Marvell Sheeva 88SV584x v6 Core   \
-                                           */
+#define CPU_ID_ARM_88SV581X_V6                                                 \
+  0x410fb760 /* Marvell Sheeva 88SV581x v6 Core                                \
+              */
+#define CPU_ID_ARM_88SV581X_V7                                                 \
+  0x413fc080 /* Marvell Sheeva 88SV581x v7 Core                                \
+              */
+#define CPU_ID_ARM_88SV584X_V6                                                 \
+  0x410fb020 /* Marvell Sheeva 88SV584x v6 Core                                \
+              */
 
 #endif /* _ARM_CPUTYPES_H_ */

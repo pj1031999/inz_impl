@@ -280,7 +280,7 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
  * Write a block to the sd card
  * returns 0 on error
  */
-int sd_writeblock(uint32_t __unused lba, uint8_t __unused *buffer,
+int sd_writeblock(uint32_t __unused lba, const uint8_t __unused *buffer,
                   uint32_t __unused num) {
   // if(((uint64_t)buffer & (uint64_t)0x3) == 0) return 0; //Buffer not 32 bit
   // aligned

@@ -9,6 +9,6 @@
 
 int sd_init();
 int sd_readblock(uint32_t lba, uint8_t *buffer, uint32_t num);
-int sd_writeblock(uint32_t lba, uint8_t *buffer, uint32_t num);
+int sd_writeblock(uint32_t lba, const uint8_t *buffer, uint32_t num);
 
 #endif
