@@ -30,12 +30,18 @@ static inline void arm_irq_disable(void) {
 }
 
 /* Data Memory Barrier */
-static inline void arm_dmb(void) { __asm__ volatile("dmb" ::: "memory"); }
+static inline void arm_dmb(void) {
+  __asm__ volatile("dmb" ::: "memory");
+}
 
 /* Data Synchronization Barrier */
-static inline void arm_dsb(void) { __asm__ volatile("dsb" ::: "memory"); }
+static inline void arm_dsb(void) {
+  __asm__ volatile("dsb" ::: "memory");
+}
 
 /* Instruction Synchronization Barrier */
-static inline void arm_isb(void) { __asm__ volatile("isb" ::: "memory"); }
+static inline void arm_isb(void) {
+  __asm__ volatile("isb" ::: "memory");
+}
 
 #endif

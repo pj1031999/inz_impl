@@ -25,7 +25,8 @@ SOURCES_C := \
 	sd.c \
 	delays.c \
 	diskio.c \
-	pff.c \
+	ff.c \
+	ffsystem.c \
 
 SOURCES_ASM := \
 	boot.S \

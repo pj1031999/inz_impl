@@ -60,6 +60,8 @@
 #define INT_DATA_TIMEOUT 0x00100000
 #define INT_CMD_TIMEOUT 0x00010000
 #define INT_READ_RDY 0x00000020
+#define INT_WRITE_RDY 0x00000010
+#define INT_DATA_DONE 0x00000002
 #define INT_CMD_DONE 0x00000001
 
 #define INT_ERROR_MASK 0x017E8000
@@ -136,7 +138,7 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
   static int last_code = 0;
   static int last_code_cnt = 0;
 
-  if(last_code == code)
+  if (last_code == code)
     last_code_cnt++;
   else
     last_code_cnt = 0;
@@ -159,7 +161,7 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
     sd_err = SD_TIMEOUT;
     return 0;
   }
-  //printf("EMMC: Sending command %p, arg %p\n", code, arg);
+  // printf("EMMC: Sending command %p, arg %p\n", code, arg);
   *EMMC_INTERRUPT = *EMMC_INTERRUPT;
   *EMMC_ARG1 = arg;
   *EMMC_CMDTM = code;
@@ -167,40 +169,45 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
     wait_usec(1000);
   else if (code == CMD_SEND_IF_COND || code == CMD_APP_CMD)
     wait_usec(100);
-  
+
   if ((r = sd_int(INT_CMD_DONE))) {
     printf("ERROR: failed to send EMMC command\n");
     sd_err = r;
     return 0;
   }
-  
+
   r = *EMMC_RESP0;
-  if (code == CMD_GO_IDLE || code == CMD_APP_CMD){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "GO IDLE", arg);
+  if (code == CMD_GO_IDLE || code == CMD_APP_CMD) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "GO IDLE", arg);
     return 0;
   }
-  
-  else if (code == (CMD_APP_CMD | CMD_RSPNS_48)){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "APP", arg);
+
+  else if (code == (CMD_APP_CMD | CMD_RSPNS_48)) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "APP", arg);
     return r & SR_APP_CMD;
   }
-  
-  else if (code == CMD_SEND_OP_COND){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "OP COND", arg);
+
+  else if (code == CMD_SEND_OP_COND) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "OP COND", arg);
     return r;
   }
-  
-  else if (code == CMD_SEND_IF_COND){
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "IF COND", arg);
+
+  else if (code == CMD_SEND_IF_COND) {
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "IF COND", arg);
     return r == arg ? SD_OK : SD_ERROR;
   }
-  
+
   else if (code == CMD_ALL_SEND_CID) {
     r |= *EMMC_RESP3;
     r |= *EMMC_RESP2;
     r |= *EMMC_RESP1;
-    
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "SEND CID", arg);
+
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "SEND CID", arg);
     return r;
   }
 
@@ -209,7 +216,8 @@ int32_t sd_cmd(uint32_t code, uint32_t arg) {
               ((r & 0x8000) << 8)) &
              CMD_ERRORS_MASK;
 
-    if (last_code_cnt == 0) printf("EMMC: Sending command %s, arg %p\n", "ADDRESS", arg);
+    if (last_code_cnt == 0)
+      printf("EMMC: Sending command %s, arg %p\n", "ADDRESS", arg);
     return r & CMD_RCA_MASK;
   }
   return r & CMD_ERRORS_MASK;
@@ -226,9 +234,10 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
   int32_t r, c = 0, d;
   if (num < 1)
     num = 1;
-  if(lba != last_lba) printf("sd_readblock lba %p, num %p\n", lba, num);
+  if (lba != last_lba)
+    printf("sd_readblock lba %p, num %p\n", lba, num);
   last_lba = lba;
-  
+
   if (sd_status(SR_DAT_INHIBIT)) {
     sd_err = SD_TIMEOUT;
     return 0;
@@ -273,57 +282,52 @@ int sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
  * Write a block to the sd card
  * returns 0 on error
  */
-int sd_writeblock(uint32_t __unused lba, uint8_t __unused *buffer,
-                  uint32_t __unused num) {
-  // if(((uint64_t)buffer & (uint64_t)0x3) == 0) return 0; //Buffer not 32 bit
-  // aligned
-  // uint32_t *buf = (uint32_t *)buffer;
-  // int32_t c = 0;
-  // int32_t d, r;
-  // if(num < 1) return 0;
-  // if(sd_status(SR_DAT_INHIBIT))
-  //{
-  // sd_err = SD_TIMEOUT;
-  // return 0;
-  //}
-  // if(sd_scr[0] & SCR_SUPP_CCS)
-  //{
-  // if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT))
-  //{
-  // sd_cmd(CMD_SET_BLOCKCNT, num);
-  // if(sd_err) return 0;
-  //}
-  //*EMMC_BLKSIZECNT = (num << 16) | 512;
-  // sd_cmd(num == 1 ? CMD_WRITE_SINGLE : CMD_WRITE_MULTI, lba);
-  // if(sd_err) return 0;
-  //}
-  // else
-  //{
-  //*EMMC_BLKSIZECNT = (1 << 16) | 512;
-  //}
-  // while(c < num)
-  //{
-  // if(!(sd_scr[0] & SCR_SUPP_CCS))
-  //{
-  // sd_cmd(CMD_WRITE_SINGLE, (lba + c) * 512);
-  // if((r = sd_int(INT_READ_RDY)))
-  //{
-  // uart_puts("\rERROR: Timeout waiting for ready to read\n");
-  // sd_err = r;
-  // return 0;
-  //}
-  // for(d = 0; d < 128; d++)
-  //*EMMC_DATA = buf[d];
-  // if(sd_err) return 0;
-  //}
-  // c++;
-  // buf += 128;
-  //}
+int sd_writeblock(uint32_t lba, const uint8_t *buffer, uint32_t num) {
+  if (((uint64_t)buffer & (uint64_t)0x3) != 0)
+    return 0;
+  uint32_t *buf = (uint32_t *)buffer;
+  int32_t c = 0;
+  int32_t d, r;
+  if (num < 1)
+    return 0;
+  if (sd_status(SR_DAT_INHIBIT)) {
+    sd_err = SD_TIMEOUT;
+    return 0;
+  }
+  if (sd_scr[0] & SCR_SUPP_CCS) {
+    if (num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT)) {
+      sd_cmd(CMD_SET_BLOCKCNT, num);
+      if (sd_err)
+        return 0;
+    }
+    *EMMC_BLKSIZECNT = (num << 16) | 512;
+    sd_cmd(num == 1 ? CMD_WRITE_SINGLE : CMD_WRITE_MULTI, lba);
+    if (sd_err)
+      return 0;
+  } else {
+    *EMMC_BLKSIZECNT = (1 << 16) | 512;
+  }
+  while (c < num) {
+    if (!(sd_scr[0] & SCR_SUPP_CCS)) {
+      sd_cmd(CMD_WRITE_SINGLE, (lba + c) * 512);
+      if ((r = sd_int(INT_WRITE_RDY))) {
+        // uart_puts("\rERROR: Timeout waiting for ready to write\n");
+        sd_err = r;
+        return 0;
+      }
+      for (d = 0; d < 128; d++)
+        *EMMC_DATA = buf[d];
+      if (sd_err)
+        return 0;
+    }
+    c++;
+    buf += 128;
+  }
 
-  // if(sd_int(INT_DATA_DONE))
-  // return 1;
-  // else
-  return 0; // Make gcc happy
+  if (!sd_int(INT_DATA_DONE))
+    return 1;
+
+  return 0;
 }
 
 /**

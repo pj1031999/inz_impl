@@ -14,9 +14,9 @@ typedef struct pcpu {
   volatile int td_idnest;
   bool on_fault;
 
-  int switch_to; //index in ctx_t table with next context to switch
-  struct trapframe* schedule[2];
-  
+  int switch_to; // index in ctx_t table with next context to switch
+  struct trapframe *schedule[2];
+
 } pcpu_t;
 
 void pcpu_init(void);
@@ -24,6 +24,5 @@ void pcpu_init(void);
 static inline pcpu_t *pcpu(void) {
   return (pcpu_t *)reg_tpidr_el1_read();
 }
-
 
 #endif

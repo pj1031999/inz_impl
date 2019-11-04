@@ -34,19 +34,17 @@
 /*
  * This is designed to be small, not fast.
  */
-void *
-memmove(void *s1, const void *s2, size_t n)
-{
-	register const char *f = s2;
-	register char *t = s1;
+void *memmove(void *s1, const void *s2, size_t n) {
+  register const char *f = s2;
+  register char *t = s1;
 
-	if (f < t) {
-		f += n;
-		t += n;
-		while (n-- > 0)
-			*--t = *--f;
-	} else
-		while (n-- > 0)
-			*t++ = *f++;
-	return s1;
+  if (f < t) {
+    f += n;
+    t += n;
+    while (n-- > 0)
+      *--t = *--f;
+  } else
+    while (n-- > 0)
+      *t++ = *f++;
+  return s1;
 }

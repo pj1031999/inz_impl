@@ -7,8 +7,8 @@ extern uint8_t _bss_end[];
 extern uint8_t _brk_limit[];
 
 static struct {
-  uint8_t * _Atomic ptr;
-  uint8_t * _Atomic end;
+  uint8_t *_Atomic ptr;
+  uint8_t *_Atomic end;
 } state = {_bss_end, _brk_limit};
 
 void *sbrk(size_t size) {

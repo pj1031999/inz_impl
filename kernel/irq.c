@@ -9,34 +9,34 @@ static irq_handler_t _handler_vec[BCM2835_NIRQ + BCM2836_NIRQ];
 
 /* BCM2835 interrupt handling (peripherals) */
 
-#define BCM2835_ARMICU(x) \
+#define BCM2835_ARMICU(x)                                                      \
   BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMICU_BASE + (x))
 
-#define CHECK_IRQ() \
-  assert(irq >= BCM2836_NIRQ); \
+#define CHECK_IRQ()                                                            \
+  assert(irq >= BCM2836_NIRQ);                                                 \
   assert(irq < BCM2835_NIRQ + BCM2836_NIRQ)
 
-#define CHOOSE_IRQ_REGISTER(X) \
-  uint32_t reg; \
-  CHECK_IRQ(); \
-  if (irq >= BCM2835_INT_BASICBASE) { \
-    reg = BCM2835_ARMICU(BCM2835_INTC_IRQB ## X); \
-    irq -= BCM2835_INT_BASICBASE; \
-  } else if (irq >= BCM2835_INT_GPU1BASE) { \
-    reg = BCM2835_ARMICU(BCM2835_INTC_IRQ2 ## X); \
-    irq -= BCM2835_INT_GPU1BASE; \
-  } else { \
-    reg = BCM2835_ARMICU(BCM2835_INTC_IRQ1 ## X); \
-    irq -= BCM2835_INT_GPU0BASE; \
+#define CHOOSE_IRQ_REGISTER(X)                                                 \
+  uint32_t reg;                                                                \
+  CHECK_IRQ();                                                                 \
+  if (irq >= BCM2835_INT_BASICBASE) {                                          \
+    reg = BCM2835_ARMICU(BCM2835_INTC_IRQB##X);                                \
+    irq -= BCM2835_INT_BASICBASE;                                              \
+  } else if (irq >= BCM2835_INT_GPU1BASE) {                                    \
+    reg = BCM2835_ARMICU(BCM2835_INTC_IRQ2##X);                                \
+    irq -= BCM2835_INT_GPU1BASE;                                               \
+  } else {                                                                     \
+    reg = BCM2835_ARMICU(BCM2835_INTC_IRQ1##X);                                \
+    irq -= BCM2835_INT_GPU0BASE;                                               \
   }
 
 void bcm2835_irq_init(void) {
-/* #define PERIPHERAL_BASE 0x3F000000 */
-/* #define INTERRUPTS_PENDING (INTERRUPTS_BASE + 0x200) */
+  /* #define PERIPHERAL_BASE 0x3F000000 */
+  /* #define INTERRUPTS_PENDING (INTERRUPTS_BASE + 0x200) */
 
-/*   interrupt_regs->irq_basic_disable = -1; */
-/*   interrupt_regs->irq_gpu_disable1 = -1; */
-/*   interrupt_regs->irq_gpu_disable2 = -1; */
+  /*   interrupt_regs->irq_basic_disable = -1; */
+  /*   interrupt_regs->irq_gpu_disable1 = -1; */
+  /*   interrupt_regs->irq_gpu_disable2 = -1; */
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQBDISABLE), -1);
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ1DISABLE), -1);
   mmio_write(BCM2835_ARMICU(BCM2835_INTC_IRQ2DISABLE), -1);
@@ -59,24 +59,23 @@ void bcm2835_irq_disable(unsigned irq) {
 
 /* BCM2836 interrupt handling (core private interrupts) */
 
-#define TIMER_IRQ_CTRL_N(x) \
+#define TIMER_IRQ_CTRL_N(x)                                                    \
   (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_TIMER_IRQ_CONTROLN(x))
-#define MAILBOX_IRQ_CTRL_N(x) \
+#define MAILBOX_IRQ_CTRL_N(x)                                                  \
   (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(x))
-#define INTC_IRQPENDING_N(x) \
+#define INTC_IRQPENDING_N(x)                                                   \
   (BCM2836_ARM_LOCAL_BASE + BCM2836_LOCAL_INTC_IRQPENDINGN(x))
 
-#define CHECK_LOCAL_IRQ() \
-  assert(irq <= BCM2836_INT_MAILBOX3)
+#define CHECK_LOCAL_IRQ() assert(irq <= BCM2836_INT_MAILBOX3)
 
-#define CHOOSE_LOCAL_IRQ_REGISTER() \
-  uint32_t reg; \
-  CHECK_LOCAL_IRQ(); \
-  if (irq >= BCM2836_INT_MAILBOX0) { \
-    reg = MAILBOX_IRQ_CTRL_N(cpu); \
-    irq -= BCM2836_INT_MAILBOX0; \
-  } else { \
-    reg = TIMER_IRQ_CTRL_N(cpu); \
+#define CHOOSE_LOCAL_IRQ_REGISTER()                                            \
+  uint32_t reg;                                                                \
+  CHECK_LOCAL_IRQ();                                                           \
+  if (irq >= BCM2836_INT_MAILBOX0) {                                           \
+    reg = MAILBOX_IRQ_CTRL_N(cpu);                                             \
+    irq -= BCM2836_INT_MAILBOX0;                                               \
+  } else {                                                                     \
+    reg = TIMER_IRQ_CTRL_N(cpu);                                               \
   }
 
 void bcm2836_local_irq_init() {
@@ -127,11 +126,11 @@ static void irq_dispatch(uint32_t reg, unsigned irq_base) {
   }
 }
 
-void irq_free_zone_begin(){
+void irq_free_zone_begin() {
   pcpu()->td_idnest++;
 }
 
-void irq_free_zone_end(){
+void irq_free_zone_end() {
   pcpu()->td_idnest--;
 }
 
@@ -156,13 +155,12 @@ void exc_fast_irq(void) {
 
 vaddr_t next_ctx_stack(vaddr_t cur_sp) {
   int idx = pcpu()->switch_to;
-  int cur = (idx+1)%2;
+  int cur = (idx + 1) % 2;
   printf("\nthread id: %d\n", idx);
 
-  if(idx < 0)
+  if (idx < 0)
     return cur_sp;
 
-  pcpu()->schedule[cur] = (struct trapframe*)cur_sp;
+  pcpu()->schedule[cur] = (struct trapframe *)cur_sp;
   return (vaddr_t)(pcpu()->schedule[idx]);
 }
-
