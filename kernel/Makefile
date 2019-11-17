@@ -27,6 +27,7 @@ SOURCES_C := \
 	diskio.c \
 	ff.c \
 	ffsystem.c \
+	rpi.c	\
 
 SOURCES_ASM := \
 	boot.S \

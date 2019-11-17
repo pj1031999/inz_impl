@@ -33,7 +33,7 @@ set_link_register:
 	// [x3] core number 
 	MRS	X3, MPIDR_EL1 		// Multiprocessor Affinity Register
 	ANDS	X3, X3, #3
-	BEQ	clear_bss
+	BEQ	_clear_bss
 	
 cpu_mailbox_wait:	
 	// [CPU#1-CPU#3] Wait for entry point to appear in local mailbox #3
@@ -67,7 +67,7 @@ cpu_mailbox_wait:
 	CMP	X3, #0
 	BNE	setup_translation_table
 
-clear_bss:
+_clear_bss:
 	// [CPU#0] Clear BSS section.
 
 	LDR	X4, =_start
@@ -80,11 +80,10 @@ clear_bss:
 	DSB	SY
 	ISB
 	
-	LDR	x4, =PHYSADDR(_bss_start)
-	LDR	x5, =PHYSADDR(_bss_end)
-1:	STP 	xzr, xzr, [x4], #16
-	CMP	x4, x5
-	BLO	1b
+    // TODO save LR in x27 at the begin
+    MOV     x27, LR                         //LR contains target function (e.g. kernel_entry)
+    BL  clear_bss
+    MOV     LR, x27
 
 	/* Set stack address core0 */
 	LDR	X29, =_el1_stack
