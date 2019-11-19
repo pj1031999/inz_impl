@@ -1,9 +1,9 @@
 TOPDIR := $(realpath .)
 
 LDFLAGS   = -nostdlib -nostartfiles -nodefaultlibs
-QEMU	  = qemu-rpi3-aarch64
+QEMU	  = qemu-mimiker-aarch64
 QEMUFLAGS = -smp 4 -M raspi3 -gdb tcp::9000 -serial stdio -d int,mmu,page
-GDB	  = aarch64-rpi3-elf-gdb
+GDB	  = aarch64-mimiker-elf-gdb
 LDSCRIPT  = rpi3-os.lds
 
 KERIMG = kernel8.img
