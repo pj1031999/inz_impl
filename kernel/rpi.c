@@ -34,3 +34,10 @@ void __attribute__((section(".init"))) enable_mmu() {
                    "DSB sy\n"
                    "ISB\n");
 }
+
+void __attribute__((section(".init"))) setup_tmp_stack() {
+  __asm__ volatile("MOV X1, X29\n"
+                   "LDR X2, =_kernel\n"
+                   "SUBS X1, X1, X2\n"
+                   "MOV SP, X1\n");
+}

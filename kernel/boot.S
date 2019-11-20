@@ -95,11 +95,9 @@ setup_translation_table:
 	MSR	TTBR1_EL1, X0
 	MSR	TTBR0_EL1, X0
 
-	//tmp stack setup
-	MOV 	X1, X29
-	LDR	X2, =_kernel
-	SUBS	X1, X1, X2
-	MOV	SP, X1
+    MOV x27, LR
+    BL setup_tmp_stack
+    MOV LR, x27
 
 	MOV	x27, LR				//LR contains target function (e.g. kernel_entry)
 	BL	page_table_fill_inner_nodes
