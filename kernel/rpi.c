@@ -13,3 +13,11 @@ void __attribute__((section(".init"))) clear_bss() {
   }
 }
 
+
+void __attribute__((section(".init"))) enable_cache() {
+  __asm__ volatile("MRS X0, S3_1_C15_C2_1\n"
+                   "ORR X0, X0, #(0x1 << 6)\n" // The SMP bit
+                   "MSR S3_1_C15_c2_1, X0\n"
+                   "DSB SY\n"
+                   "ISB\n");
+}

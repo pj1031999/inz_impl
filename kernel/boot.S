@@ -18,12 +18,9 @@ _start:
 
 	// You must ensure this bit is set to 1 before the caches and MMU are
 	// enabled, or any cache and TLB maintenance operations are performed.
-enable_cache:
-	MRS	X0, S3_1_C15_C2_1
-	ORR	X0, X0, #(0x1 << 6)	// The  SMP bit.
-	MSR	S3_1_C15_C2_1, X0 
-	DSB	SY
-	ISB
+    MOV     x27, LR                         //LR contains target function (e.g. kernel_entry)
+    BL  enable_cache
+    MOV     LR, x27
 
 	
 set_link_register:	
