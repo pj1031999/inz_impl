@@ -21,3 +21,10 @@ void __attribute__((section(".init"))) enable_cache() {
                    "DSB SY\n"
                    "ISB\n");
 }
+
+void __attribute__((section(".init"))) invalidate_tlb() {
+  __asm__ volatile("TLBI ALLE1\n"
+                   "TLBI vmalle1is\n"
+                   "DSB ish\n"
+                   "ISB\n");
+}

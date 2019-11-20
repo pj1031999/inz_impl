@@ -87,10 +87,9 @@ _clear_bss:
 
 setup_translation_table:
 	/* Invalidate all TLB */
-	TLBI	ALLE1
-	TLBI	vmalle1is
-	DSB	ish
-	ISB
+    MOV x27, LR
+    BL invalidate_tlb
+    MOV LR, x27
 
 	ADR	X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
 	MSR	TTBR1_EL1, X0
@@ -121,10 +120,10 @@ mmu_setup:
 
 	
 	/* Invalidate all TLB */
-	DSB	ishst
-	TLBI	vmalle1is
-	DSB	ish
-	ISB	
+    MOV x27, LR
+    BL invalidate_tlb
+    MOV LR, x27
+
 
 	LDR	x0, =( \
 	TCR_TxSZ(32) \
