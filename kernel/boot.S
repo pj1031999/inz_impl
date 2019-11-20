@@ -150,19 +150,14 @@ mmu_enable:
 	CMP	x4, 0x8 	//0x8 = el2
 	BEQ	change_el
 	
-el3_only:	
-
-	MRS	X0, SCR_EL3
-	ORR	X0, X0, #(1<<10)	// RW EL2 Execution state is AArch64.
-	ORR	X0, X0, #(1<<0)		// NS EL1 is Non-secure world.
-	MSR	SCR_EL3, x0
-
-	MOV	X0, #0b01001		// DAIF=0000
-	MSR	SPSR_EL3, X0 		// M[4:0]=01001 EL2h must match SCR_EL3.RW
-
+_el3_only:	
+    MOV x27, LR
+    BL el3_only
+    MOV LR, x27
+	
 	ADR	X0, change_el     	// el2_entry points to the first instruction of
 	MSR	ELR_EL3, X0       	// EL2 code.
-
+   
 	ERET	//jump to el2_entry
 
 change_el:
