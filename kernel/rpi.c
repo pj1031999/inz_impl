@@ -28,3 +28,9 @@ void __attribute__((section(".init"))) invalidate_tlb() {
                    "DSB ish\n"
                    "ISB\n");
 }
+
+void __attribute__((section(".init"))) enable_mmu() {
+  __asm__ volatile("MSR sctlr_el1, x0\n"
+                   "DSB sy\n"
+                   "ISB\n");
+}

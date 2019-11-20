@@ -144,9 +144,9 @@ mmu_setup:
 	ORR	x0, x0, x1
 
 mmu_enable:
-	MSR	sctlr_el1, x0	/* enabling MMU! */
-	DSB	sy
-	ISB	
+    MOV x27, LR
+    BL enable_mmu
+    MOV LR, x27
 	
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
