@@ -91,9 +91,9 @@ setup_translation_table:
     BL invalidate_tlb
     MOV LR, x27
 
-	ADR	X0, PHYSADDR(_level1_pagetable)	// ttb0_base must be a 4KB-aligned address.
-	MSR	TTBR1_EL1, X0
-	MSR	TTBR0_EL1, X0
+    MOV x27, LR
+    BL setup_tlb
+    MOV LR, x27
 
     MOV x27, LR
     BL setup_tmp_stack

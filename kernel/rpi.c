@@ -3,9 +3,11 @@
 #include "aarch64/pte.h"
 #include "dev/bcm2836reg.h"
 
-
 extern uint64_t _bss_start[];
 extern uint64_t _bss_end[];
+extern uint64_t _level1_pagetable[];
+extern void page_table_fill_inner_nodes(void);
+extern void page_table_fill_leaves(void);
 
 #define UPPERADDR 0xffffFFFF00000000UL
 #define PHYSADDR(x) ((x) - (UPPERADDR))
@@ -19,11 +21,17 @@ void __attribute__((section(".init"))) clear_bss() {
 
 
 void __attribute__((section(".init"))) enable_cache() {
-  __asm__ volatile("MRS X0, S3_1_C15_C2_1\n"
-                   "ORR X0, X0, #(0x1 << 6)\n" // The SMP bit
-                   "MSR S3_1_C15_c2_1, X0\n"
+  uint64_t x;
+  __asm__ volatile("MRS %0, S3_1_C15_C2_1\n"
+                   : "=r" (x)
+                   :
+      );
+  x |= (0x1 << 6); // The SMP bit
+  __asm__ volatile("MSR S3_1_C15_c2_1, %0\n"
                    "DSB SY\n"
-                   "ISB\n");
+                   "ISB\n"
+                   : 
+                   : "r" (x));
 }
 
 void __attribute__((section(".init"))) invalidate_tlb() {
@@ -47,10 +55,28 @@ void __attribute__((section(".init"))) setup_tmp_stack() {
 }
 
 void __attribute__((section(".init"))) el3_only() {
-  __asm__ volatile("MRS X0, SCR_EL3\n"
-                   "ORR X0, X0, #(1<<10)\n" // RW EL2 Execution state is AArch64.
-                   "ORR X0, X0, #(1<<0)\n" // NS EL1 is Non-secure world.
-                   "MSR SCR_EL3, X0\n" 
-                   "MOV X0, #0b01001\n" // DAIF=0000
-                   "MSR SPSR_EL3, X0\n"); // M[4:0]=01001 EL2h must match SCR_EL3.RW
+  uint64_t x;
+  __asm__ volatile("MRS %0, SCR_EL3\n"
+                   : "=r" (x)
+                   :
+      );
+
+  x |= (0x1 << 10); // RW EL2 Execution state is AArch64.
+  x |= (0x1 << 0);  // NS EL1 is Non-secure world.
+
+  __asm__ volatile("MSR SCR_EL3, %0\n"  // DAIF=0000
+                   "MSR SPSR_EL3, %1\n" // M[4:0]=01001 EL2h must match SCR_EL3.RW
+                   : 
+                   : "r" (x), "r" (0b01001))
+    ;
 }
+
+void __attribute__((section(".init"))) setup_tlb() {
+  uint64_t x = PHYSADDR((uint64_t)&_level1_pagetable);
+  __asm__ volatile("MSR TTBR1_EL1, %0\n"
+                   "MSR TTBR0_EL1, %0\n"
+                   : \
+                   : "r" (x) \
+                  );
+}
+
