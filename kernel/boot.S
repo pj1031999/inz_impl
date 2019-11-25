@@ -87,17 +87,9 @@ _clear_bss:
 
 setup_translation_table:
     MOV x27, LR
+    BL setup_tmp_stack
     BL setup_tlb
     MOV LR, x27
-
-    MOV x27, LR
-    BL setup_tmp_stack
-    MOV LR, x27
-
-	MOV	x27, LR				//LR contains target function (e.g. kernel_entry)
-	BL	page_table_fill_inner_nodes
-	BL	page_table_fill_leaves
-	MOV	LR, x27
 
 mmu_setup:
 	DSB	sy

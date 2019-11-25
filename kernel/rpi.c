@@ -22,7 +22,6 @@ void __init__ clear_bss() {
   }
 }
 
-
 void __init__ enable_cache() {
   uint64_t x;
   __asm__ volatile("MRS %0, S3_1_C15_C2_1\n"
@@ -50,7 +49,7 @@ void __init__ enable_mmu() {
                    "ISB\n");
 }
 
-void __init__ setup_tmp_stack() {
+void __init__ __inline__ setup_tmp_stack() {
   __asm__ volatile("MOV X1, X29\n"
                    "LDR X2, =_kernel\n"
                    "SUBS X1, X1, X2\n"
@@ -83,5 +82,8 @@ void __init__ setup_tlb() {
                    : \
                    : "r" (x) \
                   );
+
+  page_table_fill_inner_nodes();
+  page_table_fill_leaves();
 }
 
