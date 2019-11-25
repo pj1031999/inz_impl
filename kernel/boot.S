@@ -135,25 +135,23 @@ mmu_enable:
 	
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
-	BEQ	change_el
+	BEQ	_change_el
 	
 _el3_only:	
     MOV x27, LR
     BL el3_only
     MOV LR, x27
 	
-	ADR	X0, change_el     	// el2_entry points to the first instruction of
+	ADR	X0, _change_el     	// el2_entry points to the first instruction of
 	MSR	ELR_EL3, X0       	// EL2 code.
    
 	ERET	//jump to el2_entry
 
-change_el:
+_change_el:
 	// Initialize SCTLR_EL2 and HCR_EL2 to save values before entering EL2
-	MSR	HCR_EL2, XZR   
-	MRS	X0, HCR_EL2
-	ORR	X0, X0, #(1<<31)	// RW=1  EL1  Execution state is AArch64.
-	//ORR	X0, X0, #(1 << 1)   	// SWIO hardwired on Pi3
-	MSR	HCR_EL2, X0
+    MOV x27, LR
+    BL change_el
+    MOV LR, x27
 		
 el2_entry:
 	/* Enable access to the physical timers at EL1 */
