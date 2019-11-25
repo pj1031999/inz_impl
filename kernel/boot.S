@@ -86,11 +86,6 @@ _clear_bss:
 	LDR	X29, =_el1_stack
 
 setup_translation_table:
-	/* Invalidate all TLB */
-    MOV x27, LR
-    BL invalidate_tlb
-    MOV LR, x27
-
     MOV x27, LR
     BL setup_tlb
     MOV LR, x27

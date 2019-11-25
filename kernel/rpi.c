@@ -12,7 +12,10 @@ extern void page_table_fill_leaves(void);
 #define UPPERADDR 0xffffFFFF00000000UL
 #define PHYSADDR(x) ((x) - (UPPERADDR))
 
-void __attribute__((section(".init"))) clear_bss() {
+#define __init__ __attribute__((section(".init")))
+#define __inline__ __attribute__((always_inline))
+
+void __init__ clear_bss() {
   for (uint64_t *i = (uint64_t *)PHYSADDR((uint64_t)&_bss_start);
       i < (uint64_t *)PHYSADDR((uint64_t)&_bss_end); ++i) {
     *i = 0;
@@ -20,7 +23,7 @@ void __attribute__((section(".init"))) clear_bss() {
 }
 
 
-void __attribute__((section(".init"))) enable_cache() {
+void __init__ enable_cache() {
   uint64_t x;
   __asm__ volatile("MRS %0, S3_1_C15_C2_1\n"
                    : "=r" (x)
@@ -34,27 +37,27 @@ void __attribute__((section(".init"))) enable_cache() {
                    : "r" (x));
 }
 
-void __attribute__((section(".init"))) invalidate_tlb() {
+void __init__ __inline__ invalidate_tlb() {
   __asm__ volatile("TLBI ALLE1\n"
                    "TLBI vmalle1is\n"
                    "DSB ish\n"
                    "ISB\n");
 }
 
-void __attribute__((section(".init"))) enable_mmu() {
+void __init__ enable_mmu() {
   __asm__ volatile("MSR sctlr_el1, x0\n"
                    "DSB sy\n"
                    "ISB\n");
 }
 
-void __attribute__((section(".init"))) setup_tmp_stack() {
+void __init__ setup_tmp_stack() {
   __asm__ volatile("MOV X1, X29\n"
                    "LDR X2, =_kernel\n"
                    "SUBS X1, X1, X2\n"
                    "MOV SP, X1\n");
 }
 
-void __attribute__((section(".init"))) el3_only() {
+void __init__ el3_only() {
   uint64_t x;
   __asm__ volatile("MRS %0, SCR_EL3\n"
                    : "=r" (x)
@@ -71,7 +74,9 @@ void __attribute__((section(".init"))) el3_only() {
     ;
 }
 
-void __attribute__((section(".init"))) setup_tlb() {
+void __init__ setup_tlb() {
+  invalidate_tlb();
+
   uint64_t x = PHYSADDR((uint64_t)&_level1_pagetable);
   __asm__ volatile("MSR TTBR1_EL1, %0\n"
                    "MSR TTBR0_EL1, %0\n"
