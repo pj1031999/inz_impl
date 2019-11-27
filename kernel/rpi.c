@@ -30,8 +30,7 @@ void __init__ enable_cache(void) {
   __asm__ volatile("MSR S3_1_C15_c2_1, %0\n"
                    "DSB SY\n"
                    "ISB\n"
-                   : 
-                   : "r" (x));
+                   : : "r" (x));
 }
 
 void __init__ __inline__ invalidate_tlb(void) {
@@ -41,10 +40,11 @@ void __init__ __inline__ invalidate_tlb(void) {
                    "ISB\n");
 }
 
-void __init__ enable_mmu() {
+void __init__ enable_mmu(uint64_t x) {
   __asm__ volatile("MSR sctlr_el1, x0\n"
                    "DSB sy\n"
-                   "ISB\n");
+                   "ISB\n"
+                   : : "r" (x));
 }
 
 void __init__ __inline__ setup_tmp_stack(void) {
@@ -57,16 +57,14 @@ void __init__ __inline__ setup_tmp_stack(void) {
 void __init__ el3_only(void) {
   uint64_t x;
   __asm__ volatile("MRS %0, SCR_EL3\n"
-                   : "=r" (x)
-                   :);
+                   : "=r" (x));
 
   x |= (0x1 << 10); // RW EL2 Execution state is AArch64.
   x |= (0x1 << 0);  // NS EL1 is Non-secure world.
 
   __asm__ volatile("MSR SCR_EL3, %0\n"  // DAIF=0000
                    "MSR SPSR_EL3, %1\n" // M[4:0]=01001 EL2h must match SCR_EL3.RW
-                   : 
-                   : "r" (x), "r" (0b01001));
+                   : : "r" (x), "r" (0b01001));
 }
 
 void __init__ setup_tlb(void) {
@@ -75,8 +73,7 @@ void __init__ setup_tlb(void) {
   uint64_t x = PHYSADDR((uint64_t)&_level1_pagetable);
   __asm__ volatile("MSR TTBR1_EL1, %0\n"
                    "MSR TTBR0_EL1, %0\n"
-                   :
-                   : "r" (x));
+                   : : "r" (x));
 
   page_table_fill_inner_nodes();
   page_table_fill_leaves();
@@ -91,8 +88,7 @@ void __init__ change_el(void) {
 
   x |= (1<<31); // RW=1 EL1 Execution state is AArch64
   __asm__ volatile("MSR HCR_EL2, %0\n"
-                   : 
-                   : "r" (x));
+                   : : "r" (x));
 }
 
 void __init__ el2_entry(void) {
@@ -104,6 +100,30 @@ void __init__ el2_entry(void) {
   /* Determine the EL1 execution state */
   __asm__ volatile("MSR cnthctl_el2, %0\n"
                    "MSR SPSR_EL2, %1\n"
-                   :
-                   : "r" (x), "r" (0b0101));
+                   : : "r" (x), "r" (0b0101));
+}
+
+void __init__ setup_mmu(void) {
+  uint64_t x = MAIR_ATTR(MAIR_DEVICE_nGnRnE, ATTR_DEVICE_MEM)
+      | MAIR_ATTR(MAIR_NORMAL_NC, ATTR_NORMAL_MEM_NC)
+      | MAIR_ATTR(MAIR_NORMAL_WB, ATTR_NORMAL_MEM_WB)
+      | MAIR_ATTR(MAIR_NORMAL_WT, ATTR_NORMAL_MEM_WT);
+  __asm__ volatile("DSB sy\n"
+                   "ISB\n"
+                   "MSR MAIR_EL1, %0\n"
+                   : : "r" (x));
+  invalidate_tlb();
+
+  x = TCR_TxSZ(32ULL) | TCR_TGx_(4K) | (1ULL<<39ULL) | (1ULL<<40ULL);
+  uint64_t v;
+  __asm__ volatile("MRS %0, id_aa64mmfr0_el1\n"
+                   : "=r" (v));
+  __asm__ volatile("BFI %0, %1, #32, #3\n"
+                   : "+r" (x)
+                   : "r" (v));
+  __asm__ volatile("MSR tcr_el1, %0\n"
+                   : : "r" (x));
+  v = SCTLR_M | SCTLR_I | SCTLR_C;
+  x |= v;
+  enable_mmu(x);
 }

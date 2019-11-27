@@ -92,47 +92,10 @@ setup_translation_table:
     MOV LR, x27
 
 mmu_setup:
-	DSB	sy
-	ISB
-
-	LDR 	X0, =(	\
-	MAIR_ATTR(MAIR_DEVICE_nGnRnE, 	ATTR_DEVICE_MEM) \
-        | MAIR_ATTR(MAIR_NORMAL_NC, 	ATTR_NORMAL_MEM_NC) 	\
-	| MAIR_ATTR(MAIR_NORMAL_WB, 	ATTR_NORMAL_MEM_WB) 	\
-	| MAIR_ATTR(MAIR_NORMAL_WT, 	ATTR_NORMAL_MEM_WT)	\
-	)
-	MSR MAIR_EL1, X0
-
-	
-	/* Invalidate all TLB */
     MOV x27, LR
-    BL invalidate_tlb
+    BL setup_mmu
     MOV LR, x27
 
-
-	LDR	x0, =( \
-	TCR_TxSZ(32) \
-	| TCR_TGx_(4K) \
-	| TCR_IPS_32BIT \
-	| (1<<39)/*TCR_HA*/ \
-	| (1<<40)/*TCR_HD*/ \
-	)
-	MRS	x1, id_aa64mmfr0_el1
-	BFI	x0, x1, #32, #3
-	MSR	tcr_el1, x0
-
-	LDR	x1, =( \
-	SCTLR_M	\
-	| SCTLR_I \
-	| SCTLR_C \
-	)
-	ORR	x0, x0, x1
-
-mmu_enable:
-    MOV x27, LR
-    BL enable_mmu
-    MOV LR, x27
-	
 	MRS	x4, CurrentEl	
 	CMP	x4, 0x8 	//0x8 = el2
 	BEQ	_change_el
