@@ -95,3 +95,15 @@ void __init__ change_el(void) {
                    : "r" (x));
 }
 
+void __init__ el2_entry(void) {
+  uint64_t x;
+  /* Enable access to the physical timers at EL1 */
+  __asm__ volatile("MRS %0, cnthctl_el2\n"
+                   : "=r" (x));
+  x |= CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN;
+  /* Determine the EL1 execution state */
+  __asm__ volatile("MSR cnthctl_el2, %0\n"
+                   "MSR SPSR_EL2, %1\n"
+                   :
+                   : "r" (x), "r" (0b0101));
+}

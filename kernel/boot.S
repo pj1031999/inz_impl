@@ -153,15 +153,10 @@ _change_el:
     BL change_el
     MOV LR, x27
 		
-el2_entry:
-	/* Enable access to the physical timers at EL1 */
-	MRS	x2, cnthctl_el2
-	ORR	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
-	MSR	cnthctl_el2, x2
-	
-	// Determine the  EL1 Execution state
-	MOV	X1, #0b0101	 	// DAIF=0000
-	MSR	SPSR_EL2, X1      	// M[4:0]=00101 EL1h must match HCR_EL2.RW.
+_el2_entry:
+    MOV x27, LR
+    BL el2_entry
+    MOV LR, x27
 	
 	ADR	X1, el1_entry     	// el1_entry points to the first instruction of
 	MSR	ELR_EL2, X1       	// EL1 code.
