@@ -1,6 +1,6 @@
 CPPFLAGS	= -I $(TOPDIR)/include
 OPTFLAGS	= -Og -fomit-frame-pointer -ggdb
-TARGET		= aarch64-rpi3-elf
+TARGET		= aarch64-mimiker-elf
 CPUFLAGS	= -mcpu=cortex-a53+nofp -march=armv8-a+nofp -mgeneral-regs-only -DAARCH64 -nostartfiles -ffreestanding  -MMD -ggdb
 
 
