@@ -38,6 +38,8 @@ build: kernel.a
 
 include $(TOPDIR)/build.mk
 
+rpi.o: CFLAGS+=-mcmodel=large
+
 kernel.a: $(OBJECTS)
 
 extra-clean:
