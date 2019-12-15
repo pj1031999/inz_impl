@@ -27,6 +27,7 @@ SOURCES_C := \
 	diskio.c \
 	ff.c \
 	ffsystem.c \
+	rpi.c	\
 
 SOURCES_ASM := \
 	boot.S \
@@ -36,6 +37,8 @@ SOURCES_ASM := \
 build: kernel.a
 
 include $(TOPDIR)/build.mk
+
+rpi.o: CFLAGS+=-mcmodel=large
 
 kernel.a: $(OBJECTS)
 

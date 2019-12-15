@@ -18,7 +18,6 @@ static inline uint64_t stack_addr_read() {
 }
 
 void smp_intro() {
-
   unsigned cpu = arm_cpu_id();
   pcpu_init();
   cons_bootstrap(cpu);
@@ -54,10 +53,9 @@ smp_demo(none, false);
 void smp_bootstrap() {
 #define L2I (uint32_t)(uint64_t)
 
-  int cpu = 0;
-  mbox_send(cpu + 1, 3, L2I smp_demo_clock);
-  mbox_send(cpu + 2, 3, L2I smp_demo_sd);
-  mbox_send(cpu + 3, 3, L2I smp_demo_pmap);
+  mbox_send(1, 3, L2I smp_demo_clock);
+  mbox_send(2, 3, L2I smp_demo_sd);
+  mbox_send(3, 3, L2I smp_demo_pmap);
 
   pm_alloc(1 * L2I & _stack_size);
   vm_alloc(1 * L2I & _stack_size);
@@ -65,9 +63,9 @@ void smp_bootstrap() {
   paddr_t s2 = pm_alloc(L2I & _stack_size);
   paddr_t s3 = pm_alloc(L2I & _stack_size);
 
-  mbox_send(cpu + 1, 1, s1);
-  mbox_send(cpu + 2, 1, s2);
-  mbox_send(cpu + 3, 1, s3);
+  mbox_send(1, 1, s1);
+  mbox_send(2, 1, s2);
+  mbox_send(3, 1, s3);
 
   do {
     __asm__ volatile("wfe");
