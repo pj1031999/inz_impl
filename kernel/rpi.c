@@ -10,6 +10,7 @@ extern uint64_t _level1_pagetable[];
 extern void page_table_fill_inner_nodes(void);
 extern void page_table_fill_leaves(void);
 extern void _exc_vector(void);
+extern void kernel_entry(uint32_t, uint32_t, uint32_t);
 extern uint8_t _el1_stack[];
 extern uint8_t _kernel[];
 
@@ -32,14 +33,54 @@ __init__ static void clear_bss(void) {
   }
 }
 
-#if 0
-__init__ static intptr_t cpu_wait(void) {
-  for (;;) {
-    /* --- DO NOTHING */
+struct addr_pair {
+  intptr_t pc;
+  intptr_t sp;
+};
+
+__init__ static struct addr_pair cpu_wait(void) {
+  long cpu = get_cpu();
+
+  /* --- we have 4 mailboxes for each CPU in continuous sets */
+  uint32_t *mailbox = (uint32_t *)(BCM2836_ARM_LOCAL_BASE + 
+                                   BCM2836_LOCAL_MAILBOX0_CLRN(cpu));
+
+  intptr_t jump = 0;
+  for (; 0 == jump;) {
+    __asm__ volatile("WFE");
+    /* --- read #3 mailbox for this cpu
+     * it contains *relative* jump address
+     */
+    jump = mailbox[3];
   }
-  return 0xdeadc0de;
+
+  /* --- clear mailbox */
+  mailbox[3] = jump; // FIXME: => 0x0000000000080110 <+56>:    ldr     x1, [x1]
+  
+  /* --- add missing offset */
+  jump += *(intptr_t *)&_kernel;
+
+  __asm__ volatile("DSB SY\n"
+                   "ISB\n");
+
+  intptr_t stack = 0;
+  for (; 0 == stack;) {
+    __asm__ volatile("NOP\n");
+    /* --- read #1 mailbox for this CPU
+     * it contains new stack address
+     */
+    stack = mailbox[1];
+  }
+
+  /* --- clear mailbox */
+  mailbox[1] = jump;
+
+  /* --- add missing offset */
+  stack += *(intptr_t *)&_kernel;
+  
+  struct addr_pair result = {.pc = jump, .sp = stack};
+  return result;
 }
-#endif
 
 __init__ void invalidate_tlb(void) {
   __asm__ volatile("TLBI ALLE1\n"
@@ -47,14 +88,6 @@ __init__ void invalidate_tlb(void) {
                    "DSB ish\n"
                    "ISB\n");
 }
-
-#if 0
-__init__ static void setup_tlb(void) {
-  invalidate_tlb();
-  WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-  WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-}
-#endif
 
 __init__ __inline__ static void enable_mmu(void) {
   uint64_t x = MAIR_ATTR(MAIR_DEVICE_nGnRnE, ATTR_DEVICE_MEM)
@@ -82,6 +115,7 @@ __init__ __inline__ static void enable_mmu(void) {
   /* --- Support for 16KB memory granule size for stage 2. (id_aa64mmfr0_el1)
    * Intermediate Physical Address Size. (tcr_el1)
    * */
+  /* --- TODO(pj) change to C instructions */
   __asm__ volatile("BFI %0, %1, #32, #3\n"
                    : "+r" (x)
                    : "r" (v));
@@ -125,29 +159,33 @@ intptr_t platform_stack(void) {
 
 __noreturn__ void platform_init(void *atags) {
   (void)atags;
+
+  /* shields up, weapons armed - going live */
+  kernel_entry(0, 0, 0);
+
   for (;;) {
     /* --- DO NOTHING */
   }
 }
 
-__init__ long arm64_init(void) {
+__init__ struct addr_pair arm64_init(void) {
   uint64_t x;
   long cpu = get_cpu();
   enable_cache();
   invalidate_tlb();
 
+  struct addr_pair result = {.pc = 0, .sp = 0};
 
-#if 1
-  if (cpu == 0) {
-    /* --- now we are CPU0 */
-    clear_bss();
-    page_table_fill_inner_nodes();
-    page_table_fill_leaves();
-    WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    enable_mmu();
+  if (cpu != 0) {
+    result = cpu_wait();
   }
-#endif
+
+  clear_bss();
+  page_table_fill_inner_nodes();
+  page_table_fill_leaves();
+  WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
+  WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
+  enable_mmu();
 
   /* --- el3_only */
   /* --- 0x8 = EL2 */
@@ -196,22 +234,5 @@ el1_entry:
   __asm__ volatile ("MSR DAIFClr, #3\n");
 #endif
 
-  if (cpu == 0) {
-    /* --- now we are CPU0 */
-#if 0
-    clear_bss();
-    page_table_fill_inner_nodes();
-    page_table_fill_leaves();
-    WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    enable_mmu();
-    // WRITE_SPECIALREG(VBAR_EL1, _exc_vector);
-#endif
-  } else {
-    for (;;) {
-      /* --- DO NOTHING */
-    }
-  }
-
-  return cpu;
+  return result;
 }
