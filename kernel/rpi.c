@@ -73,7 +73,7 @@ __init__ static struct addr_pair cpu_wait(void) {
   }
 
   /* --- clear mailbox */
-  mailbox[1] = jump;
+  mailbox[1] = stack;
 
   /* --- add missing offset */
   stack += (intptr_t)&_kernel;
