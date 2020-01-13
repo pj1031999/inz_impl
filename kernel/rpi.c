@@ -55,10 +55,10 @@ __init__ static struct addr_pair cpu_wait(void) {
   }
 
   /* --- clear mailbox */
-  mailbox[3] = jump; // FIXME: => 0x0000000000080110 <+56>:    ldr     x1, [x1]
-  
+  mailbox[3] = jump;  
+
   /* --- add missing offset */
-  jump += *(intptr_t *)&_kernel;
+  jump += (intptr_t)&_kernel;
 
   __asm__ volatile("DSB SY\n"
                    "ISB\n");
@@ -76,7 +76,7 @@ __init__ static struct addr_pair cpu_wait(void) {
   mailbox[1] = jump;
 
   /* --- add missing offset */
-  stack += *(intptr_t *)&_kernel;
+  stack += (intptr_t)&_kernel;
   
   struct addr_pair result = {.pc = jump, .sp = stack};
   return result;
@@ -180,9 +180,11 @@ __init__ struct addr_pair arm64_init(void) {
     result = cpu_wait();
   }
 
-  clear_bss();
-  page_table_fill_inner_nodes();
-  page_table_fill_leaves();
+  if (cpu == 0) {
+    clear_bss();
+    page_table_fill_inner_nodes();
+    page_table_fill_leaves();
+  }
   WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
   WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
   enable_mmu();
