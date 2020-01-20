@@ -17,28 +17,28 @@ extern uint8_t _kernel[];
 #define UPPERADDR 0xffffffff00000000UL
 #define PHYSADDR(x) ((x) - (UPPERADDR))
 
-#define __init__ __attribute__((section(".init")))
-#define __inline__ __attribute__((always_inline))
-#define __noreturn__ __attribute__((__noreturn__))
+#define __init __attribute__((section(".init")))
+#define __inline __attribute__((always_inline))
+#define __noreturn __attribute__((__noreturn__))
 
-__init__ static long get_cpu(void) {
+__init static long get_cpu(void) {
   /* --- we have CPU 0 - 3 so we only need 2 bits of MPIDR_EL1 */
   return READ_SPECIALREG(MPIDR_EL1) & 0x3UL;
 }
 
-__init__ static void clear_bss(void) {
+__init static void clear_bss(void) {
   for (uint64_t *i = (uint64_t *)PHYSADDR((uint64_t)&_bss_start);
        i < (uint64_t *)PHYSADDR((uint64_t)&_bss_end); ++i) {
     *i = 0;
   }
 }
 
-struct addr_pair {
+typedef struct {
   intptr_t pc;
   intptr_t sp;
-};
+} cpuctx_t;
 
-__init__ static struct addr_pair cpu_wait(void) {
+__init static cpuctx_t cpu_wait(void) {
   long cpu = get_cpu();
 
   /* --- we have 4 mailboxes for each CPU in continuous sets */
@@ -46,13 +46,13 @@ __init__ static struct addr_pair cpu_wait(void) {
                                    BCM2836_LOCAL_MAILBOX0_CLRN(cpu));
 
   intptr_t jump = 0;
-  for (; 0 == jump;) {
+  do {
     __asm__ volatile("WFE");
     /* --- read #3 mailbox for this cpu
      * it contains *relative* jump address
      */
     jump = mailbox[3];
-  }
+  } while (!jump);
 
   /* --- clear mailbox */
   mailbox[3] = jump;  
@@ -60,17 +60,17 @@ __init__ static struct addr_pair cpu_wait(void) {
   /* --- add missing offset */
   jump += (intptr_t)&_kernel;
 
-  __asm__ volatile("DSB SY\n"
+  __asm__ volatile("DSB sy\n"
                    "ISB\n");
 
   intptr_t stack = 0;
-  for (; 0 == stack;) {
+  do {
     __asm__ volatile("NOP\n");
     /* --- read #1 mailbox for this CPU
      * it contains new stack address
      */
     stack = mailbox[1];
-  }
+  } while (!stack);
 
   /* --- clear mailbox */
   mailbox[1] = stack;
@@ -78,18 +78,17 @@ __init__ static struct addr_pair cpu_wait(void) {
   /* --- add missing offset */
   stack += (intptr_t)&_kernel;
   
-  struct addr_pair result = {.pc = jump, .sp = stack};
-  return result;
+  return (cpuctx_t){.pc = jump, .sp = stack};
 }
 
-__init__ void invalidate_tlb(void) {
-  __asm__ volatile("TLBI ALLE1\n"
+__init void invalidate_tlb(void) {
+  __asm__ volatile("TLBI alle1\n"
                    "TLBI vmalle1is\n"
                    "DSB ish\n"
                    "ISB\n");
 }
 
-__init__ __inline__ static void enable_mmu(void) {
+__init __inline static void enable_mmu(void) {
   uint64_t x = MAIR_ATTR(MAIR_DEVICE_nGnRnE, ATTR_DEVICE_MEM)
     | MAIR_ATTR(MAIR_NORMAL_NC, ATTR_NORMAL_MEM_NC)
     | MAIR_ATTR(MAIR_NORMAL_WB, ATTR_NORMAL_MEM_WB)
@@ -134,18 +133,17 @@ __init__ __inline__ static void enable_mmu(void) {
                    "ISB\n");
 }
 
-__init__ static void enable_cache(void) {
+__init static void enable_cache(void) {
   if (READ_SPECIALREG(CurrentEl) != 0x8) {
     /* --- we are not in el2 */
     /* 1 << 6 -- SMP bit */
-    WRITE_SPECIALREG(S3_1_C15_c2_1, READ_SPECIALREG(S3_1_C15_C2_1) | (0x1 << 6));
-    __asm__ volatile("DSB SY\n"
+    WRITE_SPECIALREG(S3_1_C15_c2_1, READ_SPECIALREG(S3_1_C15_C2_1) | (1 << 6));
+    __asm__ volatile("DSB sy\n"
                      "ISB\n");
   }
 }
 
 intptr_t platform_stack(void) {
-  // long cpu = get_cpu();
   intptr_t stack = ((intptr_t)&_el1_stack) - ((intptr_t)&_kernel);;
   
   /* --- TODO(pj):
@@ -157,7 +155,7 @@ intptr_t platform_stack(void) {
   return stack;
 }
 
-__noreturn__ void platform_init(void *atags) {
+__noreturn void platform_init(void *atags) {
   (void)atags;
 
   /* shields up, weapons armed - going live */
@@ -168,23 +166,24 @@ __noreturn__ void platform_init(void *atags) {
   }
 }
 
-__init__ struct addr_pair arm64_init(void) {
+__init cpuctx_t arm64_init(void) {
+  cpuctx_t ctx;
   uint64_t x;
-  long cpu = get_cpu();
+  long cpu;
+  
+  cpu = get_cpu();
   enable_cache();
   invalidate_tlb();
 
-  struct addr_pair result = {.pc = 0, .sp = 0};
-
   if (cpu != 0) {
-    result = cpu_wait();
-  }
-
-  if (cpu == 0) {
+    ctx = cpu_wait();
+  } else {
     clear_bss();
     page_table_fill_inner_nodes();
     page_table_fill_leaves();
+    ctx = (cpuctx_t){.pc = 0, .sp = 0};
   }
+
   WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
   WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
   enable_mmu();
@@ -236,5 +235,5 @@ el1_entry:
   __asm__ volatile ("MSR DAIFClr, #3\n");
 #endif
 
-  return result;
+  return ctx;
 }
