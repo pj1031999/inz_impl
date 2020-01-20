@@ -20,6 +20,11 @@ extern uint8_t _kernel[];
 #define __init __attribute__((section(".init")))
 #define __inline __attribute__((always_inline))
 #define __noreturn __attribute__((__noreturn__))
+#define __wfe() __asm__ volatile("WFE")
+#define __dsb(x) __asm__ volatile("DSB " x)
+#define __isb() __asm__ volatile("ISB")
+#define __tlbi(x) __asm__ volatile("TLBI " x)
+#define __eret() __asm__ volatile("ERET")
 
 __init static long get_cpu(void) {
   /* --- we have CPU 0 - 3 so we only need 2 bits of MPIDR_EL1 */
@@ -47,7 +52,7 @@ __init static cpuctx_t cpu_wait(void) {
 
   intptr_t jump = 0;
   do {
-    __asm__ volatile("WFE");
+    __wfe();
     /* --- read #3 mailbox for this cpu
      * it contains *relative* jump address
      */
@@ -60,12 +65,12 @@ __init static cpuctx_t cpu_wait(void) {
   /* --- add missing offset */
   jump += (intptr_t)&_kernel;
 
-  __asm__ volatile("DSB sy\n"
-                   "ISB\n");
+  __dsb("sy");
+  __isb();
 
   intptr_t stack = 0;
   do {
-    __asm__ volatile("NOP\n");
+    __wfe();
     /* --- read #1 mailbox for this CPU
      * it contains new stack address
      */
@@ -82,10 +87,10 @@ __init static cpuctx_t cpu_wait(void) {
 }
 
 __init void invalidate_tlb(void) {
-  __asm__ volatile("TLBI alle1\n"
-                   "TLBI vmalle1is\n"
-                   "DSB ish\n"
-                   "ISB\n");
+  __tlbi("alle1");
+  __tlbi("vmalle1is");
+  __dsb("ish");
+  __isb();
 }
 
 __init __inline static void enable_mmu(void) {
@@ -93,8 +98,8 @@ __init __inline static void enable_mmu(void) {
     | MAIR_ATTR(MAIR_NORMAL_NC, ATTR_NORMAL_MEM_NC)
     | MAIR_ATTR(MAIR_NORMAL_WB, ATTR_NORMAL_MEM_WB)
     | MAIR_ATTR(MAIR_NORMAL_WT, ATTR_NORMAL_MEM_WT);
-  __asm__ volatile("DSB sy\n"
-                   "ISB\n");
+  __dsb("sy");
+  __isb();
 
   WRITE_SPECIALREG(MAIR_EL1, x);
 
@@ -109,16 +114,12 @@ __init __inline static void enable_mmu(void) {
    * 4K -- Granule size for the TTBR0_EL.
    */
   x = TCR_TxSZ(32ULL) | TCR_TGx_(4K) | (0ULL << 32ULL) | (1ULL << 39ULL) | (1ULL << 40ULL);
-  uint64_t v = READ_SPECIALREG(id_aa64mmfr0_el1);
 
   /* --- Support for 16KB memory granule size for stage 2. (id_aa64mmfr0_el1)
    * Intermediate Physical Address Size. (tcr_el1)
    * */
-  /* --- TODO(pj) change to C instructions */
-  __asm__ volatile("BFI %0, %1, #32, #3\n"
-                   : "+r" (x)
-                   : "r" (v));
-  WRITE_SPECIALREG(tcr_el1, x);
+  uint64_t v = READ_SPECIALREG(id_aa64mmfr0_el1);
+  WRITE_SPECIALREG(tcr_el1, x | ((v & 3) << 32));
 
   /* --- more magic bits
    * M -- MMU enable for EL1 and EL0 stage 1 address translation. 
@@ -129,8 +130,8 @@ __init __inline static void enable_mmu(void) {
   x |= v;
 
   WRITE_SPECIALREG(sctlr_el1, x);
-  __asm__ volatile("DSB sy\n"
-                   "ISB\n");
+  __dsb("sy");
+  __isb();
 }
 
 __init static void enable_cache(void) {
@@ -138,8 +139,8 @@ __init static void enable_cache(void) {
     /* --- we are not in el2 */
     /* 1 << 6 -- SMP bit */
     WRITE_SPECIALREG(S3_1_C15_c2_1, READ_SPECIALREG(S3_1_C15_C2_1) | (1 << 6));
-    __asm__ volatile("DSB sy\n"
-                     "ISB\n");
+    __dsb("sy");
+    __isb();
   }
 }
 
@@ -206,7 +207,7 @@ __init cpuctx_t arm64_init(void) {
     WRITE_SPECIALREG(SCR_EL3, x);
     WRITE_SPECIALREG(SPSR_EL3, 0b01001);
     WRITE_SPECIALREG(ELR_EL3, &&el2_entry);
-    __asm__ volatile ("ERET\n");
+    __eret();
   }
 
 el2_entry:
@@ -217,14 +218,13 @@ el2_entry:
   x = READ_SPECIALREG(HCR_EL2) | (1 << 31);
   WRITE_SPECIALREG(HCR_EL2, x);
 
-  x = READ_SPECIALREG(CNTHCTL_EL2);
-  x |= CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN;
+  x = READ_SPECIALREG(CNTHCTL_EL2) | CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN;
   /* --- enable timer for EL1 */
   WRITE_SPECIALREG(SP_EL1, reg_sp_read());
   WRITE_SPECIALREG(CNTHCTL_EL2, x);
   WRITE_SPECIALREG(SPSR_EL2, 0b0101);
   WRITE_SPECIALREG(ELR_EL2, &&el1_entry);
-  __asm__ volatile ("ERET\n");
+  __eret();
 
 el1_entry:
   WRITE_SPECIALREG(VBAR_EL1, _exc_vector);
