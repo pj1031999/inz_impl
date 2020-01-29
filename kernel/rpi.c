@@ -10,59 +10,96 @@ extern uint64_t _level1_pagetable[];
 extern void page_table_fill_inner_nodes(void);
 extern void page_table_fill_leaves(void);
 extern void _exc_vector(void);
+extern void kernel_entry(uint32_t, uint32_t, uint32_t);
 extern uint8_t _el1_stack[];
 extern uint8_t _kernel[];
 
 #define UPPERADDR 0xffffffff00000000UL
 #define PHYSADDR(x) ((x) - (UPPERADDR))
 
-#define __init__ __attribute__((section(".init")))
-#define __inline__ __attribute__((always_inline))
-#define __noreturn__ __attribute__((__noreturn__))
+#define __init __attribute__((section(".init")))
+#define __inline __attribute__((always_inline))
+#define __noreturn __attribute__((__noreturn__))
+#define __wfe() __asm__ volatile("WFE")
+#define __dsb(x) __asm__ volatile("DSB " x)
+#define __isb() __asm__ volatile("ISB")
+#define __tlbi(x) __asm__ volatile("TLBI " x)
+#define __eret() __asm__ volatile("ERET")
 
-__init__ static long get_cpu(void) {
+__init static long get_cpu(void) {
   /* --- we have CPU 0 - 3 so we only need 2 bits of MPIDR_EL1 */
   return READ_SPECIALREG(MPIDR_EL1) & 0x3UL;
 }
 
-__init__ static void clear_bss(void) {
+__init static void clear_bss(void) {
   for (uint64_t *i = (uint64_t *)PHYSADDR((uint64_t)&_bss_start);
        i < (uint64_t *)PHYSADDR((uint64_t)&_bss_end); ++i) {
     *i = 0;
   }
 }
 
-#if 0
-__init__ static intptr_t cpu_wait(void) {
-  for (;;) {
-    /* --- DO NOTHING */
-  }
-  return 0xdeadc0de;
-}
-#endif
+typedef struct {
+  intptr_t pc;
+  intptr_t sp;
+} cpuctx_t;
 
-__init__ void invalidate_tlb(void) {
-  __asm__ volatile("TLBI ALLE1\n"
-                   "TLBI vmalle1is\n"
-                   "DSB ish\n"
-                   "ISB\n");
+__init static cpuctx_t cpu_wait(void) {
+  long cpu = get_cpu();
+
+  /* --- we have 4 mailboxes for each CPU in continuous sets */
+  uint32_t *mailbox = (uint32_t *)(BCM2836_ARM_LOCAL_BASE + 
+                                   BCM2836_LOCAL_MAILBOX0_CLRN(cpu));
+
+  intptr_t jump = 0;
+  do {
+    __wfe();
+    /* --- read #3 mailbox for this cpu
+     * it contains *relative* jump address
+     */
+    jump = mailbox[3];
+  } while (!jump);
+
+  /* --- clear mailbox */
+  mailbox[3] = jump;  
+
+  /* --- add missing offset */
+  jump += (intptr_t)&_kernel;
+
+  __dsb("sy");
+  __isb();
+
+  intptr_t stack = 0;
+  do {
+    __wfe();
+    /* --- read #1 mailbox for this CPU
+     * it contains new stack address
+     */
+    stack = mailbox[1];
+  } while (!stack);
+
+  /* --- clear mailbox */
+  mailbox[1] = stack;
+
+  /* --- add missing offset */
+  stack += (intptr_t)&_kernel;
+  
+  return (cpuctx_t){.pc = jump, .sp = stack};
 }
 
-#if 0
-__init__ static void setup_tlb(void) {
-  invalidate_tlb();
-  WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-  WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
+__init void invalidate_tlb(void) {
+  __tlbi("alle1");
+  __tlbi("vmalle1is");
+  __dsb("ish");
+  __isb();
 }
-#endif
 
-__init__ __inline__ static void enable_mmu(void) {
+__init __inline static void enable_mmu(void) {
   uint64_t x = MAIR_ATTR(MAIR_DEVICE_nGnRnE, ATTR_DEVICE_MEM)
     | MAIR_ATTR(MAIR_NORMAL_NC, ATTR_NORMAL_MEM_NC)
     | MAIR_ATTR(MAIR_NORMAL_WB, ATTR_NORMAL_MEM_WB)
     | MAIR_ATTR(MAIR_NORMAL_WT, ATTR_NORMAL_MEM_WT);
-  __asm__ volatile("DSB sy\n"
-                   "ISB\n");
+  __dsb("sy");
+  __isb();
 
   WRITE_SPECIALREG(MAIR_EL1, x);
 
@@ -77,15 +114,12 @@ __init__ __inline__ static void enable_mmu(void) {
    * 4K -- Granule size for the TTBR0_EL.
    */
   x = TCR_TxSZ(32ULL) | TCR_TGx_(4K) | (0ULL << 32ULL) | (1ULL << 39ULL) | (1ULL << 40ULL);
-  uint64_t v = READ_SPECIALREG(id_aa64mmfr0_el1);
 
   /* --- Support for 16KB memory granule size for stage 2. (id_aa64mmfr0_el1)
    * Intermediate Physical Address Size. (tcr_el1)
    * */
-  __asm__ volatile("BFI %0, %1, #32, #3\n"
-                   : "+r" (x)
-                   : "r" (v));
-  WRITE_SPECIALREG(tcr_el1, x);
+  uint64_t v = READ_SPECIALREG(id_aa64mmfr0_el1);
+  WRITE_SPECIALREG(tcr_el1, x | ((v & 3) << 32));
 
   /* --- more magic bits
    * M -- MMU enable for EL1 and EL0 stage 1 address translation. 
@@ -96,22 +130,21 @@ __init__ __inline__ static void enable_mmu(void) {
   x |= v;
 
   WRITE_SPECIALREG(sctlr_el1, x);
-  __asm__ volatile("DSB sy\n"
-                   "ISB\n");
+  __dsb("sy");
+  __isb();
 }
 
-__init__ static void enable_cache(void) {
+__init static void enable_cache(void) {
   if (READ_SPECIALREG(CurrentEl) != 0x8) {
     /* --- we are not in el2 */
     /* 1 << 6 -- SMP bit */
-    WRITE_SPECIALREG(S3_1_C15_c2_1, READ_SPECIALREG(S3_1_C15_C2_1) | (0x1 << 6));
-    __asm__ volatile("DSB SY\n"
-                     "ISB\n");
+    WRITE_SPECIALREG(S3_1_C15_c2_1, READ_SPECIALREG(S3_1_C15_C2_1) | (1 << 6));
+    __dsb("sy");
+    __isb();
   }
 }
 
 intptr_t platform_stack(void) {
-  // long cpu = get_cpu();
   intptr_t stack = ((intptr_t)&_el1_stack) - ((intptr_t)&_kernel);;
   
   /* --- TODO(pj):
@@ -123,31 +156,38 @@ intptr_t platform_stack(void) {
   return stack;
 }
 
-__noreturn__ void platform_init(void *atags) {
+__noreturn void platform_init(void *atags) {
   (void)atags;
+
+  /* shields up, weapons armed - going live */
+  kernel_entry(0, 0, 0);
+
   for (;;) {
     /* --- DO NOTHING */
   }
 }
 
-__init__ long arm64_init(void) {
+__init cpuctx_t arm64_init(void) {
+  cpuctx_t ctx;
   uint64_t x;
-  long cpu = get_cpu();
+  long cpu;
+  
+  cpu = get_cpu();
   enable_cache();
   invalidate_tlb();
 
-
-#if 1
-  if (cpu == 0) {
-    /* --- now we are CPU0 */
+  if (cpu != 0) {
+    ctx = cpu_wait();
+  } else {
     clear_bss();
     page_table_fill_inner_nodes();
     page_table_fill_leaves();
-    WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    enable_mmu();
+    ctx = (cpuctx_t){.pc = 0, .sp = 0};
   }
-#endif
+
+  WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
+  WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
+  enable_mmu();
 
   /* --- el3_only */
   /* --- 0x8 = EL2 */
@@ -167,7 +207,7 @@ __init__ long arm64_init(void) {
     WRITE_SPECIALREG(SCR_EL3, x);
     WRITE_SPECIALREG(SPSR_EL3, 0b01001);
     WRITE_SPECIALREG(ELR_EL3, &&el2_entry);
-    __asm__ volatile ("ERET\n");
+    __eret();
   }
 
 el2_entry:
@@ -178,14 +218,13 @@ el2_entry:
   x = READ_SPECIALREG(HCR_EL2) | (1 << 31);
   WRITE_SPECIALREG(HCR_EL2, x);
 
-  x = READ_SPECIALREG(CNTHCTL_EL2);
-  x |= CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN;
+  x = READ_SPECIALREG(CNTHCTL_EL2) | CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN;
   /* --- enable timer for EL1 */
   WRITE_SPECIALREG(SP_EL1, reg_sp_read());
   WRITE_SPECIALREG(CNTHCTL_EL2, x);
   WRITE_SPECIALREG(SPSR_EL2, 0b0101);
   WRITE_SPECIALREG(ELR_EL2, &&el1_entry);
-  __asm__ volatile ("ERET\n");
+  __eret();
 
 el1_entry:
   WRITE_SPECIALREG(VBAR_EL1, _exc_vector);
@@ -196,22 +235,5 @@ el1_entry:
   __asm__ volatile ("MSR DAIFClr, #3\n");
 #endif
 
-  if (cpu == 0) {
-    /* --- now we are CPU0 */
-#if 0
-    clear_bss();
-    page_table_fill_inner_nodes();
-    page_table_fill_leaves();
-    WRITE_SPECIALREG(TTBR1_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    WRITE_SPECIALREG(TTBR0_EL1, PHYSADDR((uint64_t)&_level1_pagetable));
-    enable_mmu();
-    // WRITE_SPECIALREG(VBAR_EL1, _exc_vector);
-#endif
-  } else {
-    for (;;) {
-      /* --- DO NOTHING */
-    }
-  }
-
-  return cpu;
+  return ctx;
 }

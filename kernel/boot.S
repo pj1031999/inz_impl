@@ -36,9 +36,30 @@ _start:
      * 0xf8 for CPU3 */
     ADD  x4, x4, 0x18
     MOV  SP, x4
-
+    
+    /* --- arm64_init returns pair
+     * pc
+     * sp
+     */
     BL   arm64_init
+    MRS  x3, MPIDR_EL1
+    AND  x3, x3, #3
+    
+    /* --- we are CPU0 
+     * let's go to platform_stack
+     */
+    CMP  x3, #0
+    BEQ  CPU0
 
+    /* --- we are CPU 1 - 3
+     * x0 should be pc
+     * x1 should be sp
+     * everything is configured
+     */
+    MOV SP, x1
+    BR  x0
+
+CPU0:
     BL   platform_stack
     MOV  SP, x0
     /* --- now we have stack */
